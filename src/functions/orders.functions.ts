@@ -17,7 +17,7 @@ async function attachInvoice(orderId: string) {
   const db = await admin();
   const { data: o } = await db.from("orders").select("*").eq("id", orderId).single();
   if (!o) throw new Error("Order not found");
-  const { createInvoice } = await import("./nowpayments.server");
+  const { createInvoice } = await import("@/server/nowpayments.server");
   const inv = await createInvoice({
     orderId: o.id,
     amount: Number(o.total_amount),
@@ -131,7 +131,7 @@ export const updateOrder = createServerFn({ method: "POST" })
     }
     if (isSeller) {
       const { data: buyer } = await db.from("profiles").select("telegram_id").eq("id", o.buyer_id).single();
-      const { sendTelegramMessage, escapeHtml } = await import("./telegram.server");
+      const { sendTelegramMessage, escapeHtml } = await import("@/server/telegram.server");
       await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], buyer?.telegram_id, `📦 Order #${o.order_number} (${escapeHtml(o.product_name)}) is now <b>${data.action === "ship" ? "shipped" : "delivered"}</b>.${data.tracking ? `\n${escapeHtml(data.tracking)}` : ""}`);
     }
     return { ok: true };

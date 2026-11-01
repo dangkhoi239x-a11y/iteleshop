@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { telegramLogin } from "@/server/auth.functions";
+import { telegramLogin } from "@/functions/auth.functions";
 import { inTelegram, tg } from "@/lib/telegram";
 import i18n from "@/lib/i18n";
 
@@ -45,10 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setReady(true);
     });
     const w = tg();
-    w?.ready();
-    w?.expand();
-    w?.setHeaderColor?.("#141a26");
-    w?.setBackgroundColor?.("#141a26");
+    if (w?.initData) {
+      w.ready();
+      w.expand();
+      w.setHeaderColor?.("#141a26");
+      w.setBackgroundColor?.("#141a26");
+    }
     return () => data.subscription.unsubscribe();
   }, [qc]);
 

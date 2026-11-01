@@ -17,10 +17,10 @@ export const telegramLogin = createServerFn({ method: "POST" })
     z.object({ initData: z.string().max(4096).optional(), demoId: z.string().regex(/^[a-z0-9]{12,40}$/).optional(), ref: z.string().max(32).optional() }).parse(i),
   )
   .handler(async ({ data }) => {
-    const { validateInitData } = await import("./telegram.server");
-    const { hmacHex } = await import("./crypto.server");
+    const { validateInitData } = await import("@/server/telegram.server");
+    const { hmacHex } = await import("@/server/crypto.server");
     const sessionSecret = process.env["SESSION_SECRET"]!;
-    let tg: { id: string; first_name?: string; last_name?: string; username?: string; photo_url?: string; lang?: string };
+    let tg: { id: string; first_name?: string | undefined; last_name?: string | undefined; username?: string | undefined; photo_url?: string | undefined; lang?: string | undefined };
     let ref = data.ref;
 
     if (data.initData) {
@@ -31,7 +31,7 @@ export const telegramLogin = createServerFn({ method: "POST" })
       tg = { id: String(v.user.id), first_name: v.user.first_name, last_name: v.user.last_name, username: v.user.username, photo_url: v.user.photo_url, lang: v.user.language_code };
       if (v.startParam?.startsWith("ref_")) ref = v.startParam.slice(4);
     } else if (data.demoId) {
-      tg = { id: `demo_${data.demoId}`, first_name: "Demo", last_name: "User", username: null as unknown as undefined };
+      tg = { id: `demo_${data.demoId}`, first_name: "Demo", last_name: "User", };
     } else {
       throw new Error("Missing login data");
     }

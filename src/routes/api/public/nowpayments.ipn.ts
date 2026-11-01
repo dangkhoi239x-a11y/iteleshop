@@ -16,13 +16,13 @@ export const Route = createFileRoute("/api/public/nowpayments/ipn")({
         if (!(await verifyIpn(payload, request.headers.get("x-nowpayments-sig")))) return new Response("invalid signature", { status: 401 });
 
         const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-        const orderId = String(payload.order_id ?? "");
-        const status = String(payload.payment_status ?? "");
+        const orderId = String(payload["order_id"] ?? "");
+        const status = String(payload["payment_status"] ?? "");
         const { data: o } = await db.from("orders").select("*").eq("id", orderId).maybeSingle();
         if (!o) return new Response("ok");
 
         if (status === "finished" || status === "confirmed") {
-          const changed = await db.rpc("mark_order_paid", { _order_id: o.id, _payment_id: String(payload.payment_id ?? ""), _pay_currency: String(payload.pay_currency ?? "") });
+          const changed = await db.rpc("mark_order_paid", { _order_id: o.id, _payment_id: String(payload["payment_id"] ?? ""), _pay_currency: String(payload["pay_currency"] ?? "") });
           if (changed.data) {
             const { sendTelegramMessage, escapeHtml } = await import("@/server/telegram.server");
             const { data: bot } = await db.from("shop_bots").select("*").eq("shop_id", o.shop_id).maybeSingle();

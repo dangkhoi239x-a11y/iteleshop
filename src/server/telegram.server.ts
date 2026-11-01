@@ -3,7 +3,7 @@ import { hmacBytes, hmacHex, safeEqual } from "./crypto.server";
 export type TgUser = { id: number; first_name?: string; last_name?: string; username?: string; photo_url?: string; language_code?: string };
 
 /** Validates Telegram Mini App initData (https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app). */
-export async function validateInitData(initData: string, botToken: string, maxAgeSec = 86400): Promise<{ user: TgUser; startParam?: string } | null> {
+export async function validateInitData(initData: string, botToken: string, maxAgeSec = 86400): Promise<{ user: TgUser; startParam?: string | undefined } | null> {
   const params = new URLSearchParams(initData);
   const hash = params.get("hash");
   if (!hash) return null;
