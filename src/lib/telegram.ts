@@ -5,6 +5,7 @@ type WebApp = {
   ready: () => void;
   expand: () => void;
   openLink: (url: string) => void;
+  openInvoice?: (url: string, cb?: (status: string) => void) => void;
   openTelegramLink: (url: string) => void;
   setHeaderColor?: (c: string) => void;
   setBackgroundColor?: (c: string) => void;
@@ -46,4 +47,11 @@ export function shareLink(url: string, text: string) {
   const w = tg();
   if (w?.initData) w.openTelegramLink(share);
   else window.open(share, "_blank", "noopener");
+}
+
+/** Opens a Telegram Stars invoice inside the Mini App; falls back to opening the link. */
+export function openStarsInvoice(url: string, onDone?: (status: string) => void) {
+  const w = tg();
+  if (w?.openInvoice) w.openInvoice(url, (st) => onDone?.(st));
+  else openExternal(url);
 }
