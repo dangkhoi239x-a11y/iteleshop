@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Countdown, EmptyState, ProductCard, Section } from "@/components/app/ui-bits";
 import { flashQuery, productsQuery } from "@/lib/queries";
 import { useAuth } from "@/lib/auth";
+import { AiRecommendations } from "@/components/app/AiRecommendations";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -42,6 +43,8 @@ function Home() {
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("home.search")} className="rounded-full bg-card pl-9" />
       </div>
 
+      <AiRecommendations />
+
       {!q && (flash.data?.length ?? 0) > 0 && (
         <Section>
           <div className="rounded-2xl border border-flash/40 bg-flash-gradient p-4">
@@ -56,7 +59,7 @@ function Home() {
               {soonestEnd && <span className="rounded-lg bg-background/60 px-2 py-1 text-xs">{t("home.endsIn")} <Countdown end={soonestEnd} className="font-bold" /></span>}
             </div>
             <div className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-1">
-              {flash.data!.map((p) => (
+              {flash.data?.map((p) => (
                 <div key={p.id} className="w-36 shrink-0 snap-start"><ProductCard p={p} /></div>
               ))}
             </div>

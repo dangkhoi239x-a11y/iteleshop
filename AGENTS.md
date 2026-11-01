@@ -19,3 +19,5 @@
 - Digital delivery content lives in `product_secrets` (owner-only) and is copied to `orders.delivered_content` on payment.
 - Pages render client-side (`defaultSsr: false` in src/start.ts) — Mini App, per-user data.
 - Pricing rules are pure functions in `src/lib/pricing.ts`, covered by `src/test/pricing.test.ts`.
+- Code issue mutations use service-role-only SQL functions with participant checks, order/code locks and append-only events; replacement claims inventory atomically without moving money.
+- Product recommendations use authenticated server functions, server-only AI Gateway Responses helpers and catalog ID validation; provider blocks persist in ai_access_state to prevent replay.
