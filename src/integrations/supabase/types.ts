@@ -380,6 +380,7 @@ export type Database = {
         Row: {
           affiliate_percent: number
           affiliate_user_id: string | null
+          buyer_guide: string | null
           buyer_id: string
           commission_amount: number
           commission_percent: number
@@ -418,6 +419,7 @@ export type Database = {
         Insert: {
           affiliate_percent?: number
           affiliate_user_id?: string | null
+          buyer_guide?: string | null
           buyer_id: string
           commission_amount?: number
           commission_percent?: number
@@ -456,6 +458,7 @@ export type Database = {
         Update: {
           affiliate_percent?: number
           affiliate_user_id?: string | null
+          buyer_guide?: string | null
           buyer_id?: string
           commission_amount?: number
           commission_percent?: number
@@ -581,6 +584,8 @@ export type Database = {
       }
       products: {
         Row: {
+          auto_send_telegram: boolean
+          buyer_guide: string | null
           category: string | null
           created_at: string
           currency: string
@@ -588,6 +593,7 @@ export type Database = {
           escrow_release_days: number
           flash_sale_end: string | null
           flash_sale_price: number | null
+          highlights: string | null
           id: string
           image_url: string | null
           name: string
@@ -599,6 +605,8 @@ export type Database = {
           warranty_type: string
         }
         Insert: {
+          auto_send_telegram?: boolean
+          buyer_guide?: string | null
           category?: string | null
           created_at?: string
           currency?: string
@@ -606,6 +614,7 @@ export type Database = {
           escrow_release_days?: number
           flash_sale_end?: string | null
           flash_sale_price?: number | null
+          highlights?: string | null
           id?: string
           image_url?: string | null
           name: string
@@ -617,6 +626,8 @@ export type Database = {
           warranty_type?: string
         }
         Update: {
+          auto_send_telegram?: boolean
+          buyer_guide?: string | null
           category?: string | null
           created_at?: string
           currency?: string
@@ -624,6 +635,7 @@ export type Database = {
           escrow_release_days?: number
           flash_sale_end?: string | null
           flash_sale_price?: number | null
+          highlights?: string | null
           id?: string
           image_url?: string | null
           name?: string

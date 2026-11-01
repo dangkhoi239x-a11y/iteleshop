@@ -12,6 +12,9 @@ import { adminOverview, adminResolveDispute, adminSaveTier, adminShopStatus, adm
 import { tiersQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminLists } from "@/components/app/AdminLists";
+import { RewardsManager } from "@/components/app/RewardsManager";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin · TeleShop" }, { name: "description", content: "TeleShop platform administration." }, { property: "og:title", content: "Admin · TeleShop" }, { property: "og:description", content: "Administration." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -46,7 +49,19 @@ function Admin() {
   return (
     <div>
       <PageHeader title={t("admin.title")} />
-      <div className="space-y-6 p-4">
+      <Tabs defaultValue="overview" className="p-4">
+        <TabsList className="flex h-auto w-full flex-wrap">
+          <TabsTrigger value="overview">{t("extra.tabOverview")}</TabsTrigger>
+          <TabsTrigger value="users">{t("extra.tabUsers")}</TabsTrigger>
+          <TabsTrigger value="orders">{t("extra.tabOrders")}</TabsTrigger>
+          <TabsTrigger value="products">{t("extra.tabProducts")}</TabsTrigger>
+          <TabsTrigger value="rewards">{t("extra.tabRewards")}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="users"><AdminLists kind="users" /></TabsContent>
+        <TabsContent value="orders"><AdminLists kind="orders" /></TabsContent>
+        <TabsContent value="products"><AdminLists kind="products" /></TabsContent>
+        <TabsContent value="rewards" className="-mx-4"><RewardsManager shopId={null} /></TabsContent>
+        <TabsContent value="overview" className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
           <StatCard label={t("admin.users")} value={data?.users ?? "–"} icon={Users} />
           <StatCard label={t("admin.orders")} value={data?.orders ?? "–"} icon={ShoppingBag} tone="success" />
@@ -112,7 +127,8 @@ function Admin() {
             </div>
           ))}
         </Section>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

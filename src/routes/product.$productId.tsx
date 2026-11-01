@@ -65,6 +65,12 @@ function ProductPage() {
             <span className="text-xs text-primary">{t("product.visitShop")}</span>
           </Link>
         )}
+        {p.highlights && (
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <h3 className="mb-2 text-sm font-semibold">{t("extra.highlights")}</h3>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">{p.highlights.split("\n").filter((l) => l.trim()).map((l, i) => <li key={i}>{l}</li>)}</ul>
+          </div>
+        )}
         {p.description && (
           <div>
             <h3 className="mb-1 text-sm font-semibold">{t("product.description")}</h3>

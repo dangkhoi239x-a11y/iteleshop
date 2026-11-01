@@ -117,6 +117,13 @@ function OrderPage() {
           </div>
         )}
 
+        {o.buyer_guide && (isBuyer || isSeller) && !["awaiting_payment", "cancelled", "expired"].includes(o.status) && (
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <p className="mb-1 text-sm font-semibold">{t("extra.guideTitle")}</p>
+            <p className="whitespace-pre-line text-sm text-muted-foreground">{o.buyer_guide}</p>
+          </div>
+        )}
+
         {(isBuyer || isSeller) && <CodeIssues orderId={orderId} isBuyer={isBuyer} isSeller={isSeller} eligible={!!o.delivered_content && ["paid","shipped","delivered","completed","disputed"].includes(o.status)} />}
 
         {isBuyer && ["paid", "shipped", "delivered"].includes(o.status) && (

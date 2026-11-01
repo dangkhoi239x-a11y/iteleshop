@@ -8,3 +8,6 @@
 - [x] Rewards: daily check-in, tasks (channel, invite, purchase, spend, custom), lucky draws by admin and shops
 - [ ] Waiting on user: Telegram bot token + username, NOWPayments API key + IPN secret, admin Telegram IDs
 - [ ] Decide payment direction: Telegram Stars required for digital goods inside Mini Apps (policy), NOWPayments only for physical/real-world items
+- [x] Product options: auto-send code via Telegram, highlights, after-purchase guide
+- [x] Admin panel tabs: overview, users (admin role), orders, products (hide/show), tasks & draws
+- [ ] Promotions research follow-ups (bundles, buy-X-get-Y, points-to-voucher) — awaiting user choice
