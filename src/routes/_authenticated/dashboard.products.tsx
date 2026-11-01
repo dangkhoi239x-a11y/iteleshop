@@ -66,8 +66,8 @@ function Products({ shop }: { shop: ShopRow }) {
   const submit = async () => {
     setBusy(true);
     try {
-      await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content } });
-      toast.success(t("common.saved"));
+      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content } });
+      toast.success(r.added ? t("products.savedWithCodes", { n: r.added }) : t("common.saved"));
       setEditing(undefined);
       await qc.invalidateQueries({ queryKey: ["myProducts"] });
     } catch (e) {
@@ -114,7 +114,25 @@ function Products({ shop }: { shop: ShopRow }) {
             <Field label={t("products.image")}><Input value={f.image_url} onChange={set("image_url")} placeholder="https://…" /></Field>
             <Field label={t("products.category")}><Input value={f.category} onChange={set("category")} maxLength={40} /></Field>
             <Field label={t("shop.desc")}><Textarea value={f.description} onChange={set("description")} rows={4} maxLength={4000} /></Field>
-            <Field label={t("products.delivery")} hint={t("products.deliveryHint")}><Textarea value={f.delivery_content} onChange={set("delivery_content")} rows={3} maxLength={5000} placeholder="CODE-XXXX / https://…" /></Field>
+            <Field label={t("products.delivery")} hint={t("products.deliveryHint")}><Textarea value={f.delivery_content} onChange={set("delivery_content")} rows={3} maxLength={20000} placeholder={"CODE-XXXX\nhttps://…"} /></Field>
+            {editing && (
+              <div className="space-y-2 rounded-2xl border border-border bg-secondary/40 p-3">
+                <p className="flex items-center gap-2 text-xs font-semibold"><KeyRound className="h-3.5 w-3.5 text-primary" />{t("products.codePool", { n: codes.filter((c) => c.status === "available").length, sold: codes.filter((c) => c.status === "sold").length })}</p>
+                {codes.length === 0 && <p className="text-xs text-muted-foreground">{t("products.noCodes")}</p>}
+                <div className="max-h-40 space-y-1 overflow-y-auto">
+                  {codes.map((c) => (
+                    <div key={c.id} className="flex items-center gap-2 rounded-lg bg-background px-2 py-1.5">
+                      <span className="min-w-0 flex-1 truncate font-mono text-[11px]">{c.content}</span>
+                      {c.status === "available" ? (
+                        <button onClick={() => delCode(c.id)} className="shrink-0 text-muted-foreground hover:text-destructive" aria-label={t("common.delete")}><X className="h-3.5 w-3.5" /></button>
+                      ) : (
+                        <span className="shrink-0 text-[10px] text-muted-foreground">{t(`products.codeStatus.${c.status}`)}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <Field label={t("products.warranty")}>
               <Select value={f.warranty_type} onValueChange={(v) => setF({ ...f, warranty_type: v as "standard" })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="standard">{t("products.warrantyStandard")}</SelectItem><SelectItem value="none">{t("products.warrantyNone")}</SelectItem></SelectContent></Select>
             </Field>
