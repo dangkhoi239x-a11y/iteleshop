@@ -137,6 +137,22 @@ export const updateOrder = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Buyer: gửi lại mã/link đã mua qua Telegram khi lỡ mất tin nhắn. */
+export const resendDelivery = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ orderId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const { data: o } = await db.from("orders").select("buyer_id, order_number, delivered_content").eq("id", data.orderId).single();
+    if (!o || o.buyer_id !== context.userId) throw new Error("Order not found");
+    if (!o.delivered_content) throw new Error("This order has no digital item yet");
+    const { data: buyer } = await db.from("profiles").select("telegram_id").eq("id", context.userId).single();
+    if (!buyer?.telegram_id) throw new Error("No linked Telegram account — copy the code from this page instead");
+    const { sendTelegramMessage, escapeHtml } = await import("@/server/telegram.server");
+    await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], buyer.telegram_id, `🎁 Your item (#${o.order_number}):\n<code>${escapeHtml(o.delivered_content)}</code>`);
+    return { ok: true };
+  });
+
 export const openDispute = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ orderId: z.string().uuid(), reason: z.string().min(2).max(60), note: z.string().min(10).max(2000) }).parse(i))

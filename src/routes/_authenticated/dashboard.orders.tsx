@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Truck } from "lucide-react";
+import { Search, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,9 @@ function Manage({ shop }: { shop: ShopRow }) {
   const update = useServerFn(updateOrder);
   const [tab, setTab] = useState<keyof typeof FILTERS>("toShip");
   const [tracking, setTracking] = useState<Record<string, string>>({});
-  const list = data.filter((o) => FILTERS[tab](o.status));
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const list = data.filter((o) => FILTERS[tab](o.status) && (!needle || String(o.order_number).includes(needle) || o.product_name.toLowerCase().includes(needle)));
 
   const act = async (orderId: string, action: "ship" | "deliver") => {
     try {
@@ -46,6 +48,10 @@ function Manage({ shop }: { shop: ShopRow }) {
         <Tabs value={tab} onValueChange={(v) => setTab(v as keyof typeof FILTERS)}>
           <TabsList className="grid w-full grid-cols-4">{(Object.keys(FILTERS) as (keyof typeof FILTERS)[]).map((k) => <TabsTrigger key={k} value={k} className="text-xs">{t(`manage.tabs.${k}`)}</TabsTrigger>)}</TabsList>
         </Tabs>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("manage.searchPh")} className="pl-9" />
+        </div>
         {list.length === 0 && <EmptyState icon={Truck} title={t("manage.empty")} />}
         {list.map((o) => (
           <div key={o.id} className="space-y-2 rounded-2xl border border-border bg-card p-3">

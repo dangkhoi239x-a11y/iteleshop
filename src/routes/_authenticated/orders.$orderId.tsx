@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Copy, Gift, Loader2, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Copy, Gift, Loader2, Send, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { EmptyState, Field, PageHeader, StatusPill, errMsg } from "@/components/
 import { orderQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
-import { openDispute, payOrder, respondDispute, updateOrder } from "@/functions/orders.functions";
+import { openDispute, payOrder, resendDelivery, respondDispute, updateOrder } from "@/functions/orders.functions";
 import { haptic, openExternal } from "@/lib/telegram";
 
 export const Route = createFileRoute("/_authenticated/orders/$orderId")({
@@ -37,6 +37,7 @@ function OrderPage() {
   const update = useServerFn(updateOrder);
   const dispute = useServerFn(openDispute);
   const respond = useServerFn(respondDispute);
+  const resend = useServerFn(resendDelivery);
   const [busy, setBusy] = useState(false);
   const [showDispute, setShowDispute] = useState(false);
   const [reason, setReason] = useState<string>("not_received");
@@ -108,7 +109,10 @@ function OrderPage() {
           <div className="space-y-2 rounded-2xl border border-accent/50 bg-accent/10 p-4">
             <p className="flex items-center gap-2 text-sm font-semibold text-accent"><Gift className="h-4 w-4" />{t("order.yourItem")}</p>
             <p className="whitespace-pre-wrap break-all rounded-xl bg-background/60 p-3 font-mono text-sm">{o.delivered_content}</p>
-            <Button size="sm" variant="secondary" onClick={() => { void navigator.clipboard.writeText(o.delivered_content!); toast.success(t("common.copied")); }}><Copy /> {t("common.copy")}</Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="secondary" onClick={() => { void navigator.clipboard.writeText(o.delivered_content!); toast.success(t("common.copied")); }}><Copy /> {t("common.copy")}</Button>
+              {isBuyer && <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => resend({ data: { orderId } }), t("order.resent"))}><Send /> {t("order.resend")}</Button>}
+            </div>
           </div>
         )}
 

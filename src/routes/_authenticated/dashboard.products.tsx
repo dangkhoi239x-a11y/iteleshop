@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Package, Pencil, Plus, Trash2 } from "lucide-react";
+import { KeyRound, Package, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +14,12 @@ import { EmptyState, Field, PageHeader, StatusPill, errMsg } from "@/components/
 import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { myProductsQuery } from "@/lib/queries";
 import { money } from "@/lib/format";
-import { deleteProduct, saveProduct } from "@/functions/market.functions";
+import { deleteProduct, removeProductCode, saveProduct } from "@/functions/market.functions";
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 
 type P = Database["public"]["Tables"]["products"]["Row"];
+type Code = Database["public"]["Tables"]["product_codes"]["Row"];
 
 export const Route = createFileRoute("/_authenticated/dashboard/products")({
   head: () => ({ meta: [{ title: "Products · TeleShop" }, { name: "description", content: "Manage your shop products." }, { property: "og:title", content: "Products · TeleShop" }, { property: "og:description", content: "Manage products." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -36,19 +37,37 @@ function Products({ shop }: { shop: ShopRow }) {
   const [editing, setEditing] = useState<string | null | undefined>(undefined);
   const [f, setF] = useState(blank);
   const [busy, setBusy] = useState(false);
+  const [codes, setCodes] = useState<Code[]>([]);
+  const removeCode = useServerFn(removeProductCode);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+
+  const loadCodes = async (pid: string) => {
+    const { data } = await supabase.from("product_codes").select("*").eq("product_id", pid).order("created_at");
+    setCodes(data ?? []);
+  };
 
   const open = async (p?: P) => {
     setEditing(p?.id ?? null);
-    const secret = p ? (await supabase.from("product_secrets").select("content").eq("product_id", p.id).maybeSingle()).data?.content ?? "" : "";
-    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: secret } : blank);
+    setCodes([]);
+    if (p) void loadCodes(p.id);
+    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "" } : blank);
+  };
+
+  const delCode = async (id: string) => {
+    try {
+      await removeCode({ data: { id } });
+      if (editing) await loadCodes(editing);
+      await qc.invalidateQueries({ queryKey: ["myProducts"] });
+    } catch (e) {
+      toast.error(errMsg(e));
+    }
   };
 
   const submit = async () => {
     setBusy(true);
     try {
-      await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content } });
-      toast.success(t("common.saved"));
+      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content } });
+      toast.success(r.added ? t("products.savedWithCodes", { n: r.added }) : t("common.saved"));
       setEditing(undefined);
       await qc.invalidateQueries({ queryKey: ["myProducts"] });
     } catch (e) {
@@ -95,7 +114,25 @@ function Products({ shop }: { shop: ShopRow }) {
             <Field label={t("products.image")}><Input value={f.image_url} onChange={set("image_url")} placeholder="https://…" /></Field>
             <Field label={t("products.category")}><Input value={f.category} onChange={set("category")} maxLength={40} /></Field>
             <Field label={t("shop.desc")}><Textarea value={f.description} onChange={set("description")} rows={4} maxLength={4000} /></Field>
-            <Field label={t("products.delivery")} hint={t("products.deliveryHint")}><Textarea value={f.delivery_content} onChange={set("delivery_content")} rows={3} maxLength={5000} placeholder="CODE-XXXX / https://…" /></Field>
+            <Field label={t("products.delivery")} hint={t("products.deliveryHint")}><Textarea value={f.delivery_content} onChange={set("delivery_content")} rows={3} maxLength={20000} placeholder={"CODE-XXXX\nhttps://…"} /></Field>
+            {editing && (
+              <div className="space-y-2 rounded-2xl border border-border bg-secondary/40 p-3">
+                <p className="flex items-center gap-2 text-xs font-semibold"><KeyRound className="h-3.5 w-3.5 text-primary" />{t("products.codePool", { n: codes.filter((c) => c.status === "available").length, sold: codes.filter((c) => c.status === "sold").length })}</p>
+                {codes.length === 0 && <p className="text-xs text-muted-foreground">{t("products.noCodes")}</p>}
+                <div className="max-h-40 space-y-1 overflow-y-auto">
+                  {codes.map((c) => (
+                    <div key={c.id} className="flex items-center gap-2 rounded-lg bg-background px-2 py-1.5">
+                      <span className="min-w-0 flex-1 truncate font-mono text-[11px]">{c.content}</span>
+                      {c.status === "available" ? (
+                        <button onClick={() => delCode(c.id)} className="shrink-0 text-muted-foreground hover:text-destructive" aria-label={t("common.delete")}><X className="h-3.5 w-3.5" /></button>
+                      ) : (
+                        <span className="shrink-0 text-[10px] text-muted-foreground">{t(`products.codeStatus.${c.status}`)}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <Field label={t("products.warranty")}>
               <Select value={f.warranty_type} onValueChange={(v) => setF({ ...f, warranty_type: v as "standard" })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="standard">{t("products.warrantyStandard")}</SelectItem><SelectItem value="none">{t("products.warrantyNone")}</SelectItem></SelectContent></Select>
             </Field>
