@@ -585,6 +585,7 @@ export type Database = {
       products: {
         Row: {
           auto_send_telegram: boolean
+          bulk_discounts: string | null
           buyer_guide: string | null
           category: string | null
           created_at: string
@@ -606,6 +607,7 @@ export type Database = {
         }
         Insert: {
           auto_send_telegram?: boolean
+          bulk_discounts?: string | null
           buyer_guide?: string | null
           category?: string | null
           created_at?: string
@@ -627,6 +629,7 @@ export type Database = {
         }
         Update: {
           auto_send_telegram?: boolean
+          bulk_discounts?: string | null
           buyer_guide?: string | null
           category?: string | null
           created_at?: string

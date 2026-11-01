@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, Field, PageHeader, errMsg } from "@/components/app/ui-bits";
 import { productQuery } from "@/lib/queries";
-import { effectivePrice, round6 } from "@/lib/pricing";
+import { bulkPercent, effectivePrice, parseBulkTiers, round6 } from "@/lib/pricing";
 import { money } from "@/lib/format";
 import { checkVoucher } from "@/functions/market.functions";
 import { createOrder } from "@/functions/orders.functions";
@@ -39,7 +39,9 @@ function Checkout() {
 
   if (!p) return <EmptyState title={t("common.loading")} />;
   const unit = effectivePrice(p);
-  const subtotal = round6(unit * qty);
+  const gross = round6(unit * qty);
+  const bulkOff = round6((gross * bulkPercent(parseBulkTiers(p.bulk_discounts), qty)) / 100);
+  const subtotal = round6(gross - bulkOff);
   const discount = applied ? Math.min(applied.discount, subtotal) : 0;
   const total = round6(subtotal - discount);
 
@@ -106,7 +108,8 @@ function Checkout() {
           <Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} />
         </Field>
         <div className="space-y-2 rounded-2xl border border-border bg-card p-4 text-sm">
-          <Row k={t("checkout.subtotal")} v={money(subtotal, p.currency)} />
+          <Row k={t("checkout.subtotal")} v={money(gross, p.currency)} />
+          {bulkOff > 0 && <Row k={t("extra.bulkTitle")} v={`−${money(bulkOff, p.currency)}`} className="text-success" />}
           {discount > 0 && <Row k={t("checkout.discount")} v={`−${money(discount, p.currency)}`} className="text-success" />}
           <div className="border-t border-border pt-2"><Row k={t("checkout.total")} v={money(total, p.currency)} className="font-display text-base font-bold" /></div>
         </div>

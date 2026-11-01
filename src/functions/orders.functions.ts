@@ -43,7 +43,7 @@ export const createOrder = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { effectivePrice, voucherDiscount, commissionPercent, round6 } = await import("@/lib/pricing");
+    const { effectivePrice, voucherDiscount, commissionPercent, round6, parseBulkTiers, bulkPercent } = await import("@/lib/pricing");
     const db = await admin();
     const { data: p } = await db.from("products").select("*, shops!inner(id, owner_id, status, affiliate_percent)").eq("id", data.productId).single();
     if (!p || p.status !== "active" || p.shops.status !== "active") throw new Error("Product is not available");
@@ -51,7 +51,9 @@ export const createOrder = createServerFn({ method: "POST" })
     if (p.stock < data.quantity) throw new Error("Not enough stock");
 
     const unit = effectivePrice(p);
-    const subtotal = round6(unit * data.quantity);
+    const gross = round6(unit * data.quantity);
+    const bulkOff = round6((gross * bulkPercent(parseBulkTiers(p.bulk_discounts), data.quantity)) / 100);
+    const subtotal = round6(gross - bulkOff);
     let discount = 0;
     let voucherCode: string | null = null;
     if (data.voucherCode) {
@@ -62,7 +64,8 @@ export const createOrder = createServerFn({ method: "POST" })
       discount = r.discount;
       voucherCode = v.code;
     }
-    const total = round6(subtotal - discount);
+    discount = round6(discount + bulkOff);
+    const total = round6(gross - discount);
     if (total <= 0) throw new Error("Order total must be positive");
     const { data: tiers } = await db.from("commission_tiers").select("*");
     const cp = commissionPercent(tiers ?? [], total);
@@ -78,7 +81,7 @@ export const createOrder = createServerFn({ method: "POST" })
       .from("orders")
       .insert({
         buyer_id: context.userId, shop_id: p.shop_id, product_id: p.id, product_name: p.name, product_image: p.image_url,
-        quantity: data.quantity, unit_price: unit, subtotal, discount_amount: discount, total_amount: total, currency: p.currency,
+        quantity: data.quantity, unit_price: unit, subtotal: gross, discount_amount: discount, total_amount: total, currency: p.currency,
         warranty_type: p.warranty_type, escrow_release_days: p.escrow_release_days, commission_percent: cp,
         commission_amount: round6((total * cp) / 100), affiliate_user_id: affiliateUser,
         affiliate_percent: affiliateUser ? Number(p.shops.affiliate_percent) : 0,

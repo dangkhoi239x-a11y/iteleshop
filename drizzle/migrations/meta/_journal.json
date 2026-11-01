@@ -43,6 +43,13 @@
       "when": 1793542816625,
       "tag": "0005_fix_draw_weighting",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793573510764,
+      "tag": "0006_product_bulk_discounts",
+      "breakpoints": true
     }
   ]
 }
