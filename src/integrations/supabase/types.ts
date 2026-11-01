@@ -128,6 +128,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           currency: string
+          delivered_content: string | null
           delivery_address: string | null
           discount_amount: number
           escrow_release_at: string | null
@@ -165,6 +166,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           currency: string
+          delivered_content?: string | null
           delivery_address?: string | null
           discount_amount?: number
           escrow_release_at?: string | null
@@ -202,6 +204,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           currency?: string
+          delivered_content?: string | null
           delivery_address?: string | null
           discount_amount?: number
           escrow_release_at?: string | null
@@ -243,6 +246,32 @@ export type Database = {
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_secrets: {
+        Row: {
+          content: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_secrets_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
