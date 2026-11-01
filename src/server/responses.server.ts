@@ -12,21 +12,18 @@ export function createResponsesCall(
   config: { baseURL: string; apiKey: string; model: string },
   messages: ModelMessage[],
   instructions?: string,
-  options?: { output?: Output.Output; fetch?: typeof fetch },
+  options?: { output?: Output.Output; inspectResponse?: (response: Response) => Promise<void> },
 ) {
   const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
   const provider = createOpenAI({
     baseURL: `${config.baseURL.replace(/\/+$/, "").replace(/\/v1$/, "")}/v1`,
     apiKey: config.apiKey,
     headers: { "Lovable-API-Key": config.apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-    fetch: options?.fetch ? async (input, init) => {
-      // Keep the gateway's correlation wrapper while allowing status-aware error handling.
-      const original = globalThis.fetch;
-      // The supplied fetch runs through a separate status inspector below; no global mutation.
-      void original;
+    fetch: async (input, init) => {
       const response = await runIdFetch.fetch(input, init);
-      return options.fetch ? options.fetch(new Request("https://ai.gateway.lovable.dev/v1/responses"), { response } as RequestInit) : response;
-    } : runIdFetch.fetch,
+      await options?.inspectResponse?.(response);
+      return response;
+    },
   });
   const reasoning = config.model !== "openai/chat-latest";
   const result = streamText({
