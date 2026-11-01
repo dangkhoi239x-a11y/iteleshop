@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Bar, BarChart, ResponsiveContainer, XAxis } from "recharts";
-import { Flame, Package, Settings, ShoppingBag, Store, Tag, Truck, TrendingUp } from "lucide-react";
+import { Flame, Gift, Package, Settings, ShoppingBag, Store, Tag, Truck, TrendingUp } from "lucide-react";
 import { PageHeader, Section, StatCard } from "@/components/app/ui-bits";
 import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { shopOrdersQuery } from "@/lib/queries";
@@ -30,6 +30,7 @@ function Dashboard({ shop }: { shop: ShopRow }) {
     { to: "/dashboard/orders", icon: Truck, label: t("dash.orders") },
     { to: "/dashboard/flash-sales", icon: Flame, label: t("dash.flash") },
     { to: "/dashboard/vouchers", icon: Tag, label: t("dash.vouchers") },
+    { to: "/dashboard/rewards", icon: Gift, label: t("rewards.manage") },
     { to: "/dashboard/settings", icon: Settings, label: t("dash.settings") },
   ] as const;
 

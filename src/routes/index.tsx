@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Flame, Search, Store } from "lucide-react";
+import { Flame, Gift, Search, Store } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Countdown, EmptyState, ProductCard, Section } from "@/components/app/ui-bits";
@@ -42,6 +42,16 @@ function Home() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("home.search")} className="rounded-full bg-card pl-9" />
       </div>
+
+      {!q && (
+        <Link to="/rewards" className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
+          <span className="rounded-xl bg-primary/10 p-2.5"><Gift className="h-5 w-5 text-primary" /></span>
+          <div className="flex-1">
+            <p className="font-display font-semibold">{t("rewards.title")}</p>
+            <p className="text-xs text-muted-foreground">{t("rewards.checkin")} · {t("rewards.tasks")} · {t("rewards.draws")}</p>
+          </div>
+        </Link>
+      )}
 
       <AiRecommendations />
 

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { ChevronRight, Languages, LayoutDashboard, ListOrdered, LogOut, Share2, Shield, Store, User, Wallet } from "lucide-react";
+import { ChevronRight, Gift, Languages, LayoutDashboard, ListOrdered, LogOut, Share2, Shield, Store, User, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/ui-bits";
 import { useAuth } from "@/lib/auth";
@@ -36,8 +36,9 @@ function Profile() {
         { to: "/orders", icon: ListOrdered, label: t("profile.myOrders") },
         shop ? { to: "/dashboard", icon: LayoutDashboard, label: t("profile.dashboard") } : { to: "/register-shop", icon: Store, label: t("profile.openShop") },
         { to: "/wallet", icon: Wallet, label: t("profile.wallet") },
+        { to: "/rewards", icon: Gift, label: t("rewards.title") },
         { to: "/affiliate", icon: Share2, label: t("profile.affiliate") },
-        ...(isAdmin ? [{ to: "/admin", icon: Shield, label: t("profile.admin") }] : []),
+        ...(isAdmin ? [{ to: "/admin", icon: Shield, label: t("profile.admin") }, { to: "/rewards-admin", icon: Gift, label: `${t("profile.admin")} · ${t("rewards.title")}` }] : []),
       ]
     : [];
 
