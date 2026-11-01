@@ -13,7 +13,7 @@ import { EmptyState, Field, PageHeader, StatusPill, errMsg } from "@/components/
 import { orderQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
-import { openDispute, payOrder, respondDispute, updateOrder } from "@/server/orders.functions";
+import { openDispute, payOrder, respondDispute, updateOrder } from "@/functions/orders.functions";
 import { haptic, openExternal } from "@/lib/telegram";
 
 export const Route = createFileRoute("/_authenticated/orders/$orderId")({

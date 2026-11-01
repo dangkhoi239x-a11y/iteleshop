@@ -12,7 +12,7 @@ import { EmptyState, PageHeader, StatusPill, errMsg } from "@/components/app/ui-
 import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { shopOrdersQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
-import { updateOrder } from "@/server/orders.functions";
+import { updateOrder } from "@/functions/orders.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard/orders")({
   head: () => ({ meta: [{ title: "Order management · TeleShop" }, { name: "description", content: "Ship and track your shop's orders." }, { property: "og:title", content: "Order management · TeleShop" }, { property: "og:description", content: "Manage orders." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),

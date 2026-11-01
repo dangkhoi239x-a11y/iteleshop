@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, PageHeader, Section, errMsg } from "@/components/app/ui-bits";
 import { ShopGate, type BotRow, type ShopRow } from "@/components/app/ShopGate";
-import { testShopBot, updateShop, updateShopBot } from "@/server/market.functions";
+import { testShopBot, updateShop, updateShopBot } from "@/functions/market.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard/settings")({
   head: () => ({ meta: [{ title: "Shop settings · TeleShop" }, { name: "description", content: "Shop profile, payout wallet and Telegram bot notifications." }, { property: "og:title", content: "Shop settings · TeleShop" }, { property: "og:description", content: "Shop settings." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),

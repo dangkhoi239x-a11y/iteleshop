@@ -17,8 +17,8 @@ export const telegramLogin = createServerFn({ method: "POST" })
     z.object({ initData: z.string().max(4096).optional(), demoId: z.string().regex(/^[a-z0-9]{12,40}$/).optional(), ref: z.string().max(32).optional() }).parse(i),
   )
   .handler(async ({ data }) => {
-    const { validateInitData } = await import("./telegram.server");
-    const { hmacHex } = await import("./crypto.server");
+    const { validateInitData } = await import("@/server/telegram.server");
+    const { hmacHex } = await import("@/server/crypto.server");
     const sessionSecret = process.env["SESSION_SECRET"]!;
     let tg: { id: string; first_name?: string | undefined; last_name?: string | undefined; username?: string | undefined; photo_url?: string | undefined; lang?: string | undefined };
     let ref = data.ref;

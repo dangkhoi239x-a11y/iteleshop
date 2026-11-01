@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, Field, PageHeader, Section, StatusPill, errMsg } from "@/components/app/ui-bits";
-import { getWallet, requestWithdrawal } from "@/server/orders.functions";
+import { getWallet, requestWithdrawal } from "@/functions/orders.functions";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
 

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, PageHeader, errMsg } from "@/components/app/ui-bits";
-import { createShop } from "@/server/market.functions";
+import { createShop } from "@/functions/market.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/register-shop")({

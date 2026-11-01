@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { displayName } from "@/lib/format";
 import i18n, { LANGUAGES } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { updateLanguage } from "@/server/market.functions";
+import { updateLanguage } from "@/functions/market.functions";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile · TeleShop" }, { name: "description", content: "Your TeleShop account, shop, wallet and language." }, { property: "og:title", content: "Profile · TeleShop" }, { property: "og:description", content: "Your TeleShop account." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),

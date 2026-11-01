@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, PageHeader, errMsg } from "@/components/app/ui-bits";
-import { joinAffiliate } from "@/server/market.functions";
+import { joinAffiliate } from "@/functions/market.functions";
 
 export const Route = createFileRoute("/_authenticated/kol-onboarding")({
   head: () => ({ meta: [{ title: "KOL program · TeleShop" }, { name: "description", content: "Apply as a KOL and promote TeleShop products for commission." }, { property: "og:title", content: "KOL program · TeleShop" }, { property: "og:description", content: "Apply as KOL." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),

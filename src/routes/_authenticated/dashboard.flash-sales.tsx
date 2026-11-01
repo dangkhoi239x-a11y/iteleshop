@@ -11,7 +11,7 @@ import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { myProductsQuery } from "@/lib/queries";
 import { isFlashSaleActive } from "@/lib/pricing";
 import { money } from "@/lib/format";
-import { setFlashSale } from "@/server/market.functions";
+import { setFlashSale } from "@/functions/market.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard/flash-sales")({
   head: () => ({ meta: [{ title: "Flash sales · TeleShop" }, { name: "description", content: "Run time-limited discounts on your products." }, { property: "og:title", content: "Flash sales · TeleShop" }, { property: "og:description", content: "Run flash sales." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),

@@ -14,7 +14,7 @@ import { EmptyState, Field, PageHeader, StatusPill, errMsg } from "@/components/
 import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { myProductsQuery } from "@/lib/queries";
 import { money } from "@/lib/format";
-import { deleteProduct, saveProduct } from "@/server/market.functions";
+import { deleteProduct, saveProduct } from "@/functions/market.functions";
 import type { Database } from "@/integrations/supabase/types";
 
 type P = Database["public"]["Tables"]["products"]["Row"];

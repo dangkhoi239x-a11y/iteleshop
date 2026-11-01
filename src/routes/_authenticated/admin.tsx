@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState, PageHeader, Section, StatCard, StatusPill, errMsg } from "@/components/app/ui-bits";
-import { adminOverview, adminResolveDispute, adminSaveTier, adminShopStatus, adminWithdrawal } from "@/server/admin.functions";
+import { adminOverview, adminResolveDispute, adminSaveTier, adminShopStatus, adminWithdrawal } from "@/functions/admin.functions";
 import { tiersQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";

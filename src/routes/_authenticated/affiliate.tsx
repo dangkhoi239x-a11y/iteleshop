@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader, Section, StatCard, errMsg } from "@/components/app/ui-bits";
 import { affiliateQuery } from "@/lib/queries";
 import { useAuth } from "@/lib/auth";
-import { getAffiliateStats, joinAffiliate } from "@/server/market.functions";
+import { getAffiliateStats, joinAffiliate } from "@/functions/market.functions";
 import { referralLink, shareLink } from "@/lib/telegram";
 import { money } from "@/lib/format";
 

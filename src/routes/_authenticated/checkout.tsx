@@ -13,8 +13,8 @@ import { EmptyState, Field, PageHeader, errMsg } from "@/components/app/ui-bits"
 import { productQuery } from "@/lib/queries";
 import { effectivePrice, round6 } from "@/lib/pricing";
 import { money } from "@/lib/format";
-import { checkVoucher } from "@/server/market.functions";
-import { createOrder } from "@/server/orders.functions";
+import { checkVoucher } from "@/functions/market.functions";
+import { createOrder } from "@/functions/orders.functions";
 import { haptic, openExternal } from "@/lib/telegram";
 
 export const Route = createFileRoute("/_authenticated/checkout")({

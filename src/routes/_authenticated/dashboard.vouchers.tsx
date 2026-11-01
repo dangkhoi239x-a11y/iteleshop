@@ -13,7 +13,7 @@ import { EmptyState, Field, PageHeader, Section, errMsg } from "@/components/app
 import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { vouchersQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
-import { saveVoucher, toggleVoucher } from "@/server/market.functions";
+import { saveVoucher, toggleVoucher } from "@/functions/market.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard/vouchers")({
   head: () => ({ meta: [{ title: "Vouchers · TeleShop" }, { name: "description", content: "Create discount codes for your shop." }, { property: "og:title", content: "Vouchers · TeleShop" }, { property: "og:description", content: "Create vouchers." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
