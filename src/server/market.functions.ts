@@ -58,7 +58,7 @@ export const updateShop = createServerFn({ method: "POST" })
     const db = await admin();
     const id = await myShopId(context.userId);
     const patch = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined).map(([k, v]) => [k, (k === "logo_url" || k === "banner_url") && !v ? null : v]));
-    const { error } = await db.from("shops").update(patch).eq("id", id);
+    const { error } = await db.from("shops").update(patch as { name?: string }).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -112,7 +112,7 @@ export const saveProduct = createServerFn({ method: "POST" })
     const db = await admin();
     const shopId = await myShopId(context.userId);
     const { id, ...rest } = data;
-    const row = { ...rest, image_url: rest.image_url || null };
+    const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null };
     if (id) {
       const { error } = await db.from("products").update(row).eq("id", id).eq("shop_id", shopId);
       if (error) throw new Error(error.message);
