@@ -19,6 +19,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 
 type P = Database["public"]["Tables"]["products"]["Row"];
+type Code = Database["public"]["Tables"]["product_codes"]["Row"];
 
 export const Route = createFileRoute("/_authenticated/dashboard/products")({
   head: () => ({ meta: [{ title: "Products · TeleShop" }, { name: "description", content: "Manage your shop products." }, { property: "og:title", content: "Products · TeleShop" }, { property: "og:description", content: "Manage products." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -36,12 +37,30 @@ function Products({ shop }: { shop: ShopRow }) {
   const [editing, setEditing] = useState<string | null | undefined>(undefined);
   const [f, setF] = useState(blank);
   const [busy, setBusy] = useState(false);
+  const [codes, setCodes] = useState<Code[]>([]);
+  const removeCode = useServerFn(removeProductCode);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+
+  const loadCodes = async (pid: string) => {
+    const { data } = await supabase.from("product_codes").select("*").eq("product_id", pid).order("created_at");
+    setCodes(data ?? []);
+  };
 
   const open = async (p?: P) => {
     setEditing(p?.id ?? null);
-    const secret = p ? (await supabase.from("product_secrets").select("content").eq("product_id", p.id).maybeSingle()).data?.content ?? "" : "";
-    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: secret } : blank);
+    setCodes([]);
+    if (p) void loadCodes(p.id);
+    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "" } : blank);
+  };
+
+  const delCode = async (id: string) => {
+    try {
+      await removeCode({ data: { id } });
+      if (editing) await loadCodes(editing);
+      await qc.invalidateQueries({ queryKey: ["myProducts"] });
+    } catch (e) {
+      toast.error(errMsg(e));
+    }
   };
 
   const submit = async () => {
