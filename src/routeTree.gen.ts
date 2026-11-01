@@ -13,12 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as RewardsRouteImport } from './routes/rewards'
 import { Route as ShopsRouteImport } from './routes/shops'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAffiliateRouteImport } from './routes/_authenticated/affiliate'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
 import { Route as AuthenticatedKolOnboardingRouteImport } from './routes/_authenticated/kol-onboarding'
 import { Route as AuthenticatedRegisterShopRouteImport } from './routes/_authenticated/register-shop'
+import { Route as AuthenticatedRewardsAdminRouteImport } from './routes/_authenticated/rewards-admin'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as ProductProductIdRouteImport } from './routes/product.$productId'
 import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
@@ -26,6 +28,7 @@ import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedDashboardFlashSalesRouteImport } from './routes/_authenticated/dashboard.flash-sales'
 import { Route as AuthenticatedDashboardOrdersRouteImport } from './routes/_authenticated/dashboard.orders'
 import { Route as AuthenticatedDashboardProductsRouteImport } from './routes/_authenticated/dashboard.products'
+import { Route as AuthenticatedDashboardRewardsRouteImport } from './routes/_authenticated/dashboard.rewards'
 import { Route as AuthenticatedDashboardSettingsRouteImport } from './routes/_authenticated/dashboard.settings'
 import { Route as AuthenticatedDashboardVouchersRouteImport } from './routes/_authenticated/dashboard.vouchers'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
@@ -49,6 +52,11 @@ const AuthRoute = AuthRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RewardsRoute = RewardsRouteImport.update({
+  id: '/rewards',
+  path: '/rewards',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShopsRoute = ShopsRouteImport.update({
@@ -81,6 +89,12 @@ const AuthenticatedRegisterShopRoute =
   AuthenticatedRegisterShopRouteImport.update({
     id: '/register-shop',
     path: '/register-shop',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRewardsAdminRoute =
+  AuthenticatedRewardsAdminRouteImport.update({
+    id: '/rewards-admin',
+    path: '/rewards-admin',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
@@ -122,6 +136,12 @@ const AuthenticatedDashboardProductsRoute =
     path: '/dashboard/products',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDashboardRewardsRoute =
+  AuthenticatedDashboardRewardsRouteImport.update({
+    id: '/dashboard/rewards',
+    path: '/dashboard/rewards',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardSettingsRoute =
   AuthenticatedDashboardSettingsRouteImport.update({
     id: '/dashboard/settings',
@@ -156,18 +176,21 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
+  '/rewards': typeof RewardsRoute
   '/shops': typeof ShopsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/affiliate': typeof AuthenticatedAffiliateRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/kol-onboarding': typeof AuthenticatedKolOnboardingRoute
   '/register-shop': typeof AuthenticatedRegisterShopRoute
+  '/rewards-admin': typeof AuthenticatedRewardsAdminRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
   '/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRoute
+  '/dashboard/rewards': typeof AuthenticatedDashboardRewardsRoute
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -179,18 +202,21 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
+  '/rewards': typeof RewardsRoute
   '/shops': typeof ShopsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/affiliate': typeof AuthenticatedAffiliateRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/kol-onboarding': typeof AuthenticatedKolOnboardingRoute
   '/register-shop': typeof AuthenticatedRegisterShopRoute
+  '/rewards-admin': typeof AuthenticatedRewardsAdminRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
   '/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRoute
+  '/dashboard/rewards': typeof AuthenticatedDashboardRewardsRoute
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -204,18 +230,21 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
+  '/rewards': typeof RewardsRoute
   '/shops': typeof ShopsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/affiliate': typeof AuthenticatedAffiliateRoute
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/_authenticated/kol-onboarding': typeof AuthenticatedKolOnboardingRoute
   '/_authenticated/register-shop': typeof AuthenticatedRegisterShopRoute
+  '/_authenticated/rewards-admin': typeof AuthenticatedRewardsAdminRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/_authenticated/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
   '/_authenticated/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRoute
+  '/_authenticated/dashboard/rewards': typeof AuthenticatedDashboardRewardsRoute
   '/_authenticated/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/_authenticated/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
@@ -229,18 +258,21 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/profile'
+    | '/rewards'
     | '/shops'
     | '/admin'
     | '/affiliate'
     | '/checkout'
     | '/kol-onboarding'
     | '/register-shop'
+    | '/rewards-admin'
     | '/wallet'
     | '/product/$productId'
     | '/shop/$shopId'
     | '/dashboard/flash-sales'
     | '/dashboard/orders'
     | '/dashboard/products'
+    | '/dashboard/rewards'
     | '/dashboard/settings'
     | '/dashboard/vouchers'
     | '/orders/$orderId'
@@ -252,18 +284,21 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/profile'
+    | '/rewards'
     | '/shops'
     | '/admin'
     | '/affiliate'
     | '/checkout'
     | '/kol-onboarding'
     | '/register-shop'
+    | '/rewards-admin'
     | '/wallet'
     | '/product/$productId'
     | '/shop/$shopId'
     | '/dashboard/flash-sales'
     | '/dashboard/orders'
     | '/dashboard/products'
+    | '/dashboard/rewards'
     | '/dashboard/settings'
     | '/dashboard/vouchers'
     | '/orders/$orderId'
@@ -276,18 +311,21 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/profile'
+    | '/rewards'
     | '/shops'
     | '/_authenticated/admin'
     | '/_authenticated/affiliate'
     | '/_authenticated/checkout'
     | '/_authenticated/kol-onboarding'
     | '/_authenticated/register-shop'
+    | '/_authenticated/rewards-admin'
     | '/_authenticated/wallet'
     | '/product/$productId'
     | '/shop/$shopId'
     | '/_authenticated/dashboard/flash-sales'
     | '/_authenticated/dashboard/orders'
     | '/_authenticated/dashboard/products'
+    | '/_authenticated/dashboard/rewards'
     | '/_authenticated/dashboard/settings'
     | '/_authenticated/dashboard/vouchers'
     | '/_authenticated/orders/$orderId'
@@ -301,6 +339,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ProfileRoute: typeof ProfileRoute
+  RewardsRoute: typeof RewardsRoute
   ShopsRoute: typeof ShopsRoute
   ProductProductIdRoute: typeof ProductProductIdRoute
   ShopShopIdRoute: typeof ShopShopIdRoute
@@ -335,6 +374,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rewards': {
+      id: '/rewards'
+      path: '/rewards'
+      fullPath: '/rewards'
+      preLoaderRoute: typeof RewardsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/shops': {
@@ -377,6 +423,13 @@ declare module '@tanstack/react-router' {
       path: '/register-shop'
       fullPath: '/register-shop'
       preLoaderRoute: typeof AuthenticatedRegisterShopRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rewards-admin': {
+      id: '/_authenticated/rewards-admin'
+      path: '/rewards-admin'
+      fullPath: '/rewards-admin'
+      preLoaderRoute: typeof AuthenticatedRewardsAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/wallet': {
@@ -428,6 +481,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardProductsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/rewards': {
+      id: '/_authenticated/dashboard/rewards'
+      path: '/dashboard/rewards'
+      fullPath: '/dashboard/rewards'
+      preLoaderRoute: typeof AuthenticatedDashboardRewardsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/settings': {
       id: '/_authenticated/dashboard/settings'
       path: '/dashboard/settings'
@@ -472,10 +532,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
   AuthenticatedKolOnboardingRoute: typeof AuthenticatedKolOnboardingRoute
   AuthenticatedRegisterShopRoute: typeof AuthenticatedRegisterShopRoute
+  AuthenticatedRewardsAdminRoute: typeof AuthenticatedRewardsAdminRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedDashboardFlashSalesRoute: typeof AuthenticatedDashboardFlashSalesRoute
   AuthenticatedDashboardOrdersRoute: typeof AuthenticatedDashboardOrdersRoute
   AuthenticatedDashboardProductsRoute: typeof AuthenticatedDashboardProductsRoute
+  AuthenticatedDashboardRewardsRoute: typeof AuthenticatedDashboardRewardsRoute
   AuthenticatedDashboardSettingsRoute: typeof AuthenticatedDashboardSettingsRoute
   AuthenticatedDashboardVouchersRoute: typeof AuthenticatedDashboardVouchersRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
@@ -489,10 +551,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
   AuthenticatedKolOnboardingRoute: AuthenticatedKolOnboardingRoute,
   AuthenticatedRegisterShopRoute: AuthenticatedRegisterShopRoute,
+  AuthenticatedRewardsAdminRoute: AuthenticatedRewardsAdminRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedDashboardFlashSalesRoute: AuthenticatedDashboardFlashSalesRoute,
   AuthenticatedDashboardOrdersRoute: AuthenticatedDashboardOrdersRoute,
   AuthenticatedDashboardProductsRoute: AuthenticatedDashboardProductsRoute,
+  AuthenticatedDashboardRewardsRoute: AuthenticatedDashboardRewardsRoute,
   AuthenticatedDashboardSettingsRoute: AuthenticatedDashboardSettingsRoute,
   AuthenticatedDashboardVouchersRoute: AuthenticatedDashboardVouchersRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
@@ -508,6 +572,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ProfileRoute: ProfileRoute,
+  RewardsRoute: RewardsRoute,
   ShopsRoute: ShopsRoute,
   ProductProductIdRoute: ProductProductIdRoute,
   ShopShopIdRoute: ShopShopIdRoute,
