@@ -113,22 +113,42 @@ export const saveProduct = createServerFn({ method: "POST" })
     const db = await admin();
     const shopId = await myShopId(context.userId);
     const { id, delivery_content, ...rest } = data;
-    const saveSecret = async (pid: string) => {
-      if (delivery_content === undefined) return;
-      if (delivery_content?.trim()) await db.from("product_secrets").upsert({ product_id: pid, content: delivery_content.trim(), updated_at: new Date().toISOString() });
-      else await db.from("product_secrets").delete().eq("product_id", pid);
+    // Mỗi dòng trong delivery_content là một mã/link riêng, bán đúng một lần.
+    const codes = (delivery_content ?? "").split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 500);
+    const addCodes = async (pid: string) => {
+      if (!codes.length) return 0;
+      const { error } = await db.from("product_codes").insert(codes.map((content) => ({ product_id: pid, content })));
+      if (error) throw new Error(error.message);
+      const { count } = await db.from("product_codes").select("id", { count: "exact", head: true }).eq("product_id", pid).eq("status", "available");
+      await db.from("products").update({ stock: count ?? 0 }).eq("id", pid);
+      return codes.length;
     };
     const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null };
     if (id) {
       const { error } = await db.from("products").update(row).eq("id", id).eq("shop_id", shopId);
       if (error) throw new Error(error.message);
-      await saveSecret(id);
-      return { id };
+      const added = await addCodes(id);
+      return { id, added };
     }
     const { data: p, error } = await db.from("products").insert({ ...row, shop_id: shopId }).select("id").single();
     if (error) throw new Error(error.message);
-    await saveSecret(p.id);
-    return p;
+    const added = await addCodes(p.id);
+    return { id: p.id, added };
+  });
+
+export const removeProductCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const shopId = await myShopId(context.userId);
+    const { data: c } = await db.from("product_codes").select("id, product_id, status, products!inner(shop_id)").eq("id", data.id).single();
+    if (!c || c.products.shop_id !== shopId) throw new Error("Code not found");
+    if (c.status !== "available") throw new Error("Only unsold codes can be removed");
+    await db.from("product_codes").delete().eq("id", c.id);
+    const { count } = await db.from("product_codes").select("id", { count: "exact", head: true }).eq("product_id", c.product_id).eq("status", "available");
+    await db.from("products").update({ stock: count ?? 0 }).eq("id", c.product_id);
+    return { ok: true };
   });
 
 export const deleteProduct = createServerFn({ method: "POST" })
