@@ -393,6 +393,7 @@ export type Database = {
           escrow_release_at: string | null
           escrow_release_days: number
           escrow_status: string
+          free_quantity: number
           id: string
           invoice_id: string | null
           invoice_url: string | null
@@ -400,6 +401,7 @@ export type Database = {
           order_number: number
           paid_at: string | null
           pay_currency: string | null
+          pay_method: string
           payment_id: string | null
           payment_status: string | null
           product_id: string
@@ -407,6 +409,7 @@ export type Database = {
           product_name: string
           quantity: number
           shop_id: string
+          stars_amount: number | null
           status: string
           subtotal: number
           total_amount: number
@@ -432,6 +435,7 @@ export type Database = {
           escrow_release_at?: string | null
           escrow_release_days?: number
           escrow_status?: string
+          free_quantity?: number
           id?: string
           invoice_id?: string | null
           invoice_url?: string | null
@@ -439,6 +443,7 @@ export type Database = {
           order_number?: never
           paid_at?: string | null
           pay_currency?: string | null
+          pay_method?: string
           payment_id?: string | null
           payment_status?: string | null
           product_id: string
@@ -446,6 +451,7 @@ export type Database = {
           product_name: string
           quantity?: number
           shop_id: string
+          stars_amount?: number | null
           status?: string
           subtotal: number
           total_amount: number
@@ -471,6 +477,7 @@ export type Database = {
           escrow_release_at?: string | null
           escrow_release_days?: number
           escrow_status?: string
+          free_quantity?: number
           id?: string
           invoice_id?: string | null
           invoice_url?: string | null
@@ -478,6 +485,7 @@ export type Database = {
           order_number?: never
           paid_at?: string | null
           pay_currency?: string | null
+          pay_method?: string
           payment_id?: string | null
           payment_status?: string | null
           product_id?: string
@@ -485,6 +493,7 @@ export type Database = {
           product_name?: string
           quantity?: number
           shop_id?: string
+          stars_amount?: number | null
           status?: string
           subtotal?: number
           total_amount?: number
@@ -510,6 +519,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_settings: {
+        Row: {
+          crypto_enabled: boolean
+          id: boolean
+          stars_enabled: boolean
+          stars_per_ton: number
+          stars_per_usdt: number
+          updated_at: string
+        }
+        Insert: {
+          crypto_enabled?: boolean
+          id?: boolean
+          stars_enabled?: boolean
+          stars_per_ton?: number
+          stars_per_usdt?: number
+          updated_at?: string
+        }
+        Update: {
+          crypto_enabled?: boolean
+          id?: boolean
+          stars_enabled?: boolean
+          stars_per_ton?: number
+          stars_per_usdt?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       product_codes: {
         Row: {
@@ -586,6 +622,7 @@ export type Database = {
         Row: {
           auto_send_telegram: boolean
           bulk_discounts: string | null
+          buy_x: number | null
           buyer_guide: string | null
           category: string | null
           created_at: string
@@ -594,6 +631,7 @@ export type Database = {
           escrow_release_days: number
           flash_sale_end: string | null
           flash_sale_price: number | null
+          get_y: number | null
           highlights: string | null
           id: string
           image_url: string | null
@@ -608,6 +646,7 @@ export type Database = {
         Insert: {
           auto_send_telegram?: boolean
           bulk_discounts?: string | null
+          buy_x?: number | null
           buyer_guide?: string | null
           category?: string | null
           created_at?: string
@@ -616,6 +655,7 @@ export type Database = {
           escrow_release_days?: number
           flash_sale_end?: string | null
           flash_sale_price?: number | null
+          get_y?: number | null
           highlights?: string | null
           id?: string
           image_url?: string | null
@@ -630,6 +670,7 @@ export type Database = {
         Update: {
           auto_send_telegram?: boolean
           bulk_discounts?: string | null
+          buy_x?: number | null
           buyer_guide?: string | null
           category?: string | null
           created_at?: string
@@ -638,6 +679,7 @@ export type Database = {
           escrow_release_days?: number
           flash_sale_end?: string | null
           flash_sale_price?: number | null
+          get_y?: number | null
           highlights?: string | null
           id?: string
           image_url?: string | null
@@ -923,6 +965,7 @@ export type Database = {
           expires_at: string | null
           id: string
           is_active: boolean
+          last_broadcast_at: string | null
           max_uses: number | null
           min_order_amount: number | null
           shop_id: string
@@ -936,6 +979,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean
+          last_broadcast_at?: string | null
           max_uses?: number | null
           min_order_amount?: number | null
           shop_id: string
@@ -949,6 +993,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean
+          last_broadcast_at?: string | null
           max_uses?: number | null
           min_order_amount?: number | null
           shop_id?: string

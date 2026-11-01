@@ -13,7 +13,8 @@ import { EmptyState, Field, PageHeader, Section, errMsg } from "@/components/app
 import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { vouchersQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
-import { saveVoucher, toggleVoucher } from "@/functions/market.functions";
+import { broadcastVoucher, saveVoucher, toggleVoucher } from "@/functions/market.functions";
+import { Send } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard/vouchers")({
   head: () => ({ meta: [{ title: "Vouchers · TeleShop" }, { name: "description", content: "Create discount codes for your shop." }, { property: "og:title", content: "Vouchers · TeleShop" }, { property: "og:description", content: "Create vouchers." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -26,6 +27,8 @@ function Vouchers({ shop }: { shop: ShopRow }) {
   const { data = [] } = useQuery(vouchersQuery(shop.id));
   const save = useServerFn(saveVoucher);
   const toggle = useServerFn(toggleVoucher);
+  const broadcast = useServerFn(broadcastVoucher);
+  const send = async (id: string) => { try { const r = await broadcast({ data: { id } }); toast.success(t("extra.sentTo", { n: r.sent })); await refresh(); } catch (e) { toast.error(errMsg(e)); } };
   const [f, setF] = useState({ code: "", type: "percent" as "percent" | "fixed", value: "", min: "", max: "", expires: "" });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const refresh = () => qc.invalidateQueries({ queryKey: ["vouchers"] });
@@ -71,6 +74,7 @@ function Vouchers({ shop }: { shop: ShopRow }) {
                     {v.expires_at ? ` · ${shortDate(v.expires_at)}` : ""}
                   </p>
                 </div>
+                <Button variant="ghost" size="icon" aria-label={t("extra.sendTg")} disabled={!v.is_active} onClick={() => send(v.id)}><Send /></Button>
                 <Switch checked={v.is_active} onCheckedChange={async (c) => { await toggle({ data: { id: v.id, is_active: c } }); await refresh(); }} />
                 <Button variant="ghost" size="icon" onClick={async () => { await toggle({ data: { id: v.id, remove: true } }); await refresh(); }}><Trash2 className="text-destructive" /></Button>
               </div>

@@ -40,3 +40,16 @@ describe("quantity discounts", () => {
   it("10% from 3", () => expect(bp(tiers, 4)).toBe(10));
   it("15% from 5", () => expect(bp(tiers, 7)).toBe(15));
 });
+
+import { freeUnits, starsFor } from "@/lib/pricing";
+describe("buy X get Y", () => {
+  it("buy 2 get 1: 5 bought → 2 free", () => expect(freeUnits(5, 2, 1)).toBe(2));
+  it("below X → none", () => expect(freeUnits(1, 2, 1)).toBe(0));
+  it("disabled when empty", () => expect(freeUnits(5, null, 1)).toBe(0));
+});
+describe("Stars conversion", () => {
+  const r = { stars_per_usdt: 77, stars_per_ton: 250 };
+  it("10 USDT → 770 stars", () => expect(starsFor(10, "USDT", r)).toBe(770));
+  it("rounds up", () => expect(starsFor(0.01, "USDT", r)).toBe(1));
+  it("2 TON → 500 stars", () => expect(starsFor(2, "TON", r)).toBe(500));
+});

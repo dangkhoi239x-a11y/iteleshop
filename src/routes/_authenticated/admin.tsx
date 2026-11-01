@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminLists } from "@/components/app/AdminLists";
 import { RewardsManager } from "@/components/app/RewardsManager";
+import { PaymentSettings } from "@/components/app/PaymentSettings";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin · TeleShop" }, { name: "description", content: "TeleShop platform administration." }, { property: "og:title", content: "Admin · TeleShop" }, { property: "og:description", content: "Administration." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -56,11 +57,13 @@ function Admin() {
           <TabsTrigger value="orders">{t("extra.tabOrders")}</TabsTrigger>
           <TabsTrigger value="products">{t("extra.tabProducts")}</TabsTrigger>
           <TabsTrigger value="rewards">{t("extra.tabRewards")}</TabsTrigger>
+          <TabsTrigger value="payments">{t("extra.tabPayments")}</TabsTrigger>
         </TabsList>
         <TabsContent value="users"><AdminLists kind="users" /></TabsContent>
         <TabsContent value="orders"><AdminLists kind="orders" /></TabsContent>
         <TabsContent value="products"><AdminLists kind="products" /></TabsContent>
         <TabsContent value="rewards" className="-mx-4"><RewardsManager shopId={null} /></TabsContent>
+        <TabsContent value="payments"><PaymentSettings /></TabsContent>
         <TabsContent value="overview" className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
           <StatCard label={t("admin.users")} value={data?.users ?? "–"} icon={Users} />

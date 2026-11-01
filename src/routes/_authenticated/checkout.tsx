@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, Field, PageHeader, errMsg } from "@/components/app/ui-bits";
 import { productQuery } from "@/lib/queries";
-import { bulkPercent, effectivePrice, parseBulkTiers, round6 } from "@/lib/pricing";
+import { bulkPercent, effectivePrice, freeUnits, parseBulkTiers, round6, starsFor } from "@/lib/pricing";
+import { openStarsInvoice } from "@/lib/telegram";
+import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/format";
 import { checkVoucher } from "@/functions/market.functions";
 import { createOrder } from "@/functions/orders.functions";
@@ -31,6 +33,9 @@ function Checkout() {
   const check = useServerFn(checkVoucher);
   const create = useServerFn(createOrder);
   const [qty, setQty] = useState(1);
+  const { data: settings } = useQuery({ queryKey: ["platformSettings"], queryFn: async () => (await supabase.from("platform_settings").select("*").maybeSingle()).data });
+  const [method, setMethod] = useState<"crypto" | "stars" | null>(null);
+  const payMethod = method ?? (settings && !settings.crypto_enabled ? "stars" : "crypto");
   const [code, setCode] = useState("");
   const [applied, setApplied] = useState<{ code: string; discount: number } | null>(null);
   const [address, setAddress] = useState("");
@@ -44,6 +49,8 @@ function Checkout() {
   const subtotal = round6(gross - bulkOff);
   const discount = applied ? Math.min(applied.discount, subtotal) : 0;
   const total = round6(subtotal - discount);
+  const free = freeUnits(qty, p.buy_x, p.get_y);
+  const stars = settings ? starsFor(total, p.currency, settings) : 0;
 
   const apply = async () => {
     if (!code.trim()) return;
@@ -64,9 +71,10 @@ function Checkout() {
   const pay = async () => {
     setBusy(true);
     try {
-      const r = await create({ data: { productId: p.id, quantity: qty, voucherCode: applied?.code ?? null, deliveryAddress: address || null, note: note || null } });
+      const r = await create({ data: { productId: p.id, quantity: qty, voucherCode: applied?.code ?? null, deliveryAddress: address || null, note: note || null, payMethod } });
       haptic("success");
-      if (r.invoiceUrl) openExternal(r.invoiceUrl);
+      if (r.invoiceUrl && payMethod === "stars") openStarsInvoice(r.invoiceUrl);
+      else if (r.invoiceUrl) openExternal(r.invoiceUrl);
       else toast.error(t("checkout.paymentErr", { msg: r.paymentError }));
       await nav({ to: "/orders/$orderId", params: { orderId: r.orderId } });
     } catch (e) {
@@ -92,9 +100,18 @@ function Checkout() {
           <div className="flex items-center gap-3">
             <Button variant="secondary" size="icon" onClick={() => setQty((q) => Math.max(1, q - 1))}><Minus /></Button>
             <span className="tabular w-8 text-center font-display text-lg font-bold">{qty}</span>
-            <Button variant="secondary" size="icon" onClick={() => setQty((q) => Math.min(p.stock, q + 1))} disabled={qty >= p.stock}><Plus /></Button>
+            <Button variant="secondary" size="icon" onClick={() => setQty((q) => q + 1)} disabled={qty + 1 + freeUnits(qty + 1, p.buy_x, p.get_y) > p.stock}><Plus /></Button>
           </div>
         </Field>
+        {free > 0 && <p className="rounded-xl bg-success/10 p-2 text-sm text-success">{t("extra.freeGot", { n: free })}</p>}
+        {settings?.stars_enabled && settings.crypto_enabled && (
+          <Field label={t("extra.payMethod")}>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant={payMethod === "crypto" ? "default" : "secondary"} onClick={() => setMethod("crypto")}>{t("extra.payCrypto")}</Button>
+              <Button variant={payMethod === "stars" ? "default" : "secondary"} onClick={() => setMethod("stars")}>⭐ Telegram Stars</Button>
+            </div>
+          </Field>
+        )}
         <Field label={t("checkout.voucher")}>
           <div className="flex gap-2">
             <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="SALE10" className="uppercase" />
@@ -111,13 +128,13 @@ function Checkout() {
           <Row k={t("checkout.subtotal")} v={money(gross, p.currency)} />
           {bulkOff > 0 && <Row k={t("extra.bulkTitle")} v={`−${money(bulkOff, p.currency)}`} className="text-success" />}
           {discount > 0 && <Row k={t("checkout.discount")} v={`−${money(discount, p.currency)}`} className="text-success" />}
-          <div className="border-t border-border pt-2"><Row k={t("checkout.total")} v={money(total, p.currency)} className="font-display text-base font-bold" /></div>
+          <div className="border-t border-border pt-2"><Row k={t("checkout.total")} v={payMethod === "stars" ? `${stars} ⭐ (≈ ${money(total, p.currency)})` : money(total, p.currency)} className="font-display text-base font-bold" /></div>
         </div>
         <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0 text-success" />{t("checkout.secured")}</p>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-border bg-background/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
         <Button size="lg" className="w-full shadow-glow" onClick={pay} disabled={busy}>
-          {busy ? <><Loader2 className="animate-spin" /> {t("checkout.processing")}</> : t("checkout.payNow", { amount: money(total, p.currency) })}
+          {busy ? <><Loader2 className="animate-spin" /> {t("checkout.processing")}</> : t("checkout.payNow", { amount: payMethod === "stars" ? `${stars} ⭐` : money(total, p.currency) })}
         </Button>
       </div>
     </div>

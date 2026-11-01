@@ -39,16 +39,21 @@ export const createOrder = createServerFn({ method: "POST" })
         voucherCode: z.string().trim().max(20).optional().nullable(),
         deliveryAddress: z.string().max(500).optional().nullable(),
         note: z.string().max(500).optional().nullable(),
+        payMethod: z.enum(["crypto", "stars"]).default("crypto"),
       })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { effectivePrice, voucherDiscount, commissionPercent, round6, parseBulkTiers, bulkPercent } = await import("@/lib/pricing");
+    const { effectivePrice, voucherDiscount, commissionPercent, round6, parseBulkTiers, bulkPercent, freeUnits, starsFor } = await import("@/lib/pricing");
     const db = await admin();
     const { data: p } = await db.from("products").select("*, shops!inner(id, owner_id, status, affiliate_percent)").eq("id", data.productId).single();
     if (!p || p.status !== "active" || p.shops.status !== "active") throw new Error("Product is not available");
     if (p.shops.owner_id === context.userId) throw new Error("You cannot buy from your own shop");
-    if (p.stock < data.quantity) throw new Error("Not enough stock");
+    const free = freeUnits(data.quantity, p.buy_x, p.get_y);
+    if (p.stock < data.quantity + free) throw new Error("Not enough stock");
+    const { data: settings } = await db.from("platform_settings").select("*").maybeSingle();
+    if (data.payMethod === "stars" && !settings?.stars_enabled) throw new Error("Telegram Stars payments are turned off");
+    if (data.payMethod === "crypto" && settings && !settings.crypto_enabled) throw new Error("Crypto payments are turned off");
 
     const unit = effectivePrice(p);
     const gross = round6(unit * data.quantity);
@@ -81,7 +86,9 @@ export const createOrder = createServerFn({ method: "POST" })
       .from("orders")
       .insert({
         buyer_id: context.userId, shop_id: p.shop_id, product_id: p.id, product_name: p.name, product_image: p.image_url,
-        quantity: data.quantity, unit_price: unit, subtotal: gross, discount_amount: discount, total_amount: total, currency: p.currency,
+        quantity: data.quantity + free, free_quantity: free, pay_method: data.payMethod,
+        stars_amount: data.payMethod === "stars" && settings ? starsFor(total, p.currency, settings) : null,
+        unit_price: unit, subtotal: gross, discount_amount: discount, total_amount: total, currency: p.currency,
         warranty_type: p.warranty_type, escrow_release_days: p.escrow_release_days, commission_percent: cp,
         commission_amount: round6((total * cp) / 100), affiliate_user_id: affiliateUser,
         affiliate_percent: affiliateUser ? Number(p.shops.affiliate_percent) : 0,
@@ -90,6 +97,17 @@ export const createOrder = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    if (data.payMethod === "stars") {
+      try {
+        const { tgApi } = await import("@/server/order-paid.server");
+        const stars = starsFor(total, p.currency, settings!);
+        const link = await tgApi<string>("createInvoiceLink", { title: p.name.slice(0, 32), description: `TeleShop order × ${data.quantity + free}`.slice(0, 255), payload: order.id, currency: "XTR", prices: [{ label: p.name.slice(0, 32), amount: stars }] });
+        await db.from("orders").update({ invoice_url: link, payment_status: "waiting" }).eq("id", order.id);
+        return { orderId: order.id, invoiceUrl: link, stars: true };
+      } catch (e) {
+        return { orderId: order.id, invoiceUrl: null, paymentError: (e as Error).message };
+      }
+    }
     try {
       return { orderId: order.id, invoiceUrl: await attachInvoice(order.id) };
     } catch (e) {

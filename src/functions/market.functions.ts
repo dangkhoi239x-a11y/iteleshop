@@ -108,6 +108,8 @@ const productInput = z.object({
   buyer_guide: z.string().max(4000).optional().nullable(),
   highlights: z.string().max(2000).optional().nullable(),
   bulk_discounts: z.string().max(500).optional().nullable(),
+  buy_x: z.number().int().min(1).max(100).nullable().optional(),
+  get_y: z.number().int().min(1).max(100).nullable().optional(),
 });
 
 export const saveProduct = createServerFn({ method: "POST" })
@@ -128,7 +130,7 @@ export const saveProduct = createServerFn({ method: "POST" })
       await db.from("products").update({ stock: count ?? 0 }).eq("id", pid);
       return codes.length;
     };
-    const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null, buyer_guide: rest.buyer_guide || null, highlights: rest.highlights || null, bulk_discounts: rest.bulk_discounts || null };
+    const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null, buyer_guide: rest.buyer_guide || null, highlights: rest.highlights || null, bulk_discounts: rest.bulk_discounts || null, buy_x: rest.buy_x && rest.get_y ? rest.buy_x : null, get_y: rest.buy_x && rest.get_y ? rest.get_y : null };
     if (id) {
       const { data: cur } = await db.from("products").select("status").eq("id", id).eq("shop_id", shopId).maybeSingle();
       // Admin-hidden products stay hidden until an admin restores them.
@@ -254,4 +256,29 @@ export const getAffiliateStats = createServerFn({ method: "POST" })
     const { data: pending } = await db.from("orders").select("total_amount, affiliate_percent, currency").eq("affiliate_user_id", context.userId).eq("escrow_status", "holding");
     const pendingAmount = (pending ?? []).reduce((s, o) => s + (Number(o.total_amount) * Number(o.affiliate_percent)) / 100, 0);
     return { referrals: referrals ?? 0, pendingAmount };
+  });
+
+/** Sends a voucher to the shop's past buyers via the platform bot and to the shop's own channel/chat. */
+export const broadcastVoucher = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), message: z.string().max(500).optional() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const shopId = await myShopId(context.userId);
+    const { data: v } = await db.from("vouchers").select("*, shops(name)").eq("id", data.id).eq("shop_id", shopId).single();
+    if (!v || !v.is_active) throw new Error("Voucher is not active");
+    if (v.last_broadcast_at && Date.now() - new Date(v.last_broadcast_at).getTime() < 6 * 3600e3) throw new Error("This voucher was sent less than 6 hours ago");
+    const { sendTelegramMessage, escapeHtml } = await import("@/server/telegram.server");
+    const off = v.discount_type === "percent" ? `${Number(v.discount_value)}%` : `${Number(v.discount_value)}`;
+    const text = `🎟 <b>${escapeHtml(v.shops?.name ?? "Shop")}</b> — voucher <code>${v.code}</code> (−${off})${v.expires_at ? `\n⏰ ${new Date(v.expires_at).toISOString().slice(0, 10)}` : ""}${data.message ? `\n\n${escapeHtml(data.message)}` : ""}`;
+    const { data: orders } = await db.from("orders").select("buyer_id").eq("shop_id", shopId).not("paid_at", "is", null).limit(2000);
+    const ids = [...new Set((orders ?? []).map((o) => o.buyer_id))].slice(0, 500);
+    const { data: buyers } = ids.length ? await db.from("profiles").select("telegram_id").in("id", ids) : { data: [] };
+    const tok = process.env["TELEGRAM_BOT_TOKEN"];
+    let sent = 0;
+    for (const b of buyers ?? []) { if (b.telegram_id) { await sendTelegramMessage(tok, b.telegram_id, text); sent++; } }
+    const { data: bot } = await db.from("shop_bots").select("*").eq("shop_id", shopId).maybeSingle();
+    await sendTelegramMessage(bot?.bot_token, bot?.notification_chat_id, text);
+    await db.from("vouchers").update({ last_broadcast_at: new Date().toISOString() }).eq("id", v.id);
+    return { sent };
   });

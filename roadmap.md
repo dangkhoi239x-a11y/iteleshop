@@ -14,3 +14,6 @@
 - [ ] Promo 2: points-to-voucher
 - [ ] Promo 3: first-time / win-back auto vouchers
 - [ ] Promo 4: private time-limited promo codes via shop channel
+- [x] Promotions: vouchers sent via Telegram, buy-X-get-Y, quantity tiers
+- [x] Telegram Stars payment with admin on/off + rates
+- [ ] Waiting on user: bot token, then press "Connect bot" in Admin → Payments to receive Stars

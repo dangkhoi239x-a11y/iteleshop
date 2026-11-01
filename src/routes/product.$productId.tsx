@@ -66,6 +66,7 @@ function ProductPage() {
             <span className="text-xs text-primary">{t("product.visitShop")}</span>
           </Link>
         )}
+        {p.buy_x && p.get_y && <div className="rounded-2xl border border-success/40 bg-success/10 p-3 text-sm font-semibold text-success">🎁 {t("extra.bxgy", { x: p.buy_x, y: p.get_y })}</div>}
         {parseBulkTiers(p.bulk_discounts).length > 0 && (
           <div className="rounded-2xl border border-primary/40 bg-card p-4">
             <h3 className="mb-2 text-sm font-semibold">{t("extra.bulkTitle")}</h3>

@@ -55,3 +55,14 @@ export function parseBulkTiers(text: string | null | undefined): BulkTier[] {
 export function bulkPercent(tiers: BulkTier[], qty: number) {
   return tiers.filter((t) => qty >= t.minQty).reduce((m, t) => Math.max(m, t.percent), 0);
 }
+
+/** Buy X get Y: free units added on top of the paid quantity. */
+export function freeUnits(qty: number, buyX: number | null | undefined, getY: number | null | undefined) {
+  if (!buyX || !getY || buyX < 1 || getY < 1) return 0;
+  return Math.floor(qty / buyX) * getY;
+}
+/** Telegram Stars needed for an order total (rounded up, min 1). */
+export function starsFor(total: number, currency: string, rates: { stars_per_usdt: number | string; stars_per_ton: number | string }) {
+  const rate = Number(currency === "TON" ? rates.stars_per_ton : rates.stars_per_usdt);
+  return Math.max(1, Math.ceil(total * rate - 1e-9));
+}

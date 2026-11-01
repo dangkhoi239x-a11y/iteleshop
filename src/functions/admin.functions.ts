@@ -125,3 +125,25 @@ export const adminSetAdmin = createServerFn({ method: "POST" })
     else await db.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
     return { ok: true };
   });
+
+export const adminSaveSettings = createServerFn({ method: "POST" })
+  .middleware([...adminMw])
+  .inputValidator((i: unknown) => z.object({ stars_enabled: z.boolean(), crypto_enabled: z.boolean(), stars_per_usdt: z.number().positive().max(100000), stars_per_ton: z.number().positive().max(100000) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const db = await assertAdmin(context);
+    if (!data.stars_enabled && !data.crypto_enabled) throw new Error("Keep at least one payment method on");
+    await db.from("platform_settings").upsert({ id: true, ...data, updated_at: new Date().toISOString() });
+    return { ok: true };
+  });
+
+export const adminRegisterWebhook = createServerFn({ method: "POST" })
+  .middleware([...adminMw])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { tgApi, webhookSecret } = await import("@/server/order-paid.server");
+    const origin = new URL(getRequest().url).origin.replace("id-preview--", "project--").replace(/(project--[0-9a-f-]+)(\.)/, (m, a, b) => (a.endsWith("-dev") ? m : `${a}-dev${b}`));
+    const url = `${origin}/api/public/telegram/webhook`;
+    await tgApi("setWebhook", { url, secret_token: await webhookSecret(), allowed_updates: ["message", "pre_checkout_query"] });
+    return { url };
+  });

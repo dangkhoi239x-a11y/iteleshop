@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/products")({
   component: () => <ShopGate>{(shop) => <Products shop={shop} />}</ShopGate>,
 });
 
-const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "", auto_send_telegram: true, buyer_guide: "", highlights: "", bulk_discounts: "" };
+const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "", auto_send_telegram: true, buyer_guide: "", highlights: "", bulk_discounts: "", buy_x: "", get_y: "" };
 
 function Products({ shop }: { shop: ShopRow }) {
   const { t } = useTranslation();
@@ -51,7 +51,7 @@ function Products({ shop }: { shop: ShopRow }) {
     setEditing(p?.id ?? null);
     setCodes([]);
     if (p) void loadCodes(p.id);
-    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "", auto_send_telegram: p.auto_send_telegram, buyer_guide: p.buyer_guide ?? "", highlights: p.highlights ?? "", bulk_discounts: p.bulk_discounts ?? "" } : blank);
+    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "", auto_send_telegram: p.auto_send_telegram, buyer_guide: p.buyer_guide ?? "", highlights: p.highlights ?? "", bulk_discounts: p.bulk_discounts ?? "", buy_x: p.buy_x ? String(p.buy_x) : "", get_y: p.get_y ? String(p.get_y) : "" } : blank);
   };
 
   const delCode = async (id: string) => {
@@ -67,7 +67,7 @@ function Products({ shop }: { shop: ShopRow }) {
   const submit = async () => {
     setBusy(true);
     try {
-      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content, auto_send_telegram: f.auto_send_telegram, buyer_guide: f.buyer_guide || null, highlights: f.highlights || null, bulk_discounts: f.bulk_discounts || null } });
+      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content, auto_send_telegram: f.auto_send_telegram, buyer_guide: f.buyer_guide || null, highlights: f.highlights || null, bulk_discounts: f.bulk_discounts || null, buy_x: Number(f.buy_x) || null, get_y: Number(f.get_y) || null } });
       toast.success(r.added ? t("products.savedWithCodes", { n: r.added }) : t("common.saved"));
       setEditing(undefined);
       await qc.invalidateQueries({ queryKey: ["myProducts"] });
@@ -119,6 +119,7 @@ function Products({ shop }: { shop: ShopRow }) {
             <label className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"><span><span className="block text-sm font-medium">{t("extra.autoSend")}</span><span className="block text-xs text-muted-foreground">{t("extra.autoSendHint")}</span></span><Switch checked={f.auto_send_telegram} onCheckedChange={(v) => setF({ ...f, auto_send_telegram: v })} /></label>
             <Field label={t("extra.highlights")} hint={t("extra.highlightsHint")}><Textarea value={f.highlights} onChange={set("highlights")} rows={3} maxLength={2000} /></Field>
             <Field label={t("extra.bulk")} hint={t("extra.bulkHint")}><Textarea value={f.bulk_discounts} onChange={set("bulk_discounts")} rows={2} maxLength={500} placeholder={"3:10\n5:15"} /></Field>
+            <div className="grid grid-cols-2 gap-3"><Field label={t("extra.buyX")}><Input type="number" value={f.buy_x} onChange={set("buy_x")} placeholder="2" /></Field><Field label={t("extra.getY")} hint={t("extra.bxgyHint")}><Input type="number" value={f.get_y} onChange={set("get_y")} placeholder="1" /></Field></div>
             <Field label={t("extra.buyerGuide")} hint={t("extra.buyerGuideHint")}><Textarea value={f.buyer_guide} onChange={set("buyer_guide")} rows={3} maxLength={4000} /></Field>
             {editing && (
               <div className="space-y-2 rounded-2xl border border-border bg-secondary/40 p-3">
