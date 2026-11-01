@@ -10,6 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ShopsRouteImport } from './routes/shops'
+import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
+import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
+import { Route as ProductProductIdRouteImport } from './routes/product.$productId'
+import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
+import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
+import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as ApiPublicNowpaymentsIpnRouteImport } from './routes/api/public/nowpayments.ipn'
 
 const IndexRoute = IndexRouteImport.update({
@@ -17,6 +26,52 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopsRoute = ShopsRouteImport.update({
+  id: '/shops',
+  path: '/shops',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ProductProductIdRoute = ProductProductIdRouteImport.update({
+  id: '/product/$productId',
+  path: '/product/$productId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopShopIdRoute = ShopShopIdRouteImport.update({
+  id: '/shop/$shopId',
+  path: '/shop/$shopId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedOrdersIndexRoute =
+  AuthenticatedOrdersIndexRouteImport.update({
+    id: '/orders/',
+    path: '/orders/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOrdersOrderIdRoute =
+  AuthenticatedOrdersOrderIdRouteImport.update({
+    id: '/orders/$orderId',
+    path: '/orders/$orderId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicNowpaymentsIpnRoute = ApiPublicNowpaymentsIpnRouteImport.update({
   id: '/api/public/nowpayments/ipn',
   path: '/api/public/nowpayments/ipn',
@@ -25,27 +80,89 @@ const ApiPublicNowpaymentsIpnRoute = ApiPublicNowpaymentsIpnRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/shops': typeof ShopsRoute
+  '/checkout': typeof AuthenticatedCheckoutRoute
+  '/wallet': typeof AuthenticatedWalletRoute
+  '/product/$productId': typeof ProductProductIdRoute
+  '/shop/$shopId': typeof ShopShopIdRoute
+  '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
+  '/orders/': typeof AuthenticatedOrdersIndexRoute
   '/api/public/nowpayments/ipn': typeof ApiPublicNowpaymentsIpnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/shops': typeof ShopsRoute
+  '/checkout': typeof AuthenticatedCheckoutRoute
+  '/wallet': typeof AuthenticatedWalletRoute
+  '/product/$productId': typeof ProductProductIdRoute
+  '/shop/$shopId': typeof ShopShopIdRoute
+  '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
+  '/orders': typeof AuthenticatedOrdersIndexRoute
   '/api/public/nowpayments/ipn': typeof ApiPublicNowpaymentsIpnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/shops': typeof ShopsRoute
+  '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
+  '/_authenticated/wallet': typeof AuthenticatedWalletRoute
+  '/product/$productId': typeof ProductProductIdRoute
+  '/shop/$shopId': typeof ShopShopIdRoute
+  '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
+  '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
   '/api/public/nowpayments/ipn': typeof ApiPublicNowpaymentsIpnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/nowpayments/ipn'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/shops'
+    | '/checkout'
+    | '/wallet'
+    | '/product/$productId'
+    | '/shop/$shopId'
+    | '/orders/$orderId'
+    | '/orders/'
+    | '/api/public/nowpayments/ipn'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/nowpayments/ipn'
-  id: '__root__' | '/' | '/api/public/nowpayments/ipn'
+  to:
+    | '/'
+    | '/auth'
+    | '/shops'
+    | '/checkout'
+    | '/wallet'
+    | '/product/$productId'
+    | '/shop/$shopId'
+    | '/orders/$orderId'
+    | '/orders'
+    | '/api/public/nowpayments/ipn'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/shops'
+    | '/_authenticated/checkout'
+    | '/_authenticated/wallet'
+    | '/product/$productId'
+    | '/shop/$shopId'
+    | '/_authenticated/orders/$orderId'
+    | '/_authenticated/orders/'
+    | '/api/public/nowpayments/ipn'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ShopsRoute: typeof ShopsRoute
+  ProductProductIdRoute: typeof ProductProductIdRoute
+  ShopShopIdRoute: typeof ShopShopIdRoute
   ApiPublicNowpaymentsIpnRoute: typeof ApiPublicNowpaymentsIpnRoute
 }
 
@@ -58,6 +175,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shops': {
+      id: '/shops'
+      path: '/shops'
+      fullPath: '/shops'
+      preLoaderRoute: typeof ShopsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/checkout': {
+      id: '/_authenticated/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof AuthenticatedCheckoutRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wallet': {
+      id: '/_authenticated/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof AuthenticatedWalletRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/product/$productId': {
+      id: '/product/$productId'
+      path: '/product/$productId'
+      fullPath: '/product/$productId'
+      preLoaderRoute: typeof ProductProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop/$shopId': {
+      id: '/shop/$shopId'
+      path: '/shop/$shopId'
+      fullPath: '/shop/$shopId'
+      preLoaderRoute: typeof ShopShopIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/orders/': {
+      id: '/_authenticated/orders/'
+      path: '/orders'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof AuthenticatedOrdersIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/orders/$orderId': {
+      id: '/_authenticated/orders/$orderId'
+      path: '/orders/$orderId'
+      fullPath: '/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/nowpayments/ipn': {
       id: '/api/public/nowpayments/ipn'
       path: '/api/public/nowpayments/ipn'
@@ -68,8 +248,30 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
+  AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
+  AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
+  AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
+  AuthenticatedWalletRoute: AuthenticatedWalletRoute,
+  AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
+  AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ShopsRoute: ShopsRoute,
+  ProductProductIdRoute: ProductProductIdRoute,
+  ShopShopIdRoute: ShopShopIdRoute,
   ApiPublicNowpaymentsIpnRoute: ApiPublicNowpaymentsIpnRoute,
 }
 export const routeTree = rootRouteImport
