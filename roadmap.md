@@ -2,4 +2,6 @@
 - [x] Migrate Replit TeleShop to Lovable (all pages, 4 languages, escrow, wallet, vouchers, flash sale, affiliate/KOL, disputes, admin)
 - [x] NOWPayments checkout + webhook
 - [x] Digital delivery: seller stores code/link per product, buyer sees it after payment
+- [x] Code pool: one code/link per unit, stock auto-syncs, buyer can resend code via Telegram, order search (buyer + seller)
 - [ ] Waiting on user: Telegram bot token + username, NOWPayments API key + IPN secret, admin Telegram IDs
+- [ ] Decide payment direction: Telegram Stars required for digital goods inside Mini Apps (policy), NOWPayments only for physical/real-world items
