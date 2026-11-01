@@ -79,3 +79,49 @@ export const adminSaveTier = createServerFn({ method: "POST" })
     else await db.from("commission_tiers").insert(row);
     return { ok: true };
   });
+
+const term = (s?: string) => (s ?? "").replace(/[%_,()]/g, "").trim();
+
+export const adminLists = createServerFn({ method: "POST" })
+  .middleware([...adminMw])
+  .inputValidator((i: unknown) => z.object({ kind: z.enum(["users", "orders", "products"]), q: z.string().max(100).optional() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const db = await assertAdmin(context);
+    const q = term(data.q);
+    if (data.kind === "users") {
+      let r = db.from("profiles").select("id, username, first_name, telegram_id, created_at").order("created_at", { ascending: false }).limit(100);
+      if (q) r = r.or(`username.ilike.%${q}%,first_name.ilike.%${q}%,telegram_id.ilike.%${q}%`);
+      const { data: users } = await r;
+      const { data: roles } = await db.from("user_roles").select("user_id").eq("role", "admin");
+      const admins = new Set((roles ?? []).map((x) => x.user_id));
+      return { users: (users ?? []).map((u) => ({ ...u, isAdmin: admins.has(u.id) })), orders: [], products: [] };
+    }
+    if (data.kind === "orders") {
+      let r = db.from("orders").select("id, order_number, product_name, total_amount, currency, status, created_at, shops(name)").order("created_at", { ascending: false }).limit(100);
+      if (q) r = /^\d+$/.test(q) ? r.eq("order_number", Number(q)) : r.ilike("product_name", `%${q}%`);
+      return { users: [], orders: (await r).data ?? [], products: [] };
+    }
+    let r = db.from("products").select("id, name, price, currency, stock, status, sold_count, shops(name)").neq("status", "archived").order("created_at", { ascending: false }).limit(100);
+    if (q) r = r.ilike("name", `%${q}%`);
+    return { users: [], orders: [], products: (await r).data ?? [] };
+  });
+
+export const adminProductStatus = createServerFn({ method: "POST" })
+  .middleware([...adminMw])
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["active", "suspended"]) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const db = await assertAdmin(context);
+    await db.from("products").update({ status: data.status }).eq("id", data.id);
+    return { ok: true };
+  });
+
+export const adminSetAdmin = createServerFn({ method: "POST" })
+  .middleware([...adminMw])
+  .inputValidator((i: unknown) => z.object({ userId: z.string().uuid(), admin: z.boolean() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const db = await assertAdmin(context);
+    if (data.userId === context.userId) throw new Error("You cannot change your own admin role");
+    if (data.admin) await db.from("user_roles").upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role", ignoreDuplicates: true });
+    else await db.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
+    return { ok: true };
+  });
