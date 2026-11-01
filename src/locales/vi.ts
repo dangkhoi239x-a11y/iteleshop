@@ -1,7 +1,8 @@
-import { features } from "./features";
+import { features, rewardsText } from "./features";
 import type { Dict } from "./en";
 const vi: Dict = {
   ...features.vi,
+  rewards: rewardsText.vi,
   common: { loading: "Đang tải…", save: "Lưu", cancel: "Hủy", delete: "Xóa", edit: "Sửa", back: "Quay lại", confirm: "Xác nhận", signIn: "Đăng nhập", signInRequired: "Đăng nhập để tiếp tục", error: "Đã có lỗi xảy ra", saved: "Đã lưu", copy: "Sao chép", copied: "Đã sao chép", optional: "không bắt buộc", all: "Tất cả", soon: "Sắp ra mắt" },
   nav: { home: "Trang chủ", shops: "Cửa hàng", orders: "Đơn hàng", wallet: "Ví", profile: "Tài khoản" },
   home: { search: "Tìm sản phẩm…", flashSale: "Flash Sale", flashSub: "Ưu đãi crypto có hạn", endsIn: "Kết thúc sau", trending: "Đang thịnh hành", newest: "Hàng mới", noProducts: "Chưa có sản phẩm", openShopCta: "Bán hàng trên TeleShop", openShopSub: "Mở shop crypto chỉ trong 1 phút" },

@@ -1,7 +1,8 @@
-import { features } from "./features";
+import { features, rewardsText } from "./features";
 import type { Dict } from "./en";
 const zh: Dict = {
   ...features.zh,
+  rewards: rewardsText.zh,
   common: { loading: "加载中…", save: "保存", cancel: "取消", delete: "删除", edit: "编辑", back: "返回", confirm: "确认", signIn: "登录", signInRequired: "请先登录", error: "出错了", saved: "已保存", copy: "复制", copied: "已复制", optional: "可选", all: "全部", soon: "即将推出" },
   nav: { home: "首页", shops: "店铺", orders: "订单", wallet: "钱包", profile: "我的" },
   home: { search: "搜索商品…", flashSale: "限时抢购", flashSub: "限时加密货币优惠", endsIn: "剩余", trending: "热门", newest: "新品", noProducts: "暂无商品", openShopCta: "在 TeleShop 开店", openShopSub: "1 分钟开设加密货币店铺" },

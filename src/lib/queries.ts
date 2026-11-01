@@ -87,3 +87,40 @@ export const affiliateQuery = (userId: string) =>
 
 export const tiersQuery = () =>
   queryOptions({ queryKey: ["tiers"], queryFn: async () => must(await supabase.from("commission_tiers").select("*").order("min_order_amount")) });
+
+export const rewardsQuery = (shopId?: string) =>
+  queryOptions({
+    queryKey: ["rewards", shopId ?? "all"],
+    queryFn: async () => {
+      let tq = supabase.from("reward_tasks").select("*, shops(name)").eq("is_active", true).order("created_at", { ascending: false });
+      let dq = supabase.from("lucky_draws").select("*, shops(name), draw_winners(display_name, rank)").neq("status", "cancelled").order("ends_at", { ascending: false }).limit(30);
+      if (shopId) { tq = tq.eq("shop_id", shopId); dq = dq.eq("shop_id", shopId); }
+      return { tasks: must(await tq), draws: must(await dq) };
+    },
+  });
+
+export const myRewardsQuery = (userId: string) =>
+  queryOptions({
+    queryKey: ["myRewards", userId],
+    queryFn: async () => {
+      const [pts, ck, done, ent] = await Promise.all([
+        supabase.from("reward_points").select("amount, source, note, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(500),
+        supabase.from("checkins").select("day, streak").eq("user_id", userId).order("day", { ascending: false }).limit(1),
+        supabase.from("task_completions").select("task_id").eq("user_id", userId),
+        supabase.from("draw_entries").select("draw_id").eq("user_id", userId),
+      ]);
+      return { points: must(pts), lastCheckin: must(ck)[0] ?? null, done: must(done).map((d) => d.task_id), entries: must(ent).map((e) => e.draw_id) };
+    },
+  });
+
+export const managedRewardsQuery = (shopId: string | null) =>
+  queryOptions({
+    queryKey: ["managedRewards", shopId ?? "platform"],
+    queryFn: async () => {
+      let tq = supabase.from("reward_tasks").select("*").order("created_at", { ascending: false });
+      let dq = supabase.from("lucky_draws").select("*, draw_winners(display_name, rank)").order("created_at", { ascending: false });
+      tq = shopId ? tq.eq("shop_id", shopId) : tq.is("shop_id", null);
+      dq = shopId ? dq.eq("shop_id", shopId) : dq.is("shop_id", null);
+      return { tasks: must(await tq), draws: must(await dq) };
+    },
+  });

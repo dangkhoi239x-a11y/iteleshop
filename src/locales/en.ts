@@ -1,6 +1,7 @@
-import { features } from "./features";
+import { features, rewardsText } from "./features";
 const en = {
   ...features.en,
+  rewards: rewardsText.en,
   common: { loading: "Loading…", save: "Save", cancel: "Cancel", delete: "Delete", edit: "Edit", back: "Back", confirm: "Confirm", signIn: "Sign in", signInRequired: "Sign in to continue", error: "Something went wrong", saved: "Saved", copy: "Copy", copied: "Copied", optional: "optional", all: "All", soon: "Coming soon" },
   nav: { home: "Home", shops: "Shops", orders: "Orders", wallet: "Wallet", profile: "Profile" },
   home: { search: "Search products…", flashSale: "Flash Sale", flashSub: "Limited-time crypto deals", endsIn: "Ends in", trending: "Trending now", newest: "New arrivals", noProducts: "No products yet", openShopCta: "Sell on TeleShop", openShopSub: "Open your crypto shop in 1 minute" },
