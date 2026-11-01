@@ -44,7 +44,7 @@ export const createShop = createServerFn({ method: "POST" })
     const slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
     const { data: shop, error } = await db
       .from("shops")
-      .insert({ ...data, logo_url: data.logo_url || null, banner_url: data.banner_url || null, owner_id: context.userId, slug })
+      .insert({ name: data.name, description: data.description ?? null, category: data.category ?? null, wallet_address: data.wallet_address ?? null, telegram_channel: data.telegram_channel ?? null, plan: data.plan, affiliate_percent: data.affiliate_percent ?? 5, logo_url: data.logo_url || null, banner_url: data.banner_url || null, owner_id: context.userId, slug })
       .select("id")
       .single();
     if (error) throw new Error(error.code === "23505" ? "You already have a shop" : error.message);
@@ -57,9 +57,7 @@ export const updateShop = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await admin();
     const id = await myShopId(context.userId);
-    const patch = { ...data } as Record<string, unknown>;
-    if ("logo_url" in patch) patch.logo_url = patch.logo_url || null;
-    if ("banner_url" in patch) patch.banner_url = patch.banner_url || null;
+    const patch = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined).map(([k, v]) => [k, (k === "logo_url" || k === "banner_url") && !v ? null : v]));
     const { error } = await db.from("shops").update(patch).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
