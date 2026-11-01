@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Package, Pencil, Plus, Trash2 } from "lucide-react";
+import { KeyRound, Package, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { EmptyState, Field, PageHeader, StatusPill, errMsg } from "@/components/
 import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { myProductsQuery } from "@/lib/queries";
 import { money } from "@/lib/format";
-import { deleteProduct, saveProduct } from "@/functions/market.functions";
+import { deleteProduct, removeProductCode, saveProduct } from "@/functions/market.functions";
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 
