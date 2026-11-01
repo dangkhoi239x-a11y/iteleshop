@@ -62,6 +62,30 @@ export type Database = {
         }
         Relationships: []
       }
+      checkins: {
+        Row: {
+          created_at: string
+          day: string
+          points: number
+          streak: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          points: number
+          streak: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          points?: number
+          streak?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       code_issue_events: {
         Row: {
           action: string
@@ -231,6 +255,123 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: true
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      draw_entries: {
+        Row: {
+          created_at: string
+          draw_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          draw_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          draw_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draw_entries_draw_id_fkey"
+            columns: ["draw_id"]
+            isOneToOne: false
+            referencedRelation: "lucky_draws"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      draw_winners: {
+        Row: {
+          display_name: string
+          draw_id: string
+          rank: number
+          user_id: string
+        }
+        Insert: {
+          display_name: string
+          draw_id: string
+          rank: number
+          user_id: string
+        }
+        Update: {
+          display_name?: string
+          draw_id?: string
+          rank?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draw_winners_draw_id_fkey"
+            columns: ["draw_id"]
+            isOneToOne: false
+            referencedRelation: "lucky_draws"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lucky_draws: {
+        Row: {
+          created_at: string
+          created_by: string
+          drawn_at: string | null
+          ends_at: string
+          entry_cost: number
+          id: string
+          image_url: string | null
+          max_entries_per_user: number
+          prize: string
+          shop_id: string | null
+          starts_at: string
+          status: string
+          title: string
+          winners_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          drawn_at?: string | null
+          ends_at: string
+          entry_cost?: number
+          id?: string
+          image_url?: string | null
+          max_entries_per_user?: number
+          prize: string
+          shop_id?: string | null
+          starts_at?: string
+          status?: string
+          title: string
+          winners_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          drawn_at?: string | null
+          ends_at?: string
+          entry_cost?: number
+          id?: string
+          image_url?: string | null
+          max_entries_per_user?: number
+          prize?: string
+          shop_id?: string | null
+          starts_at?: string
+          status?: string
+          title?: string
+          winners_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lucky_draws_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
             referencedColumns: ["id"]
           },
         ]
@@ -542,6 +683,89 @@ export type Database = {
         }
         Relationships: []
       }
+      reward_points: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          note: string | null
+          ref_id: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          ref_id?: string | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          ref_id?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reward_tasks: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          kind: string
+          link_url: string | null
+          points: number
+          shop_id: string | null
+          target: string | null
+          target_amount: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          kind: string
+          link_url?: string | null
+          points: number
+          shop_id?: string | null
+          target?: string | null
+          target_amount?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          link_url?: string | null
+          points?: number
+          shop_id?: string | null
+          target?: string | null
+          target_amount?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_tasks_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_bots: {
         Row: {
           bot_token: string | null
@@ -627,6 +851,35 @@ export type Database = {
           wallet_address?: string | null
         }
         Relationships: []
+      }
+      task_completions: {
+        Row: {
+          created_at: string
+          points: number
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          points: number
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          points?: number
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_completions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "reward_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -751,6 +1004,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_task: { Args: { _task: string; _user: string }; Returns: number }
+      daily_checkin: { Args: { _user: string }; Returns: number }
+      enter_draw: { Args: { _draw: string; _user: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -786,6 +1042,7 @@ export type Database = {
         Args: { _action: string; _actor: string; _issue: string; _note: string }
         Returns: boolean
       }
+      run_draw: { Args: { _actor: string; _draw: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
