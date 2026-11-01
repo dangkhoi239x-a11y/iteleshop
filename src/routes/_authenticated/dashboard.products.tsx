@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { KeyRound, Package, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/products")({
   component: () => <ShopGate>{(shop) => <Products shop={shop} />}</ShopGate>,
 });
 
-const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "" };
+const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "", auto_send_telegram: true, buyer_guide: "", highlights: "" };
 
 function Products({ shop }: { shop: ShopRow }) {
   const { t } = useTranslation();
@@ -50,7 +51,7 @@ function Products({ shop }: { shop: ShopRow }) {
     setEditing(p?.id ?? null);
     setCodes([]);
     if (p) void loadCodes(p.id);
-    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "" } : blank);
+    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "", auto_send_telegram: p.auto_send_telegram, buyer_guide: p.buyer_guide ?? "", highlights: p.highlights ?? "" } : blank);
   };
 
   const delCode = async (id: string) => {
@@ -66,7 +67,7 @@ function Products({ shop }: { shop: ShopRow }) {
   const submit = async () => {
     setBusy(true);
     try {
-      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content } });
+      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content, auto_send_telegram: f.auto_send_telegram, buyer_guide: f.buyer_guide || null, highlights: f.highlights || null } });
       toast.success(r.added ? t("products.savedWithCodes", { n: r.added }) : t("common.saved"));
       setEditing(undefined);
       await qc.invalidateQueries({ queryKey: ["myProducts"] });
@@ -115,6 +116,9 @@ function Products({ shop }: { shop: ShopRow }) {
             <Field label={t("products.category")}><Input value={f.category} onChange={set("category")} maxLength={40} /></Field>
             <Field label={t("shop.desc")}><Textarea value={f.description} onChange={set("description")} rows={4} maxLength={4000} /></Field>
             <Field label={t("products.delivery")} hint={t("products.deliveryHint")}><Textarea value={f.delivery_content} onChange={set("delivery_content")} rows={3} maxLength={20000} placeholder={"CODE-XXXX\nhttps://…"} /></Field>
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"><span><span className="block text-sm font-medium">{t("extra.autoSend")}</span><span className="block text-xs text-muted-foreground">{t("extra.autoSendHint")}</span></span><Switch checked={f.auto_send_telegram} onCheckedChange={(v) => setF({ ...f, auto_send_telegram: v })} /></label>
+            <Field label={t("extra.highlights")} hint={t("extra.highlightsHint")}><Textarea value={f.highlights} onChange={set("highlights")} rows={3} maxLength={2000} /></Field>
+            <Field label={t("extra.buyerGuide")} hint={t("extra.buyerGuideHint")}><Textarea value={f.buyer_guide} onChange={set("buyer_guide")} rows={3} maxLength={4000} /></Field>
             {editing && (
               <div className="space-y-2 rounded-2xl border border-border bg-secondary/40 p-3">
                 <p className="flex items-center gap-2 text-xs font-semibold"><KeyRound className="h-3.5 w-3.5 text-primary" />{t("products.codePool", { n: codes.filter((c) => c.status === "available").length, sold: codes.filter((c) => c.status === "sold").length })}</p>

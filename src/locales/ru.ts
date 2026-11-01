@@ -1,8 +1,9 @@
-import { features, rewardsText } from "./features";
+import { extraText, features, rewardsText } from "./features";
 import type { Dict } from "./en";
 const ru: Dict = {
   ...features.ru,
   rewards: rewardsText.ru,
+  extra: extraText.ru,
   common: { loading: "Загрузка…", save: "Сохранить", cancel: "Отмена", delete: "Удалить", edit: "Изменить", back: "Назад", confirm: "Подтвердить", signIn: "Войти", signInRequired: "Войдите, чтобы продолжить", error: "Что-то пошло не так", saved: "Сохранено", copy: "Копировать", copied: "Скопировано", optional: "необязательно", all: "Все", soon: "Скоро" },
   nav: { home: "Главная", shops: "Магазины", orders: "Заказы", wallet: "Кошелёк", profile: "Профиль" },
   home: { search: "Поиск товаров…", flashSale: "Флеш-распродажа", flashSub: "Крипто-скидки на время", endsIn: "До конца", trending: "Популярное", newest: "Новинки", noProducts: "Товаров пока нет", openShopCta: "Продавайте на TeleShop", openShopSub: "Откройте крипто-магазин за 1 минуту" },

@@ -104,6 +104,9 @@ const productInput = z.object({
   warranty_type: z.enum(["standard", "none"]).default("standard"),
   escrow_release_days: z.number().int().min(1).max(30).default(3),
   delivery_content: z.string().max(5000).optional().nullable(),
+  auto_send_telegram: z.boolean().default(true),
+  buyer_guide: z.string().max(4000).optional().nullable(),
+  highlights: z.string().max(2000).optional().nullable(),
 });
 
 export const saveProduct = createServerFn({ method: "POST" })
@@ -124,7 +127,7 @@ export const saveProduct = createServerFn({ method: "POST" })
       await db.from("products").update({ stock: count ?? 0 }).eq("id", pid);
       return codes.length;
     };
-    const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null };
+    const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null, buyer_guide: rest.buyer_guide || null, highlights: rest.highlights || null };
     if (id) {
       const { error } = await db.from("products").update(row).eq("id", id).eq("shop_id", shopId);
       if (error) throw new Error(error.message);

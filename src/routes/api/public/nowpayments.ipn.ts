@@ -30,8 +30,12 @@ export const Route = createFileRoute("/api/public/nowpayments/ipn")({
             const amt = `${Number(o.total_amount).toFixed(2)} ${o.currency}`;
             await sendTelegramMessage(bot?.bot_token, bot?.notification_chat_id, `🛒 <b>New paid order #${o.order_number}</b>\n${escapeHtml(o.product_name)} × ${o.quantity}\n💰 ${amt}\n👤 ${buyer?.username ? "@" + escapeHtml(buyer.username) : "buyer"}${o.delivery_address ? `\n📍 ${escapeHtml(o.delivery_address)}` : ""}`);
             await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], buyer?.telegram_id, `✅ Payment received for order #${o.order_number} (${amt}). Funds are held in escrow until you confirm receipt.`);
+            const { data: prod } = await db.from("products").select("auto_send_telegram, buyer_guide").eq("id", o.product_id).maybeSingle();
+            if (prod?.buyer_guide) await db.from("orders").update({ buyer_guide: prod.buyer_guide }).eq("id", o.id);
             const { data: fresh } = await db.from("orders").select("delivered_content").eq("id", o.id).single();
-            if (fresh?.delivered_content) await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], buyer?.telegram_id, `🎁 Your item (#${o.order_number}):\n<code>${escapeHtml(fresh.delivered_content)}</code>`);
+            const guide = prod?.buyer_guide ? `\n\n📘 ${escapeHtml(prod.buyer_guide)}` : "";
+            if (fresh?.delivered_content && prod?.auto_send_telegram !== false) await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], buyer?.telegram_id, `🎁 Your item (#${o.order_number}):\n<code>${escapeHtml(fresh.delivered_content)}</code>${guide}`);
+            else if (guide) await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], buyer?.telegram_id, `📦 Order #${o.order_number} is ready in the app.${guide}`);
           }
         } else if (o.status === "awaiting_payment") {
           const next = status === "expired" ? "expired" : status === "failed" ? "awaiting_payment" : o.status;
