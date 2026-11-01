@@ -129,6 +129,9 @@ export const saveProduct = createServerFn({ method: "POST" })
     };
     const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null, buyer_guide: rest.buyer_guide || null, highlights: rest.highlights || null };
     if (id) {
+      const { data: cur } = await db.from("products").select("status").eq("id", id).eq("shop_id", shopId).maybeSingle();
+      // Admin-hidden products stay hidden until an admin restores them.
+      if (cur?.status === "suspended") (row as { status: string }).status = "suspended";
       const { error } = await db.from("products").update(row).eq("id", id).eq("shop_id", shopId);
       if (error) throw new Error(error.message);
       const added = await addCodes(id);
