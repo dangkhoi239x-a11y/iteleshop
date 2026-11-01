@@ -1,4 +1,6 @@
 # TeleShop roadmap
+- [ ] Buyer code issue reports, seller review/replacement, order history
+- [ ] AI product recommendations from live shop catalog
 - [x] Migrate Replit TeleShop to Lovable (all pages, 4 languages, escrow, wallet, vouchers, flash sale, affiliate/KOL, disputes, admin)
 - [x] NOWPayments checkout + webhook
 - [x] Digital delivery: seller stores code/link per product, buyer sees it after payment
