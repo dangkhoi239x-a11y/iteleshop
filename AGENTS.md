@@ -22,3 +22,4 @@
 - Code issue mutations use service-role-only SQL functions with participant checks, order/code locks and append-only events; replacement claims inventory atomically without moving money.
 - Product recommendations use authenticated server functions, server-only AI Gateway Responses helpers and catalog ID validation; provider blocks persist in ai_access_state to prevent replay.
 - Reward points are a signed ledger (`reward_points`); check-in, task awards, draw entry and draw runs go through service-role-only SQL functions; task requirements are verified server-side before awarding. Why: no double claims or negative balances.
+- Telegram Stars checkout: invoice payload = order id, webhook /api/public/telegram/webhook verifies secret token derived from bot token; post-payment logic shared in src/server/order-paid.server.ts. Why: one idempotent paid path for crypto and Stars.

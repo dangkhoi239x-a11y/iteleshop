@@ -13,7 +13,6 @@ import { EmptyState, Field, PageHeader, errMsg } from "@/components/app/ui-bits"
 import { productQuery } from "@/lib/queries";
 import { bulkPercent, effectivePrice, freeUnits, parseBulkTiers, round6, starsFor } from "@/lib/pricing";
 import { openStarsInvoice } from "@/lib/telegram";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/format";
 import { checkVoucher } from "@/functions/market.functions";
