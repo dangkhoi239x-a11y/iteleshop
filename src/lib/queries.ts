@@ -1,9 +1,14 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const must = <T,>(r: { data: T | null; error: { message: string } | null }) => {
+type Res = { data: unknown; error: { message: string } | null };
+const must = <R extends Res>(r: R) => {
   if (r.error) throw new Error(r.error.message);
-  return r.data as T;
+  return r.data as NonNullable<R["data"]>;
+};
+const maybe = <R extends Res>(r: R) => {
+  if (r.error) throw new Error(r.error.message);
+  return (r.data ?? null) as R["data"] | null;
 };
 
 const PRODUCT_COLS = "*, shops(id, name, logo_url)";
@@ -29,7 +34,7 @@ export const flashQuery = () =>
 export const productQuery = (id: string) =>
   queryOptions({
     queryKey: ["product", id],
-    queryFn: async () => must(await supabase.from("products").select("*, shops(id, name, logo_url, owner_id, rating, total_sales)").eq("id", id).maybeSingle()),
+    queryFn: async () => maybe(await supabase.from("products").select("*, shops(id, name, logo_url, owner_id, rating, total_sales)").eq("id", id).maybeSingle()),
   });
 
 export const shopsQuery = () =>
@@ -39,7 +44,7 @@ export const shopQuery = (id: string) =>
   queryOptions({
     queryKey: ["shop", id],
     queryFn: async () => {
-      const shop = must(await supabase.from("shops").select("*").eq("id", id).maybeSingle());
+      const shop = maybe(await supabase.from("shops").select("*").eq("id", id).maybeSingle());
       const products = must(await supabase.from("products").select("*").eq("shop_id", id).eq("status", "active").order("created_at", { ascending: false }));
       return { shop, products };
     },
@@ -52,8 +57,8 @@ export const myShopQuery = (userId: string) =>
   queryOptions({
     queryKey: ["myShop", userId],
     queryFn: async () => {
-      const shop = must(await supabase.from("shops").select("*").eq("owner_id", userId).maybeSingle());
-      const bot = shop ? must(await supabase.from("shop_bots").select("*").eq("shop_id", shop.id).maybeSingle()) : null;
+      const shop = maybe(await supabase.from("shops").select("*").eq("owner_id", userId).maybeSingle());
+      const bot = shop ? maybe(await supabase.from("shop_bots").select("*").eq("shop_id", shop.id).maybeSingle()) : null;
       return { shop, bot };
     },
   });
@@ -68,8 +73,8 @@ export const orderQuery = (id: string) =>
   queryOptions({
     queryKey: ["order", id],
     queryFn: async () => {
-      const order = must(await supabase.from("orders").select("*, shops(id, name, owner_id)").eq("id", id).maybeSingle());
-      const dispute = order ? must(await supabase.from("disputes").select("*").eq("order_id", id).maybeSingle()) : null;
+      const order = maybe(await supabase.from("orders").select("*, shops(id, name, owner_id)").eq("id", id).maybeSingle());
+      const dispute = order ? maybe(await supabase.from("disputes").select("*").eq("order_id", id).maybeSingle()) : null;
       return { order, dispute };
     },
   });
@@ -78,7 +83,7 @@ export const vouchersQuery = (shopId: string) =>
   queryOptions({ queryKey: ["vouchers", shopId], queryFn: async () => must(await supabase.from("vouchers").select("*").eq("shop_id", shopId).order("created_at", { ascending: false })) });
 
 export const affiliateQuery = (userId: string) =>
-  queryOptions({ queryKey: ["affiliate", userId], queryFn: async () => must(await supabase.from("affiliates").select("*").eq("user_id", userId).maybeSingle()) });
+  queryOptions({ queryKey: ["affiliate", userId], queryFn: async () => maybe(await supabase.from("affiliates").select("*").eq("user_id", userId).maybeSingle()) });
 
 export const tiersQuery = () =>
   queryOptions({ queryKey: ["tiers"], queryFn: async () => must(await supabase.from("commission_tiers").select("*").order("min_order_amount")) });

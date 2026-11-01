@@ -26,6 +26,8 @@ const csrfMiddleware = createCsrfMiddleware({
 });
 
 export const startInstance = createStart(() => ({
+  // Telegram Mini App: data is per-user and read in the browser, so pages render client-side.
+  defaultSsr: false,
   functionMiddleware: [attachSupabaseAuth],
   requestMiddleware: [errorMiddleware, csrfMiddleware],
 }));

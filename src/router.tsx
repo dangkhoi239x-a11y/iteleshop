@@ -10,8 +10,6 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
-    // Telegram Mini App: data is per-user and read in the browser, so pages render client-side.
-    defaultSsr: false,
   });
 
   return router;
