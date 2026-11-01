@@ -44,6 +44,123 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_access_state: {
+        Row: {
+          blocked_message: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          blocked_message: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          blocked_message?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      code_issue_events: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          issue_id: string
+          new_content: string | null
+          note: string
+          old_content: string | null
+          order_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          issue_id: string
+          new_content?: string | null
+          note: string
+          old_content?: string | null
+          order_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          issue_id?: string
+          new_content?: string | null
+          note?: string
+          old_content?: string | null
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_issue_events_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "code_issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "code_issue_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      code_issues: {
+        Row: {
+          buyer_id: string
+          code_id: string
+          created_at: string
+          description: string
+          id: string
+          order_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          code_id: string
+          created_at?: string
+          description: string
+          id?: string
+          order_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          code_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          order_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_issues_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "product_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "code_issues_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commission_tiers: {
         Row: {
           commission_percent: number
@@ -647,6 +764,15 @@ export type Database = {
       }
       refund_order_escrow: { Args: { _order_id: string }; Returns: boolean }
       release_order_escrow: { Args: { _order_id: string }; Returns: boolean }
+      report_code_issue: {
+        Args: {
+          _actor: string
+          _code: string
+          _description: string
+          _order: string
+        }
+        Returns: string
+      }
       request_withdrawal: {
         Args: {
           _address: string
@@ -655,6 +781,10 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      resolve_code_issue: {
+        Args: { _action: string; _actor: string; _issue: string; _note: string }
+        Returns: boolean
       }
     }
     Enums: {
