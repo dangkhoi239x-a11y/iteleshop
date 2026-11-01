@@ -250,6 +250,51 @@ export type Database = {
           },
         ]
       }
+      product_codes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          order_id: string | null
+          product_id: string
+          sold_at: string | null
+          status: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id: string
+          sold_at?: string | null
+          status?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id?: string
+          sold_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_codes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_codes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_secrets: {
         Row: {
           content: string
