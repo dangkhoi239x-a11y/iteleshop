@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ListOrdered } from "lucide-react";
+import { ListOrdered, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, PageHeader, StatusPill } from "@/components/app/ui-bits";
 import { myOrdersQuery } from "@/lib/queries";
@@ -18,13 +20,22 @@ function Orders() {
   const { t } = useTranslation();
   const { userId } = useAuth();
   const { data, isLoading } = useQuery({ ...myOrdersQuery(userId ?? ""), enabled: !!userId });
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const list = (data ?? []).filter((o) => !needle || String(o.order_number).includes(needle) || o.product_name.toLowerCase().includes(needle));
   return (
     <div>
       <PageHeader title={t("order.title")} back={false} />
       <div className="space-y-2 p-4">
+        {(data?.length ?? 0) > 3 && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("order.searchPh")} className="pl-9" />
+          </div>
+        )}
         {isLoading && [1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
         {data?.length === 0 && <EmptyState icon={ListOrdered} title={t("order.empty")} sub={t("order.emptySub")} action={<Button asChild><Link to="/">{t("order.startShopping")}</Link></Button>} />}
-        {data?.map((o) => (
+        {list.map((o) => (
           <Link key={o.id} to="/orders/$orderId" params={{ orderId: o.id }} className="flex gap-3 rounded-2xl border border-border bg-card p-3">
             <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">{o.product_image && <img src={o.product_image} alt="" className="h-full w-full object-cover" />}</div>
             <div className="min-w-0 flex-1">
