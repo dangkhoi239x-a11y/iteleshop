@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createResponsesCall } from "./responses.server.ts";
 import { matchRecommendations } from "@/lib/recommendations";
 
-export async function recommendProducts(request: Request, db: Awaited<ReturnType<typeof import("@/integrations/supabase/client.server")["supabaseAdmin"]["from"]>> extends never ? never : typeof import("@/integrations/supabase/client.server")["supabaseAdmin"], need: string, language: string, shopId?: string) {
+export async function recommendProducts(request: Request, db: typeof import("@/integrations/supabase/client.server")["supabaseAdmin"], need: string, language: string, shopId?: string) {
   const { data: blocked, error: stateError } = await db.from("ai_access_state").select("blocked_message").eq("id", "recommendations").maybeSingle();
   if (stateError) throw new Error(stateError.message);
   if (blocked) throw new Error(blocked.blocked_message);

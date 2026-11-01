@@ -6,6 +6,8 @@ import { EmptyState, PageHeader, ProductCard } from "@/components/app/ui-bits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { shopQuery } from "@/lib/queries";
 import { openExternal } from "@/lib/telegram";
+import { AiRecommendations } from "@/components/app/AiRecommendations";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/shop/$shopId")({
   head: () => ({
@@ -44,12 +46,13 @@ function ShopPage() {
         </div>
         {s.description && <p className="mt-3 text-sm text-muted-foreground">{s.description}</p>}
         {s.telegram_channel && (
-          <button onClick={() => openExternal(`https://t.me/${s.telegram_channel!.replace(/^@|https?:\/\/t\.me\//g, "")}`)} className="mt-3 inline-flex items-center gap-1.5 text-sm text-primary">
+          <Button variant="link" onClick={() => openExternal(`https://t.me/${s.telegram_channel?.replace(/^@|https?:\/\/t\.me\//g, "")}`)} className="mt-3 inline-flex items-center gap-1.5 text-sm text-primary">
             <Send className="h-4 w-4" /> {s.telegram_channel}
-          </button>
+          </Button>
         )}
       </div>
       <div className="p-4">
+        <div className="mb-4"><AiRecommendations shopId={shopId} /></div>
         {data.products.length ? <div className="grid grid-cols-2 gap-3">{data.products.map((p) => <ProductCard key={p.id} p={p} />)}</div> : <EmptyState title={t("shop.empty")} />}
       </div>
     </div>
