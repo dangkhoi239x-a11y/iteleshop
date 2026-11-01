@@ -36,6 +36,13 @@
       "when": 1793542774724,
       "tag": "0004_rewards_tasks_checkin_draws",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793542816625,
+      "tag": "0005_fix_draw_weighting",
+      "breakpoints": true
     }
   ]
 }
