@@ -45,10 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setReady(true);
     });
     const w = tg();
-    w?.ready();
-    w?.expand();
-    w?.setHeaderColor?.("#141a26");
-    w?.setBackgroundColor?.("#141a26");
+    if (w?.initData) {
+      w.ready();
+      w.expand();
+      w.setHeaderColor?.("#141a26");
+      w.setBackgroundColor?.("#141a26");
+    }
     return () => data.subscription.unsubscribe();
   }, [qc]);
 

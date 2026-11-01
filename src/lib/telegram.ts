@@ -30,7 +30,8 @@ export function openExternal(url: string) {
 }
 
 export function haptic(kind: "success" | "error" | "light" = "light") {
-  const h = tg()?.HapticFeedback;
+  const w = tg();
+  const h = w?.initData ? w.HapticFeedback : undefined;
   if (!h) return;
   if (kind === "light") h.impactOccurred("light");
   else h.notificationOccurred(kind);
