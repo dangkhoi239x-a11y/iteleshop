@@ -1,3 +1,4 @@
+import { parseBulkTiers } from "@/lib/pricing";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -64,6 +65,12 @@ function ProductPage() {
             <span className="flex-1 font-medium">{p.shops.name}</span>
             <span className="text-xs text-primary">{t("product.visitShop")}</span>
           </Link>
+        )}
+        {parseBulkTiers(p.bulk_discounts).length > 0 && (
+          <div className="rounded-2xl border border-primary/40 bg-card p-4">
+            <h3 className="mb-2 text-sm font-semibold">{t("extra.bulkTitle")}</h3>
+            <ul className="space-y-1 text-sm">{parseBulkTiers(p.bulk_discounts).map((b) => <li key={b.minQty}>{t("extra.bulkRow", { qty: b.minQty, pct: b.percent })}</li>)}</ul>
+          </div>
         )}
         {p.highlights && (
           <div className="rounded-2xl border border-border bg-card p-4">

@@ -10,4 +10,7 @@
 - [ ] Decide payment direction: Telegram Stars required for digital goods inside Mini Apps (policy), NOWPayments only for physical/real-world items
 - [x] Product options: auto-send code via Telegram, highlights, after-purchase guide
 - [x] Admin panel tabs: overview, users (admin role), orders, products (hide/show), tasks & draws
-- [ ] Promotions research follow-ups (bundles, buy-X-get-Y, points-to-voucher) — awaiting user choice
+- [x] Promo 1: quantity discounts (buy more, save more)
+- [ ] Promo 2: points-to-voucher
+- [ ] Promo 3: first-time / win-back auto vouchers
+- [ ] Promo 4: private time-limited promo codes via shop channel

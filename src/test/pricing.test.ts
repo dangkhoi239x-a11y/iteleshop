@@ -31,3 +31,12 @@ describe("pricing rules", () => {
     expect(voucherDiscount({ ...v, min_order_amount: 150 }, 100, now)).toEqual({ ok: false, reason: "min_order" });
   });
 });
+
+import { bulkPercent as bp, parseBulkTiers as pbt } from "@/lib/pricing";
+describe("quantity discounts", () => {
+  const tiers = pbt("3:10\n5:15\nbad\n1:50");
+  it("parses valid tiers only", () => expect(tiers).toEqual([{ minQty: 3, percent: 10 }, { minQty: 5, percent: 15 }]));
+  it("no discount below 3", () => expect(bp(tiers, 2)).toBe(0));
+  it("10% from 3", () => expect(bp(tiers, 4)).toBe(10));
+  it("15% from 5", () => expect(bp(tiers, 7)).toBe(15));
+});

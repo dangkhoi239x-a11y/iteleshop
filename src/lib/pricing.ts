@@ -38,3 +38,20 @@ export function commissionPercent(tiers: Tier[], total: number) {
     .sort((a, b) => n(b.min_order_amount) - n(a.min_order_amount))[0];
   return t ? n(t.commission_percent) : 0;
 }
+
+export type BulkTier = { minQty: number; percent: number };
+/** Parses "3:10\n5:15" (min quantity : percent off) into sorted tiers; ignores bad lines. */
+export function parseBulkTiers(text: string | null | undefined): BulkTier[] {
+  const out = new Map<number, number>();
+  for (const line of (text ?? "").split(/[\n,;]/)) {
+    const m = line.trim().match(/^(\d+)\s*[:=]\s*(\d+(?:\.\d+)?)%?$/);
+    if (!m) continue;
+    const q = Number(m[1]), pct = Number(m[2]);
+    if (q >= 2 && pct > 0 && pct <= 90) out.set(q, pct);
+  }
+  return [...out].map(([minQty, percent]) => ({ minQty, percent })).sort((a, b) => a.minQty - b.minQty);
+}
+/** Best percent off for a quantity. */
+export function bulkPercent(tiers: BulkTier[], qty: number) {
+  return tiers.filter((t) => qty >= t.minQty).reduce((m, t) => Math.max(m, t.percent), 0);
+}

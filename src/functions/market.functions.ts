@@ -107,6 +107,7 @@ const productInput = z.object({
   auto_send_telegram: z.boolean().default(true),
   buyer_guide: z.string().max(4000).optional().nullable(),
   highlights: z.string().max(2000).optional().nullable(),
+  bulk_discounts: z.string().max(500).optional().nullable(),
 });
 
 export const saveProduct = createServerFn({ method: "POST" })
@@ -127,7 +128,7 @@ export const saveProduct = createServerFn({ method: "POST" })
       await db.from("products").update({ stock: count ?? 0 }).eq("id", pid);
       return codes.length;
     };
-    const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null, buyer_guide: rest.buyer_guide || null, highlights: rest.highlights || null };
+    const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null, buyer_guide: rest.buyer_guide || null, highlights: rest.highlights || null, bulk_discounts: rest.bulk_discounts || null };
     if (id) {
       const { data: cur } = await db.from("products").select("status").eq("id", id).eq("shop_id", shopId).maybeSingle();
       // Admin-hidden products stay hidden until an admin restores them.
