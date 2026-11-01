@@ -16,6 +16,7 @@ import { myProductsQuery } from "@/lib/queries";
 import { money } from "@/lib/format";
 import { deleteProduct, saveProduct } from "@/functions/market.functions";
 import type { Database } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
 
 type P = Database["public"]["Tables"]["products"]["Row"];
 
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/products")({
   component: () => <ShopGate>{(shop) => <Products shop={shop} />}</ShopGate>,
 });
 
-const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3" };
+const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "" };
 
 function Products({ shop }: { shop: ShopRow }) {
   const { t } = useTranslation();
@@ -37,15 +38,16 @@ function Products({ shop }: { shop: ShopRow }) {
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
 
-  const open = (p?: P) => {
+  const open = async (p?: P) => {
     setEditing(p?.id ?? null);
-    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days) } : blank);
+    const secret = p ? (await supabase.from("product_secrets").select("content").eq("product_id", p.id).maybeSingle()).data?.content ?? "" : "";
+    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: secret } : blank);
   };
 
   const submit = async () => {
     setBusy(true);
     try {
-      await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days) } });
+      await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content } });
       toast.success(t("common.saved"));
       setEditing(undefined);
       await qc.invalidateQueries({ queryKey: ["myProducts"] });
@@ -93,6 +95,7 @@ function Products({ shop }: { shop: ShopRow }) {
             <Field label={t("products.image")}><Input value={f.image_url} onChange={set("image_url")} placeholder="https://…" /></Field>
             <Field label={t("products.category")}><Input value={f.category} onChange={set("category")} maxLength={40} /></Field>
             <Field label={t("shop.desc")}><Textarea value={f.description} onChange={set("description")} rows={4} maxLength={4000} /></Field>
+            <Field label={t("products.delivery")} hint={t("products.deliveryHint")}><Textarea value={f.delivery_content} onChange={set("delivery_content")} rows={3} maxLength={5000} placeholder="CODE-XXXX / https://…" /></Field>
             <Field label={t("products.warranty")}>
               <Select value={f.warranty_type} onValueChange={(v) => setF({ ...f, warranty_type: v as "standard" })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="standard">{t("products.warrantyStandard")}</SelectItem><SelectItem value="none">{t("products.warrantyNone")}</SelectItem></SelectContent></Select>
             </Field>

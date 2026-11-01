@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Loader2, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Copy, Gift, Loader2, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -103,6 +103,14 @@ function OrderPage() {
           {o.note && <Row k={t("checkout.note")} v={o.note} />}
           {o.tracking_info && <Row k={t("order.tracking")} v={o.tracking_info} />}
         </div>
+
+        {o.delivered_content && (isBuyer || isSeller) && (
+          <div className="space-y-2 rounded-2xl border border-accent/50 bg-accent/10 p-4">
+            <p className="flex items-center gap-2 text-sm font-semibold text-accent"><Gift className="h-4 w-4" />{t("order.yourItem")}</p>
+            <p className="whitespace-pre-wrap break-all rounded-xl bg-background/60 p-3 font-mono text-sm">{o.delivered_content}</p>
+            <Button size="sm" variant="secondary" onClick={() => { void navigator.clipboard.writeText(o.delivered_content!); toast.success(t("common.copied")); }}><Copy /> {t("common.copy")}</Button>
+          </div>
+        )}
 
         {isBuyer && ["paid", "shipped", "delivered"].includes(o.status) && (
           <div className="space-y-2">

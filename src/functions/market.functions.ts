@@ -103,6 +103,7 @@ const productInput = z.object({
   status: z.enum(["active", "draft"]).default("active"),
   warranty_type: z.enum(["standard", "none"]).default("standard"),
   escrow_release_days: z.number().int().min(1).max(30).default(3),
+  delivery_content: z.string().max(5000).optional().nullable(),
 });
 
 export const saveProduct = createServerFn({ method: "POST" })
@@ -111,15 +112,22 @@ export const saveProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await admin();
     const shopId = await myShopId(context.userId);
-    const { id, ...rest } = data;
+    const { id, delivery_content, ...rest } = data;
+    const saveSecret = async (pid: string) => {
+      if (delivery_content === undefined) return;
+      if (delivery_content?.trim()) await db.from("product_secrets").upsert({ product_id: pid, content: delivery_content.trim(), updated_at: new Date().toISOString() });
+      else await db.from("product_secrets").delete().eq("product_id", pid);
+    };
     const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null };
     if (id) {
       const { error } = await db.from("products").update(row).eq("id", id).eq("shop_id", shopId);
       if (error) throw new Error(error.message);
+      await saveSecret(id);
       return { id };
     }
     const { data: p, error } = await db.from("products").insert({ ...row, shop_id: shopId }).select("id").single();
     if (error) throw new Error(error.message);
+    await saveSecret(p.id);
     return p;
   });
 
