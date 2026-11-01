@@ -14,13 +14,20 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ShopsRouteImport } from './routes/shops'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAffiliateRouteImport } from './routes/_authenticated/affiliate'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
+import { Route as AuthenticatedKolOnboardingRouteImport } from './routes/_authenticated/kol-onboarding'
 import { Route as AuthenticatedRegisterShopRouteImport } from './routes/_authenticated/register-shop'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as ProductProductIdRouteImport } from './routes/product.$productId'
 import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
+import { Route as AuthenticatedDashboardFlashSalesRouteImport } from './routes/_authenticated/dashboard.flash-sales'
+import { Route as AuthenticatedDashboardOrdersRouteImport } from './routes/_authenticated/dashboard.orders'
 import { Route as AuthenticatedDashboardProductsRouteImport } from './routes/_authenticated/dashboard.products'
+import { Route as AuthenticatedDashboardSettingsRouteImport } from './routes/_authenticated/dashboard.settings'
+import { Route as AuthenticatedDashboardVouchersRouteImport } from './routes/_authenticated/dashboard.vouchers'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as ApiPublicNowpaymentsIpnRouteImport } from './routes/api/public/nowpayments.ipn'
@@ -49,11 +56,27 @@ const ShopsRoute = ShopsRouteImport.update({
   path: '/shops',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAffiliateRoute = AuthenticatedAffiliateRouteImport.update({
+  id: '/affiliate',
+  path: '/affiliate',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedKolOnboardingRoute =
+  AuthenticatedKolOnboardingRouteImport.update({
+    id: '/kol-onboarding',
+    path: '/kol-onboarding',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRegisterShopRoute =
   AuthenticatedRegisterShopRouteImport.update({
     id: '/register-shop',
@@ -81,10 +104,34 @@ const AuthenticatedDashboardIndexRoute =
     path: '/dashboard/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDashboardFlashSalesRoute =
+  AuthenticatedDashboardFlashSalesRouteImport.update({
+    id: '/dashboard/flash-sales',
+    path: '/dashboard/flash-sales',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardOrdersRoute =
+  AuthenticatedDashboardOrdersRouteImport.update({
+    id: '/dashboard/orders',
+    path: '/dashboard/orders',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardProductsRoute =
   AuthenticatedDashboardProductsRouteImport.update({
     id: '/dashboard/products',
     path: '/dashboard/products',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardSettingsRoute =
+  AuthenticatedDashboardSettingsRouteImport.update({
+    id: '/dashboard/settings',
+    path: '/dashboard/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardVouchersRoute =
+  AuthenticatedDashboardVouchersRouteImport.update({
+    id: '/dashboard/vouchers',
+    path: '/dashboard/vouchers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedOrdersIndexRoute =
@@ -110,12 +157,19 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/shops': typeof ShopsRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/affiliate': typeof AuthenticatedAffiliateRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
+  '/kol-onboarding': typeof AuthenticatedKolOnboardingRoute
   '/register-shop': typeof AuthenticatedRegisterShopRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
+  '/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRoute
+  '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
+  '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
@@ -126,12 +180,19 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/shops': typeof ShopsRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/affiliate': typeof AuthenticatedAffiliateRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
+  '/kol-onboarding': typeof AuthenticatedKolOnboardingRoute
   '/register-shop': typeof AuthenticatedRegisterShopRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
+  '/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRoute
+  '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
+  '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
@@ -144,12 +205,19 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/shops': typeof ShopsRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/affiliate': typeof AuthenticatedAffiliateRoute
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
+  '/_authenticated/kol-onboarding': typeof AuthenticatedKolOnboardingRoute
   '/_authenticated/register-shop': typeof AuthenticatedRegisterShopRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/_authenticated/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
+  '/_authenticated/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRoute
+  '/_authenticated/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
+  '/_authenticated/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
@@ -162,12 +230,19 @@ export interface FileRouteTypes {
     | '/auth'
     | '/profile'
     | '/shops'
+    | '/admin'
+    | '/affiliate'
     | '/checkout'
+    | '/kol-onboarding'
     | '/register-shop'
     | '/wallet'
     | '/product/$productId'
     | '/shop/$shopId'
+    | '/dashboard/flash-sales'
+    | '/dashboard/orders'
     | '/dashboard/products'
+    | '/dashboard/settings'
+    | '/dashboard/vouchers'
     | '/orders/$orderId'
     | '/dashboard/'
     | '/orders/'
@@ -178,12 +253,19 @@ export interface FileRouteTypes {
     | '/auth'
     | '/profile'
     | '/shops'
+    | '/admin'
+    | '/affiliate'
     | '/checkout'
+    | '/kol-onboarding'
     | '/register-shop'
     | '/wallet'
     | '/product/$productId'
     | '/shop/$shopId'
+    | '/dashboard/flash-sales'
+    | '/dashboard/orders'
     | '/dashboard/products'
+    | '/dashboard/settings'
+    | '/dashboard/vouchers'
     | '/orders/$orderId'
     | '/dashboard'
     | '/orders'
@@ -195,12 +277,19 @@ export interface FileRouteTypes {
     | '/auth'
     | '/profile'
     | '/shops'
+    | '/_authenticated/admin'
+    | '/_authenticated/affiliate'
     | '/_authenticated/checkout'
+    | '/_authenticated/kol-onboarding'
     | '/_authenticated/register-shop'
     | '/_authenticated/wallet'
     | '/product/$productId'
     | '/shop/$shopId'
+    | '/_authenticated/dashboard/flash-sales'
+    | '/_authenticated/dashboard/orders'
     | '/_authenticated/dashboard/products'
+    | '/_authenticated/dashboard/settings'
+    | '/_authenticated/dashboard/vouchers'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/dashboard/'
     | '/_authenticated/orders/'
@@ -255,11 +344,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/affiliate': {
+      id: '/_authenticated/affiliate'
+      path: '/affiliate'
+      fullPath: '/affiliate'
+      preLoaderRoute: typeof AuthenticatedAffiliateRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/checkout': {
       id: '/_authenticated/checkout'
       path: '/checkout'
       fullPath: '/checkout'
       preLoaderRoute: typeof AuthenticatedCheckoutRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/kol-onboarding': {
+      id: '/_authenticated/kol-onboarding'
+      path: '/kol-onboarding'
+      fullPath: '/kol-onboarding'
+      preLoaderRoute: typeof AuthenticatedKolOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/register-shop': {
@@ -297,11 +407,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/flash-sales': {
+      id: '/_authenticated/dashboard/flash-sales'
+      path: '/dashboard/flash-sales'
+      fullPath: '/dashboard/flash-sales'
+      preLoaderRoute: typeof AuthenticatedDashboardFlashSalesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard/orders': {
+      id: '/_authenticated/dashboard/orders'
+      path: '/dashboard/orders'
+      fullPath: '/dashboard/orders'
+      preLoaderRoute: typeof AuthenticatedDashboardOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/products': {
       id: '/_authenticated/dashboard/products'
       path: '/dashboard/products'
       fullPath: '/dashboard/products'
       preLoaderRoute: typeof AuthenticatedDashboardProductsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard/settings': {
+      id: '/_authenticated/dashboard/settings'
+      path: '/dashboard/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof AuthenticatedDashboardSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard/vouchers': {
+      id: '/_authenticated/dashboard/vouchers'
+      path: '/dashboard/vouchers'
+      fullPath: '/dashboard/vouchers'
+      preLoaderRoute: typeof AuthenticatedDashboardVouchersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/orders/': {
@@ -329,20 +467,34 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAffiliateRoute: typeof AuthenticatedAffiliateRoute
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
+  AuthenticatedKolOnboardingRoute: typeof AuthenticatedKolOnboardingRoute
   AuthenticatedRegisterShopRoute: typeof AuthenticatedRegisterShopRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
+  AuthenticatedDashboardFlashSalesRoute: typeof AuthenticatedDashboardFlashSalesRoute
+  AuthenticatedDashboardOrdersRoute: typeof AuthenticatedDashboardOrdersRoute
   AuthenticatedDashboardProductsRoute: typeof AuthenticatedDashboardProductsRoute
+  AuthenticatedDashboardSettingsRoute: typeof AuthenticatedDashboardSettingsRoute
+  AuthenticatedDashboardVouchersRoute: typeof AuthenticatedDashboardVouchersRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAffiliateRoute: AuthenticatedAffiliateRoute,
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
+  AuthenticatedKolOnboardingRoute: AuthenticatedKolOnboardingRoute,
   AuthenticatedRegisterShopRoute: AuthenticatedRegisterShopRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
+  AuthenticatedDashboardFlashSalesRoute: AuthenticatedDashboardFlashSalesRoute,
+  AuthenticatedDashboardOrdersRoute: AuthenticatedDashboardOrdersRoute,
   AuthenticatedDashboardProductsRoute: AuthenticatedDashboardProductsRoute,
+  AuthenticatedDashboardSettingsRoute: AuthenticatedDashboardSettingsRoute,
+  AuthenticatedDashboardVouchersRoute: AuthenticatedDashboardVouchersRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
