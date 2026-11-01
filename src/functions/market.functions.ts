@@ -114,7 +114,8 @@ export const saveProduct = createServerFn({ method: "POST" })
     const shopId = await myShopId(context.userId);
     const { id, delivery_content, ...rest } = data;
     // Mỗi dòng trong delivery_content là một mã/link riêng, bán đúng một lần.
-    const codes = (delivery_content ?? "").split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 500);
+    const { parseCodeLines } = await import("@/lib/codes");
+    const codes = parseCodeLines(delivery_content);
     const addCodes = async (pid: string) => {
       if (!codes.length) return 0;
       const { error } = await db.from("product_codes").insert(codes.map((content) => ({ product_id: pid, content })));
