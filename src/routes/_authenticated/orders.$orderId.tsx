@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Copy, Gift, Loader2, Send, ShieldCheck } from "lucide-react";
+import { AlertTriangle, BookOpen, Copy, Gift, Loader2, Send, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
