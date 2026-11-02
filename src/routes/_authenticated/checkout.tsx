@@ -20,19 +20,19 @@ import { createOrder } from "@/functions/orders.functions";
 import { haptic, openExternal } from "@/lib/telegram";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
-  validateSearch: z.object({ productId: z.string() }),
+  validateSearch: z.object({ productId: z.string(), quantity: z.coerce.number().int().min(1).max(100).optional() }),
   head: () => ({ meta: [{ title: "Checkout · TeleShop" }, { name: "description", content: "Pay with crypto on TeleShop." }, { property: "og:title", content: "Checkout · TeleShop" }, { property: "og:description", content: "Pay with crypto." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: Checkout,
 });
 
 function Checkout() {
   const { t } = useTranslation();
-  const { productId } = Route.useSearch();
+  const { productId, quantity } = Route.useSearch();
   const nav = useNavigate();
   const { data: p } = useQuery(productQuery(productId));
   const check = useServerFn(checkVoucher);
   const create = useServerFn(createOrder);
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState(quantity ?? 1);
   const { data: settings } = useQuery({ queryKey: ["platformSettings"], queryFn: async () => (await supabase.from("platform_settings").select("*").maybeSingle()).data });
   const [method, setMethod] = useState<"crypto" | "stars" | null>(null);
   const payMethod = method ?? (settings && !settings.crypto_enabled ? "stars" : "crypto");

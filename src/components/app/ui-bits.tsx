@@ -4,16 +4,18 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { countdown, money } from "@/lib/format";
-import { effectivePrice, isFlashSaleActive } from "@/lib/pricing";
+import { isFlashSaleActive } from "@/lib/pricing";
+import { Button } from "@/components/ui/button";
+import { ProductBadges, ProductPrice, type MerchProduct } from "./ProductMerchandising";
 
 export function PageHeader({ title, back = true, action }: { title: string; back?: boolean; action?: ReactNode }) {
   const router = useRouter();
   return (
     <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-border/60 bg-background/85 px-4 py-3 backdrop-blur">
       {back && (
-        <button onClick={() => router.history.back()} className="-ml-1 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label="Back">
+        <Button variant="ghost" size="icon" onClick={() => router.history.back()} className="-ml-1 shrink-0 text-muted-foreground" aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
-        </button>
+        </Button>
       )}
       <h1 className="flex-1 truncate text-lg font-semibold">{title}</h1>
       {action}
@@ -62,36 +64,22 @@ export function Countdown({ end, className }: { end: string; className?: string 
   return <span className={cn("tabular font-mono", className)}>{countdown(end, now)}</span>;
 }
 
-type CardProduct = { id: string; name: string; price: number | string; currency: string; image_url: string | null; flash_sale_price: number | string | null; flash_sale_end: string | null; sold_count: number; stock: number };
+type CardProduct = MerchProduct & { id: string; name: string; image_url: string | null; sold_count: number; stock: number };
 
 export function ProductCard({ p }: { p: CardProduct }) {
-  const { t } = useTranslation();
-  const flash = isFlashSaleActive(p);
-  return (
-    <Link to="/product/$productId" params={{ productId: p.id }} className="group block overflow-hidden rounded-2xl border border-border bg-card transition-transform active:scale-[0.98]">
-      <div className="relative aspect-square bg-muted">
-        {p.image_url ? (
-          <img src={p.image_url} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full items-center justify-center"><Package className="h-8 w-8 text-muted-foreground" /></div>
-        )}
-        {flash && (
-          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-flash px-2 py-0.5 text-[10px] font-bold text-flash-foreground">
-            <Flame className="h-3 w-3" /> <Countdown end={p.flash_sale_end!} />
-          </span>
-        )}
-        {p.stock === 0 && <span className="absolute inset-x-0 bottom-0 bg-background/80 py-1 text-center text-[11px] font-semibold">{t("product.outOfStock")}</span>}
-      </div>
-      <div className="p-3">
-        <h3 className="line-clamp-1 text-sm font-medium">{p.name}</h3>
-        <div className="mt-1.5 flex items-baseline gap-1.5">
-          <span className="tabular font-display font-bold text-primary">{money(effectivePrice(p), p.currency)}</span>
-          {flash && <span className="tabular text-[11px] text-muted-foreground line-through">{money(p.price)}</span>}
-        </div>
-        {p.sold_count > 0 && <p className="mt-0.5 text-[11px] text-muted-foreground">{t("product.sold", { n: p.sold_count })}</p>}
-      </div>
-    </Link>
-  );
+ const { t } = useTranslation(); const flash = isFlashSaleActive(p);
+ return <Link to="/product/$productId" params={{productId:p.id}} className="group flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-primary/50">
+  <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+   {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" className="h-full w-full object-contain p-2" /> : <div className="flex h-full items-center justify-center"><Package className="size-8 text-muted-foreground" /></div>}
+   {flash && p.flash_sale_end && <span className="absolute right-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-background/90 px-1.5 py-1 text-[10px] text-flash"><Flame className="size-3" /><Countdown end={p.flash_sale_end} /></span>}
+   {p.stock === 0 && <span className="absolute inset-x-0 bottom-0 bg-background/90 py-1 text-center text-[11px]">{t('product.outOfStock')}</span>}
+  </div>
+  <div className="flex flex-1 flex-col gap-2 p-2.5">
+   <h3 className="line-clamp-2 min-h-10 break-words text-sm font-semibold">{p.name}</h3>
+   <ProductPrice p={p} /><ProductBadges p={p} />
+   <div className="mt-auto flex flex-wrap justify-between gap-1 border-t border-border/60 pt-2 text-[10px] text-muted-foreground"><span>{t('product.sold',{n:p.sold_count})}</span><span className={p.stock>0?'text-success':''}>{p.stock>0?t('product.stock',{n:p.stock}):t('product.outOfStock')}</span></div>
+  </div>
+ </Link>;
 }
 
 export function StatCard({ label, value, icon: Icon, tone = "primary" }: { label: string; value: ReactNode; icon?: LucideIcon; tone?: "primary" | "accent" | "warning" | "success" }) {

@@ -1,4 +1,5 @@
 # TeleShop roadmap
+- [x] Refresh product, shop and shop-list UI: compact imagery, visible price/buy/share, factual promotion badges and related items; live stocked product, 360/390/843 layouts, purchase-to-sign-in, search/offer filter, copy/share and details verified; 23 pricing/referral tests pass. Current catalog has no configured offers or related items for populated verification.
 - [x] Product referral links, verified Telegram capture, order commission snapshots and shop/UTC+7 daily referral cost reports; 29 tests pass
 - [x] Automatic Telegram gift-code delivery with retry state, recipient acknowledgement callback and admin history implemented; live gift delivery/acknowledgement awaits eligible participant
 - [x] Admin campaign creation, planned budgets/claim deadlines and schedules; shop quiz awards points plus capped free spins; creation/activation/quiz readback verified in signed-in admin UI
