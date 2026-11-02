@@ -81,6 +81,13 @@ export const createOrder = createServerFn({ method: "POST" })
       const { data: aff } = await db.from("affiliates").select("user_id, status").eq("user_id", me.referred_by).maybeSingle();
       if (aff?.status === "active") affiliateUser = aff.user_id;
     }
+    let productReferralId:string|null=null;
+    const {data:binding}=await db.from('buyer_product_referrals').select('referral_id,product_referrals(affiliate_user_id)').eq('buyer_id',context.userId).eq('product_id',p.id).maybeSingle();
+    const linkedAffiliate=binding?.product_referrals?.affiliate_user_id;
+    if(linkedAffiliate&&linkedAffiliate!==context.userId&&linkedAffiliate!==p.shops.owner_id){
+      const {data:eligible}=await db.from('affiliates').select('status').eq('user_id',linkedAffiliate).maybeSingle();
+      if(eligible?.status==='active'){affiliateUser=linkedAffiliate;productReferralId=binding?.referral_id??null;}
+    }
 
     const { data: order, error } = await db
       .from("orders")
@@ -91,6 +98,7 @@ export const createOrder = createServerFn({ method: "POST" })
         unit_price: unit, subtotal: gross, discount_amount: discount, total_amount: total, currency: p.currency,
         warranty_type: p.warranty_type, escrow_release_days: p.escrow_release_days, commission_percent: cp,
         commission_amount: round6((total * cp) / 100), affiliate_user_id: affiliateUser,
+        product_referral_id:productReferralId,
         affiliate_percent: affiliateUser ? Number(p.shops.affiliate_percent) : 0,
         delivery_address: data.deliveryAddress ?? null, note: data.note ?? null, voucher_code: voucherCode,
       })
