@@ -1,4 +1,10 @@
 # TeleShop roadmap
+- [ ] Explain current NOWPayments fees from official sources
+- [ ] Build seller Stars pending/settlement and withdrawal pages with real-receipt accounting
+- [ ] Build fee-aware USDT/TON withdrawals to external wallets with payout history
+- [ ] Build Admin Telegram channel management and buyer/seller notification history
+- [ ] Grant verified Telegram 999511304 admin, enable Stars and create sample code product
+- [ ] Verify user-funded Stars purchase, Telegram code delivery, shop/day revenue and actual settlement/wallet reconciliation
 - [x] Correct blank Telegram menu: verified published page returns 200 and renders; menu updated and corrected button delivered to requested Telegram account; 4 URL/Start tests pass
 - [x] Fix silent Telegram Start: store-opening reply and menu added, webhook registered; Telegram drained 2 pending updates with no delivery errors, 3 tests pass
 - [x] Configure NOWPayments API key/IPN secret; public callback rejects unsigned requests
