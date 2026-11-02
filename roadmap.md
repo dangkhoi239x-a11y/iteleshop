@@ -40,3 +40,5 @@
 - [x] Promotions: vouchers sent via Telegram, buy-X-get-Y, quantity tiers
 - [x] Telegram Stars payment with admin on/off + rates
 - [x] Connect configured bot to receive Telegram Start and Stars updates
+- [x] Product page: sticky header with small image, price, buy, share/referral
+- [x] After-purchase guide: product field, order page highlight, Telegram auto-send
