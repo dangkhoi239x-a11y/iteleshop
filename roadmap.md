@@ -1,4 +1,6 @@
 # TeleShop roadmap
+- [ ] Actual-receipt Stars settlement and safe seller wallet accounting
+- [ ] Shop/day revenue report separating Stars and crypto
 - [x] Buyer code issue reports, seller review/replacement, order history
 - [x] AI product recommendations from live shop catalog
 - [x] Migrate Replit TeleShop to Lovable (all pages, 4 languages, escrow, wallet, vouchers, flash sale, affiliate/KOL, disputes, admin)
