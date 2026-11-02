@@ -408,8 +408,15 @@ export type Database = {
           product_image: string | null
           product_name: string
           quantity: number
+          settled_affiliate: number | null
+          settled_amount: number | null
+          settled_at: string | null
+          settled_currency: string | null
+          settled_fee: number | null
+          settled_net: number | null
           shop_id: string
           stars_amount: number | null
+          stars_settlement_id: string | null
           status: string
           subtotal: number
           total_amount: number
@@ -450,8 +457,15 @@ export type Database = {
           product_image?: string | null
           product_name: string
           quantity?: number
+          settled_affiliate?: number | null
+          settled_amount?: number | null
+          settled_at?: string | null
+          settled_currency?: string | null
+          settled_fee?: number | null
+          settled_net?: number | null
           shop_id: string
           stars_amount?: number | null
+          stars_settlement_id?: string | null
           status?: string
           subtotal: number
           total_amount: number
@@ -492,8 +506,15 @@ export type Database = {
           product_image?: string | null
           product_name?: string
           quantity?: number
+          settled_affiliate?: number | null
+          settled_amount?: number | null
+          settled_at?: string | null
+          settled_currency?: string | null
+          settled_fee?: number | null
+          settled_net?: number | null
           shop_id?: string
           stars_amount?: number | null
+          stars_settlement_id?: string | null
           status?: string
           subtotal?: number
           total_amount?: number
@@ -516,6 +537,13 @@ export type Database = {
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_stars_settlement_id_fkey"
+            columns: ["stars_settlement_id"]
+            isOneToOne: false
+            referencedRelation: "stars_settlements"
             referencedColumns: ["id"]
           },
         ]
@@ -909,6 +937,36 @@ export type Database = {
         }
         Relationships: []
       }
+      stars_settlements: {
+        Row: {
+          confirmed_by: string
+          created_at: string
+          currency: string
+          id: string
+          received_amount: number
+          reference: string
+          stars_amount: number
+        }
+        Insert: {
+          confirmed_by: string
+          created_at?: string
+          currency: string
+          id?: string
+          received_amount: number
+          reference: string
+          stars_amount: number
+        }
+        Update: {
+          confirmed_by?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          received_amount?: number
+          reference?: string
+          stars_amount?: number
+        }
+        Relationships: []
+      }
       task_completions: {
         Row: {
           created_at: string
@@ -1065,6 +1123,7 @@ export type Database = {
     }
     Functions: {
       award_task: { Args: { _task: string; _user: string }; Returns: number }
+      credit_stars_order: { Args: { _order_id: string }; Returns: boolean }
       daily_checkin: { Args: { _user: string }; Returns: number }
       enter_draw: { Args: { _draw: string; _user: string }; Returns: boolean }
       has_role: {
@@ -1103,6 +1162,16 @@ export type Database = {
         Returns: boolean
       }
       run_draw: { Args: { _actor: string; _draw: string }; Returns: number }
+      settle_stars_orders: {
+        Args: {
+          _actor: string
+          _amount: number
+          _currency: string
+          _orders: string[]
+          _reference: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

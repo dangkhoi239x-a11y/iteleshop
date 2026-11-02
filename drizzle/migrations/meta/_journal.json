@@ -57,6 +57,13 @@
       "when": 1793573865202,
       "tag": "0007_promotions_and_stars",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793589896799,
+      "tag": "0008_stars_actual_settlement",
+      "breakpoints": true
     }
   ]
 }
