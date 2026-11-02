@@ -29,6 +29,8 @@ function Dashboard({ shop }: { shop: ShopRow }) {
   });
   const actions = [
     { to: "/dashboard/revenue", icon: TrendingUp, label: finance.title },
+    { to: '/dashboard/settlements', icon: TrendingUp, label: 'Đối soát Stars' },
+    { to: '/withdrawals', icon: Truck, label: 'Lịch sử rút tiền' },
     { to: "/dashboard/products", icon: Package, label: t("dash.products") },
     { to: "/dashboard/orders", icon: Truck, label: t("dash.orders") },
     { to: "/dashboard/flash-sales", icon: Flame, label: t("dash.flash") },
