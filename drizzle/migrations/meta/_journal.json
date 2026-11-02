@@ -78,6 +78,13 @@
       "when": 1793596755151,
       "tag": "0010_shop_growth_gift_wheel",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793599223022,
+      "tag": "0011_referral_quiz_notification_extensions",
+      "breakpoints": true
     }
   ]
 }
