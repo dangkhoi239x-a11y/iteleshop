@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Coins, ShoppingBag, Users } from "lucide-react";
+import { ArrowUpRight, Coins, ShoppingBag, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminLists } from "@/components/app/AdminLists";
 import { RewardsManager } from "@/components/app/RewardsManager";
 import { PaymentSettings } from "@/components/app/PaymentSettings";
-import { RevenueReport, useFinanceText } from "@/components/app/RevenueReport";
+import { RevenueReport, useFinanceText, useRevenueText } from "@/components/app/RevenueReport";
 import { StarsSettlement } from "@/components/app/StarsSettlement";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 function Admin() {
   const finance = useFinanceText();
+  const revenueLabels = useRevenueText();
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
   const qc = useQueryClient();
@@ -68,7 +69,7 @@ function Admin() {
         <TabsContent value="products"><AdminLists kind="products" /></TabsContent>
         <TabsContent value="rewards" className="-mx-4"><RewardsManager shopId={null} /></TabsContent>
         <TabsContent value="payments"><PaymentSettings /><StarsSettlement /></TabsContent>
-        <TabsContent value="revenue"><RevenueReport admin /></TabsContent>
+        <TabsContent value="revenue" className="space-y-4"><div className="flex justify-end"><Button asChild variant="outline" size="sm"><Link to="/revenue">{revenueLabels.open}<ArrowUpRight /></Link></Button></div><RevenueReport admin /></TabsContent>
         <TabsContent value="overview" className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
           <StatCard label={t("admin.users")} value={data?.users ?? "–"} icon={Users} />

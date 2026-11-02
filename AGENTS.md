@@ -25,3 +25,4 @@
 - Telegram Stars checkout: invoice payload = order id, webhook /api/public/telegram/webhook verifies secret token derived from bot token; post-payment logic shared in src/server/order-paid.server.ts. Why: one idempotent paid path for crypto and Stars.
 - Stars actual receipts are allocated proportionally by invoice Stars in service-role-only settlement SQL; seller credits require both settlement and escrow release. Why: checkout prices are not realized cash proceeds and credits must be idempotent.
 - Revenue reports aggregate all paginated paid orders by shop, UTC+7 payment day, payment method and settlement currency; never combine TON and USDT. Why: reporting must reconcile to the realized seller ledger without mixing assets.
+- The shared revenue view serves the dedicated platform report and seller report; report query keys include the authenticated user and filters. Why: consistent accounting and no cross-account cached financial data.
