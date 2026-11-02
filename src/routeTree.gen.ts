@@ -28,6 +28,7 @@ import { Route as ProductProductIdRouteImport } from './routes/product.$productI
 import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
 import { Route as AuthenticatedDashboardFlashSalesRouteImport } from './routes/_authenticated/dashboard.flash-sales'
+import { Route as AuthenticatedDashboardGrowthRouteImport } from './routes/_authenticated/dashboard.growth'
 import { Route as AuthenticatedDashboardOrdersRouteImport } from './routes/_authenticated/dashboard.orders'
 import { Route as AuthenticatedDashboardProductsRouteImport } from './routes/_authenticated/dashboard.products'
 import { Route as AuthenticatedDashboardRevenueRouteImport } from './routes/_authenticated/dashboard.revenue'
@@ -35,6 +36,8 @@ import { Route as AuthenticatedDashboardRewardsRouteImport } from './routes/_aut
 import { Route as AuthenticatedDashboardSettingsRouteImport } from './routes/_authenticated/dashboard.settings'
 import { Route as AuthenticatedDashboardSettlementsRouteImport } from './routes/_authenticated/dashboard.settlements'
 import { Route as AuthenticatedDashboardVouchersRouteImport } from './routes/_authenticated/dashboard.vouchers'
+import { Route as AuthenticatedGrowthIndexRouteImport } from './routes/_authenticated/growth.index'
+import { Route as AuthenticatedGrowthCampaignIdRouteImport } from './routes/_authenticated/growth.$campaignId'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as ApiPublicNowpaymentsIpnRouteImport } from './routes/api/public/nowpayments.ipn'
@@ -140,6 +143,12 @@ const AuthenticatedDashboardFlashSalesRoute =
     path: '/dashboard/flash-sales',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDashboardGrowthRoute =
+  AuthenticatedDashboardGrowthRouteImport.update({
+    id: '/dashboard/growth',
+    path: '/dashboard/growth',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardOrdersRoute =
   AuthenticatedDashboardOrdersRouteImport.update({
     id: '/dashboard/orders',
@@ -180,6 +189,18 @@ const AuthenticatedDashboardVouchersRoute =
   AuthenticatedDashboardVouchersRouteImport.update({
     id: '/dashboard/vouchers',
     path: '/dashboard/vouchers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGrowthIndexRoute =
+  AuthenticatedGrowthIndexRouteImport.update({
+    id: '/growth/',
+    path: '/growth/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGrowthCampaignIdRoute =
+  AuthenticatedGrowthCampaignIdRouteImport.update({
+    id: '/growth/$campaignId',
+    path: '/growth/$campaignId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedOrdersIndexRoute =
@@ -224,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
+  '/dashboard/growth': typeof AuthenticatedDashboardGrowthRoute
   '/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRoute
   '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
@@ -231,8 +253,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/settlements': typeof AuthenticatedDashboardSettlementsRoute
   '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
+  '/growth/$campaignId': typeof AuthenticatedGrowthCampaignIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/growth/': typeof AuthenticatedGrowthIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
   '/api/public/nowpayments/ipn': typeof ApiPublicNowpaymentsIpnRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -255,6 +279,7 @@ export interface FileRoutesByTo {
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
+  '/dashboard/growth': typeof AuthenticatedDashboardGrowthRoute
   '/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRoute
   '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
@@ -262,8 +287,10 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/settlements': typeof AuthenticatedDashboardSettlementsRoute
   '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
+  '/growth/$campaignId': typeof AuthenticatedGrowthCampaignIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
+  '/growth': typeof AuthenticatedGrowthIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
   '/api/public/nowpayments/ipn': typeof ApiPublicNowpaymentsIpnRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -288,6 +315,7 @@ export interface FileRoutesById {
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/_authenticated/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
+  '/_authenticated/dashboard/growth': typeof AuthenticatedDashboardGrowthRoute
   '/_authenticated/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRoute
   '/_authenticated/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
@@ -295,8 +323,10 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/_authenticated/dashboard/settlements': typeof AuthenticatedDashboardSettlementsRoute
   '/_authenticated/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
+  '/_authenticated/growth/$campaignId': typeof AuthenticatedGrowthCampaignIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/_authenticated/growth/': typeof AuthenticatedGrowthIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
   '/api/public/nowpayments/ipn': typeof ApiPublicNowpaymentsIpnRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -321,6 +351,7 @@ export interface FileRouteTypes {
     | '/product/$productId'
     | '/shop/$shopId'
     | '/dashboard/flash-sales'
+    | '/dashboard/growth'
     | '/dashboard/orders'
     | '/dashboard/products'
     | '/dashboard/revenue'
@@ -328,8 +359,10 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/settlements'
     | '/dashboard/vouchers'
+    | '/growth/$campaignId'
     | '/orders/$orderId'
     | '/dashboard/'
+    | '/growth/'
     | '/orders/'
     | '/api/public/nowpayments/ipn'
     | '/api/public/telegram/webhook'
@@ -352,6 +385,7 @@ export interface FileRouteTypes {
     | '/product/$productId'
     | '/shop/$shopId'
     | '/dashboard/flash-sales'
+    | '/dashboard/growth'
     | '/dashboard/orders'
     | '/dashboard/products'
     | '/dashboard/revenue'
@@ -359,8 +393,10 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/settlements'
     | '/dashboard/vouchers'
+    | '/growth/$campaignId'
     | '/orders/$orderId'
     | '/dashboard'
+    | '/growth'
     | '/orders'
     | '/api/public/nowpayments/ipn'
     | '/api/public/telegram/webhook'
@@ -384,6 +420,7 @@ export interface FileRouteTypes {
     | '/product/$productId'
     | '/shop/$shopId'
     | '/_authenticated/dashboard/flash-sales'
+    | '/_authenticated/dashboard/growth'
     | '/_authenticated/dashboard/orders'
     | '/_authenticated/dashboard/products'
     | '/_authenticated/dashboard/revenue'
@@ -391,8 +428,10 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/settings'
     | '/_authenticated/dashboard/settlements'
     | '/_authenticated/dashboard/vouchers'
+    | '/_authenticated/growth/$campaignId'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/dashboard/'
+    | '/_authenticated/growth/'
     | '/_authenticated/orders/'
     | '/api/public/nowpayments/ipn'
     | '/api/public/telegram/webhook'
@@ -546,6 +585,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardFlashSalesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/growth': {
+      id: '/_authenticated/dashboard/growth'
+      path: '/dashboard/growth'
+      fullPath: '/dashboard/growth'
+      preLoaderRoute: typeof AuthenticatedDashboardGrowthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/orders': {
       id: '/_authenticated/dashboard/orders'
       path: '/dashboard/orders'
@@ -595,6 +641,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardVouchersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/growth/': {
+      id: '/_authenticated/growth/'
+      path: '/growth'
+      fullPath: '/growth/'
+      preLoaderRoute: typeof AuthenticatedGrowthIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/growth/$campaignId': {
+      id: '/_authenticated/growth/$campaignId'
+      path: '/growth/$campaignId'
+      fullPath: '/growth/$campaignId'
+      preLoaderRoute: typeof AuthenticatedGrowthCampaignIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orders/': {
       id: '/_authenticated/orders/'
       path: '/orders'
@@ -637,6 +697,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedWithdrawalsRoute: typeof AuthenticatedWithdrawalsRoute
   AuthenticatedDashboardFlashSalesRoute: typeof AuthenticatedDashboardFlashSalesRoute
+  AuthenticatedDashboardGrowthRoute: typeof AuthenticatedDashboardGrowthRoute
   AuthenticatedDashboardOrdersRoute: typeof AuthenticatedDashboardOrdersRoute
   AuthenticatedDashboardProductsRoute: typeof AuthenticatedDashboardProductsRoute
   AuthenticatedDashboardRevenueRoute: typeof AuthenticatedDashboardRevenueRoute
@@ -644,8 +705,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardSettingsRoute: typeof AuthenticatedDashboardSettingsRoute
   AuthenticatedDashboardSettlementsRoute: typeof AuthenticatedDashboardSettlementsRoute
   AuthenticatedDashboardVouchersRoute: typeof AuthenticatedDashboardVouchersRoute
+  AuthenticatedGrowthCampaignIdRoute: typeof AuthenticatedGrowthCampaignIdRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
+  AuthenticatedGrowthIndexRoute: typeof AuthenticatedGrowthIndexRoute
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
 }
 
@@ -660,6 +723,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedWithdrawalsRoute: AuthenticatedWithdrawalsRoute,
   AuthenticatedDashboardFlashSalesRoute: AuthenticatedDashboardFlashSalesRoute,
+  AuthenticatedDashboardGrowthRoute: AuthenticatedDashboardGrowthRoute,
   AuthenticatedDashboardOrdersRoute: AuthenticatedDashboardOrdersRoute,
   AuthenticatedDashboardProductsRoute: AuthenticatedDashboardProductsRoute,
   AuthenticatedDashboardRevenueRoute: AuthenticatedDashboardRevenueRoute,
@@ -668,8 +732,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardSettlementsRoute:
     AuthenticatedDashboardSettlementsRoute,
   AuthenticatedDashboardVouchersRoute: AuthenticatedDashboardVouchersRoute,
+  AuthenticatedGrowthCampaignIdRoute: AuthenticatedGrowthCampaignIdRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
+  AuthenticatedGrowthIndexRoute: AuthenticatedGrowthIndexRoute,
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
 }
 
