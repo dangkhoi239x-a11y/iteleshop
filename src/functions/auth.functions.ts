@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { parseGrowthInvite } from '@/lib/growth';
 
 function randomCode() {
   const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -22,6 +23,7 @@ export const telegramLogin = createServerFn({ method: "POST" })
     const sessionSecret = process.env["SESSION_SECRET"]!;
     let tg: { id: string; first_name?: string | undefined; last_name?: string | undefined; username?: string | undefined; photo_url?: string | undefined; lang?: string | undefined };
     let ref = data.ref;
+    let growthInvite: string | null = null;
 
     if (data.initData) {
       const bot = process.env["TELEGRAM_BOT_TOKEN"];
@@ -30,6 +32,7 @@ export const telegramLogin = createServerFn({ method: "POST" })
       if (!v) throw new Error("Invalid Telegram session. Please reopen the app from Telegram.");
       tg = { id: String(v.user.id), first_name: v.user.first_name, last_name: v.user.last_name, username: v.user.username, photo_url: v.user.photo_url, lang: v.user.language_code };
       if (v.startParam?.startsWith("ref_")) ref = v.startParam.slice(4);
+      growthInvite = parseGrowthInvite(v.startParam);
     } else if (data.demoId) {
       tg = { id: `demo_${data.demoId}`, first_name: "Demo", last_name: "User", };
     } else {
@@ -51,11 +54,20 @@ export const telegramLogin = createServerFn({ method: "POST" })
         const { data: r } = await supabaseAdmin.from("profiles").select("id").eq("referral_code", ref.toUpperCase()).maybeSingle();
         if (r && r.id !== userId) referredBy = r.id;
       }
-      const lang = ["vi", "en", "ru", "zh"].includes(tg.lang?.slice(0, 2) ?? "") ? tg.lang!.slice(0, 2) : "vi";
-      await supabaseAdmin.from("profiles").insert({
+      const selectedLang = tg.lang?.slice(0, 2) ?? 'vi';
+      const lang = ["vi", "en", "ru", "zh"].includes(selectedLang) ? selectedLang : "vi";
+      const profileInsert = await supabaseAdmin.from("profiles").insert({
         id: userId, telegram_id: tg.id, username: tg.username ?? null, first_name: tg.first_name ?? null, last_name: tg.last_name ?? null,
         photo_url: tg.photo_url ?? null, referral_code: randomCode(), referred_by: referredBy, language: lang,
       });
+      if (profileInsert.error) throw new Error(profileInsert.error.message);
+      if (growthInvite && data.initData) {
+        const { data: invitation } = await supabaseAdmin.from('growth_members').select('campaign_id').eq('invite_code', growthInvite).maybeSingle();
+        if (invitation) {
+          const joined = await supabaseAdmin.rpc('join_growth_campaign', { _user: userId, _campaign: invitation.campaign_id, _invite: growthInvite, _new_telegram: true });
+          if (joined.error) console.warn('Growth invite not eligible', joined.error.code);
+        }
+      }
     } else if (data.initData) {
       await supabaseAdmin.from("profiles").update({ username: tg.username ?? null, first_name: tg.first_name ?? null, last_name: tg.last_name ?? null, photo_url: tg.photo_url ?? null }).eq("id", userId);
     }
