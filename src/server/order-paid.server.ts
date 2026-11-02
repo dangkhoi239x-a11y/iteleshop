@@ -4,6 +4,7 @@ import { escapeHtml, sendTelegramMessage } from "./telegram.server";
 export async function onOrderPaid(orderId: string, paymentId: string, payCurrency: string) {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   const changed = await db.rpc("mark_order_paid", { _order_id: orderId, _payment_id: paymentId, _pay_currency: payCurrency });
+  if (changed.error) throw new Error(changed.error.message);
   if (!changed.data) return false;
   const { data: o } = await db.from("orders").select("*").eq("id", orderId).single();
   if (!o) return true;

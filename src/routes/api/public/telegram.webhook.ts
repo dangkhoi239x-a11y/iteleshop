@@ -20,8 +20,8 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         }
         const sp = u["message"]?.successful_payment;
         if (sp && sp.currency === "XTR") {
-          const { data: o } = await db.from("orders").select("id, stars_amount").eq("id", String(sp.invoice_payload)).maybeSingle();
-          if (o && Number(sp.total_amount) === o.stars_amount) await onOrderPaid(o.id, String(sp.telegram_payment_charge_id), "XTR");
+          const { data: o } = await db.from("orders").select("id, stars_amount, pay_method").eq("id", String(sp.invoice_payload)).maybeSingle();
+          if (o?.pay_method === 'stars' && Number(sp.total_amount) === o.stars_amount) await onOrderPaid(o.id, String(sp.telegram_payment_charge_id), "XTR");
         }
         return new Response("ok");
       },

@@ -28,6 +28,7 @@ import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedDashboardFlashSalesRouteImport } from './routes/_authenticated/dashboard.flash-sales'
 import { Route as AuthenticatedDashboardOrdersRouteImport } from './routes/_authenticated/dashboard.orders'
 import { Route as AuthenticatedDashboardProductsRouteImport } from './routes/_authenticated/dashboard.products'
+import { Route as AuthenticatedDashboardRevenueRouteImport } from './routes/_authenticated/dashboard.revenue'
 import { Route as AuthenticatedDashboardRewardsRouteImport } from './routes/_authenticated/dashboard.rewards'
 import { Route as AuthenticatedDashboardSettingsRouteImport } from './routes/_authenticated/dashboard.settings'
 import { Route as AuthenticatedDashboardVouchersRouteImport } from './routes/_authenticated/dashboard.vouchers'
@@ -137,6 +138,12 @@ const AuthenticatedDashboardProductsRoute =
     path: '/dashboard/products',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDashboardRevenueRoute =
+  AuthenticatedDashboardRevenueRouteImport.update({
+    id: '/dashboard/revenue',
+    path: '/dashboard/revenue',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRewardsRoute =
   AuthenticatedDashboardRewardsRouteImport.update({
     id: '/dashboard/rewards',
@@ -197,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
   '/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRoute
+  '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/dashboard/rewards': typeof AuthenticatedDashboardRewardsRoute
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
@@ -224,6 +232,7 @@ export interface FileRoutesByTo {
   '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
   '/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRoute
+  '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/dashboard/rewards': typeof AuthenticatedDashboardRewardsRoute
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
@@ -253,6 +262,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
   '/_authenticated/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
   '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRoute
+  '/_authenticated/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/_authenticated/dashboard/rewards': typeof AuthenticatedDashboardRewardsRoute
   '/_authenticated/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/_authenticated/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/dashboard/flash-sales'
     | '/dashboard/orders'
     | '/dashboard/products'
+    | '/dashboard/revenue'
     | '/dashboard/rewards'
     | '/dashboard/settings'
     | '/dashboard/vouchers'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/dashboard/flash-sales'
     | '/dashboard/orders'
     | '/dashboard/products'
+    | '/dashboard/revenue'
     | '/dashboard/rewards'
     | '/dashboard/settings'
     | '/dashboard/vouchers'
@@ -337,6 +349,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/flash-sales'
     | '/_authenticated/dashboard/orders'
     | '/_authenticated/dashboard/products'
+    | '/_authenticated/dashboard/revenue'
     | '/_authenticated/dashboard/rewards'
     | '/_authenticated/dashboard/settings'
     | '/_authenticated/dashboard/vouchers'
@@ -495,6 +508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardProductsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/revenue': {
+      id: '/_authenticated/dashboard/revenue'
+      path: '/dashboard/revenue'
+      fullPath: '/dashboard/revenue'
+      preLoaderRoute: typeof AuthenticatedDashboardRevenueRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/rewards': {
       id: '/_authenticated/dashboard/rewards'
       path: '/dashboard/rewards'
@@ -558,6 +578,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardFlashSalesRoute: typeof AuthenticatedDashboardFlashSalesRoute
   AuthenticatedDashboardOrdersRoute: typeof AuthenticatedDashboardOrdersRoute
   AuthenticatedDashboardProductsRoute: typeof AuthenticatedDashboardProductsRoute
+  AuthenticatedDashboardRevenueRoute: typeof AuthenticatedDashboardRevenueRoute
   AuthenticatedDashboardRewardsRoute: typeof AuthenticatedDashboardRewardsRoute
   AuthenticatedDashboardSettingsRoute: typeof AuthenticatedDashboardSettingsRoute
   AuthenticatedDashboardVouchersRoute: typeof AuthenticatedDashboardVouchersRoute
@@ -577,6 +598,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardFlashSalesRoute: AuthenticatedDashboardFlashSalesRoute,
   AuthenticatedDashboardOrdersRoute: AuthenticatedDashboardOrdersRoute,
   AuthenticatedDashboardProductsRoute: AuthenticatedDashboardProductsRoute,
+  AuthenticatedDashboardRevenueRoute: AuthenticatedDashboardRevenueRoute,
   AuthenticatedDashboardRewardsRoute: AuthenticatedDashboardRewardsRoute,
   AuthenticatedDashboardSettingsRoute: AuthenticatedDashboardSettingsRoute,
   AuthenticatedDashboardVouchersRoute: AuthenticatedDashboardVouchersRoute,

@@ -19,13 +19,15 @@ export const adminOverview = createServerFn({ method: "POST" })
       db.from("profiles").select("id", { count: "exact", head: true }),
       db.from("shops").select("id, name, status, total_sales, created_at").order("created_at", { ascending: false }).limit(100),
       db.from("orders").select("id", { count: "exact", head: true }),
-      db.from("orders").select("total_amount, commission_amount, currency").in("escrow_status", ["holding", "released", "frozen"]),
+      db.from("orders").select("total_amount, commission_amount, currency, pay_method, settled_amount, settled_fee, settled_currency").in("escrow_status", ["holding", "released", "frozen"]),
     ]);
     const volume: Record<string, number> = {};
     const fees: Record<string, number> = {};
     for (const o of paid.data ?? []) {
-      volume[o.currency] = (volume[o.currency] ?? 0) + Number(o.total_amount);
-      fees[o.currency] = (fees[o.currency] ?? 0) + Number(o.commission_amount);
+      const currency = o.pay_method === 'stars' ? o.settled_currency : o.currency;
+      if (!currency) continue;
+      volume[currency] = (volume[currency] ?? 0) + Number(o.pay_method === 'stars' ? o.settled_amount : o.total_amount);
+      fees[currency] = (fees[currency] ?? 0) + Number(o.pay_method === 'stars' ? o.settled_fee : o.commission_amount);
     }
     const { data: withdrawals } = await db.from("wallet_transactions").select("*").eq("type", "withdrawal").eq("status", "pending").order("created_at");
     const { data: disputes } = await db.from("disputes").select("*, orders(order_number, product_name, total_amount, currency)").eq("status", "open").order("created_at");
@@ -48,10 +50,14 @@ export const adminResolveDispute = createServerFn({ method: "POST" })
     const db = await assertAdmin(context);
     const { data: d } = await db.from("disputes").select("order_id, status").eq("id", data.id).single();
     if (!d || d.status !== "open") throw new Error("Dispute is not open");
-    if (data.outcome === "refund") await db.rpc("refund_order_escrow", { _order_id: d.order_id });
+    if (data.outcome === "refund") {
+      const {error}=await db.rpc("refund_order_escrow", { _order_id: d.order_id });
+      if(error)throw new Error(error.message);
+    }
     else {
       await db.from("orders").update({ escrow_status: "holding" }).eq("id", d.order_id).eq("escrow_status", "frozen");
-      await db.rpc("release_order_escrow", { _order_id: d.order_id });
+      const {error}=await db.rpc("release_order_escrow", { _order_id: d.order_id });
+      if(error)throw new Error(error.message);
     }
     await db.from("disputes").update({ status: data.outcome === "refund" ? "resolved_refund" : "resolved_release", admin_note: data.note ?? null, resolved_at: new Date().toISOString() }).eq("id", data.id);
     return { ok: true };
