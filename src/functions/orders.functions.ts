@@ -164,6 +164,8 @@ export const updateOrder = createServerFn({ method: "POST" })
     } else if (data.action === "confirm" && isBuyer && ["paid", "shipped", "delivered"].includes(o.status)) {
       const {error}=await db.rpc("release_order_escrow", { _order_id: o.id });
       if(error)throw new Error(error.message);
+      const rc = await db.from("product_codes").update({ received_at: now }).eq("order_id", o.id).eq("status", "sold").is("received_at", null);
+      if (rc.error) throw new Error(rc.error.message);
     } else if (data.action === "cancel" && isBuyer && o.status === "awaiting_payment") {
       await db.from("orders").update({ status: "cancelled", updated_at: now }).eq("id", o.id);
     } else {

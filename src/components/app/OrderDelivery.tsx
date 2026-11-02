@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { BookOpen, Copy, Gamepad2, Gift, Send } from "lucide-react";
+import { BookOpen, CheckCircle2, Copy, Gamepad2, Gift, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +12,7 @@ import { resendDelivery } from "@/functions/orders.functions";
 import { resendGrowthPrize } from "@/functions/growth.functions";
 import { shortDate } from "@/lib/format";
 
-type CodeRow = { id: string; content: string };
+type CodeRow = { id: string; content: string; received_at: string | null };
 type GameRow = { id: string; kind: string; points: number; entries: number; delivered_content: string | null; telegram_state: string; created_at: string; shop_quizzes: { title: string } | null };
 
 export function OrderDelivery({ orderId, shopId, userId, deliveredContent, buyerGuide, isBuyer }: {
@@ -24,7 +24,7 @@ export function OrderDelivery({ orderId, shopId, userId, deliveredContent, buyer
   const resendGame = useServerFn(resendGrowthPrize);
   const [busy, setBusy] = useState(false);
   const { data: codes } = useQuery({ queryKey: ["orderCodes", orderId], queryFn: async () => {
-    const r = await supabase.from("product_codes").select("id,content").eq("order_id", orderId).eq("status", "sold").order("created_at");
+    const r = await supabase.from("product_codes").select("id,content,received_at").eq("order_id", orderId).eq("status", "sold").order("created_at");
     if (r.error) throw new Error(r.error.message);
     return (r.data ?? []) as CodeRow[];
   } });
@@ -57,6 +57,7 @@ export function OrderDelivery({ orderId, shopId, userId, deliveredContent, buyer
         {codeList.map((c, i) => (
           <div key={c.id} className="flex items-start justify-between gap-2 rounded-xl bg-background/60 p-3">
             <p className="min-w-0 flex-1 break-all font-mono text-sm">{codeList.length > 1 ? `${i + 1}. ` : ""}{c.content}</p>
+            {c.received_at && <span className="flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"><CheckCircle2 className="h-3 w-3" />{t("order.codeReceived")}</span>}
             <Button size="icon" variant="ghost" aria-label={t("common.copy")} className="h-7 w-7 shrink-0" onClick={() => copy(c.content)}><Copy className="h-3.5 w-3.5" /></Button>
           </div>
         ))}
