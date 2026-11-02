@@ -12,6 +12,7 @@ import { myRewardsQuery, rewardsQuery } from "@/lib/queries";
 import { pointsBalance } from "@/lib/rewards";
 import { claimTask, dailyCheckin, enterDraw } from "@/functions/rewards.functions";
 import { shortDate } from "@/lib/format";
+import { useGrowthText } from '@/lib/growth-text';
 
 export const Route = createFileRoute("/rewards")({
   head: () => ({ meta: [{ title: "Rewards · TeleShop" }, { name: "description", content: "Daily check-in, tasks and lucky draws to earn TeleShop reward points." }, { property: "og:title", content: "Rewards · TeleShop" }, { property: "og:description", content: "Check in, complete tasks and join lucky draws." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/rewards")({
 const todayVN = () => new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
 
 function Rewards() {
+  const growth = useGrowthText();
   const { t } = useTranslation();
   const { userId, session } = useAuth();
   const qc = useQueryClient();
@@ -47,6 +49,7 @@ function Rewards() {
     <div>
       <PageHeader title={t("rewards.title")} />
       <div className="space-y-5 p-4">
+        <Button asChild variant="outline" className="w-full"><Link to="/growth"><Gift/>{growth.title}</Link></Button>
         <div className="rounded-2xl border border-border bg-hero p-4">
           <div className="flex items-center justify-between">
             <div>

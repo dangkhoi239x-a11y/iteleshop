@@ -1,0 +1,4 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { GrowthCampaigns } from '@/components/app/GrowthCampaigns';
+export const Route=createFileRoute('/_authenticated/growth/$campaignId')({head:()=>({meta:[{title:'Prize wheel · TeleShop'},{name:'description',content:'Spin for shop-sponsored gifts with verified free entries.'},{property:'og:title',content:'Prize wheel · TeleShop'},{property:'og:description',content:'Gift inventory, campaign rules and your prizes.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:Page});
+function Page(){const {campaignId}=Route.useParams();return <GrowthCampaigns key={campaignId} campaignId={campaignId}/>}

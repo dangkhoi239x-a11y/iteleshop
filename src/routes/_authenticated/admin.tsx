@@ -20,6 +20,8 @@ import { RevenueReport, useFinanceText, useRevenueText } from "@/components/app/
 import { StarsSettlement } from "@/components/app/StarsSettlement";
 import { TelegramAdmin } from '@/components/app/TelegramAdmin';
 import { WithdrawalPolicy } from '@/components/app/WithdrawalPolicy';
+import { GrowthManager } from '@/components/app/GrowthManager';
+import { useGrowthText } from '@/lib/growth-text';
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin · TeleShop" }, { name: "description", content: "TeleShop platform administration." }, { property: "og:title", content: "Admin · TeleShop" }, { property: "og:description", content: "Administration." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -27,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function Admin() {
+  const growth = useGrowthText();
   const finance = useFinanceText();
   const revenueLabels = useRevenueText();
   const { t } = useTranslation();
@@ -66,9 +69,11 @@ function Admin() {
           <TabsTrigger value="payments">{t("extra.tabPayments")}</TabsTrigger>
           <TabsTrigger value="revenue">{finance.title}</TabsTrigger>
           <TabsTrigger value="telegram">Telegram</TabsTrigger>
+          <TabsTrigger value="growth">{growth.title}</TabsTrigger>
         </TabsList>
         <TabsContent value="users"><AdminLists kind="users" /></TabsContent>
         <TabsContent value="telegram"><TelegramAdmin /></TabsContent>
+        <TabsContent value="growth"><GrowthManager /></TabsContent>
         <TabsContent value="orders"><AdminLists kind="orders" /></TabsContent>
         <TabsContent value="products"><AdminLists kind="products" /></TabsContent>
         <TabsContent value="rewards" className="-mx-4"><RewardsManager shopId={null} /></TabsContent>

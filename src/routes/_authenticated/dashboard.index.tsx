@@ -8,6 +8,7 @@ import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { shopOrdersQuery } from "@/lib/queries";
 import { money } from "@/lib/format";
 import { useFinanceText } from "@/components/app/RevenueReport";
+import { useGrowthText } from '@/lib/growth-text';
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({ meta: [{ title: "Merchant dashboard · TeleShop" }, { name: "description", content: "Revenue, orders and tools for your TeleShop store." }, { property: "og:title", content: "Merchant dashboard · TeleShop" }, { property: "og:description", content: "Manage your shop." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 });
 
 function Dashboard({ shop }: { shop: ShopRow }) {
+  const growth = useGrowthText();
   const finance = useFinanceText();
   const { t } = useTranslation();
   const { data: orders = [] } = useQuery(shopOrdersQuery(shop.id));
@@ -28,6 +30,7 @@ function Dashboard({ shop }: { shop: ShopRow }) {
     return { day: d.toLocaleDateString(undefined, { weekday: "narrow" }), v: done.filter((o) => (o.completed_at ?? "").slice(0, 10) === key && (o.pay_method==='stars'?o.settled_currency:o.currency)==='USDT').reduce((s, o) => s + (o.pay_method==='stars'?Number(o.settled_net??0):Number(o.total_amount)-Number(o.commission_amount)-(o.affiliate_user_id?Number(o.total_amount)*Number(o.affiliate_percent)/100:0)), 0) };
   });
   const actions = [
+    { to: '/dashboard/growth', icon: Gift, label: growth.title },
     { to: "/dashboard/revenue", icon: TrendingUp, label: finance.title },
     { to: '/dashboard/settlements', icon: TrendingUp, label: 'Đối soát Stars' },
     { to: '/withdrawals', icon: Truck, label: 'Lịch sử rút tiền' },

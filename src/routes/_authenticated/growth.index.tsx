@@ -1,0 +1,3 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { GrowthCampaigns } from '@/components/app/GrowthCampaigns';
+export const Route=createFileRoute('/_authenticated/growth/')({head:()=>({meta:[{title:'Gift campaigns · TeleShop'},{name:'description',content:'Join free shop gift campaigns and invite friends.'},{property:'og:title',content:'Gift campaigns · TeleShop'},{property:'og:description',content:'Shop-sponsored gifts and free entries.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:()=> <GrowthCampaigns/>});
