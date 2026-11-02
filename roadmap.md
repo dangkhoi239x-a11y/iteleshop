@@ -1,7 +1,8 @@
 # TeleShop roadmap
-- [ ] Growth: shop-scoped referral campaigns, free gift wheel, private prize inventory, admin approval and participation reports
+- [x] Growth first release: shop-scoped referral campaigns, free gift wheel, private prize inventory, admin approval and participation reports; shop creation/admin activation/mobile display/owner rejection verified; 16 tests pass
+- [ ] Growth participant verification: first signup referral bonus, actual free spin/gift readback and concurrent retries need a separate verified Telegram participant; no other linked Telegram account exists
 - [ ] Growth: TON-funded pools and automatic token prizes — blocked by verified custody/payout access and promotional compliance review; no real funds accepted in first release
-- [ ] Growth: additional quiz/unlock/team minigames — follow gift-wheel release
+- [ ] Growth: additional quiz/unlock/team minigames — remaining phase; campaign-specific rules and prize fulfillment require definition
 - [x] Explain current NOWPayments fees from official sources
 - [x] Add seller Stars pending/settlement and withdrawal history pages
 - [ ] Automated NOWPayments withdrawals: fee settings added; blocked by provider ENDPOINT_NOT_ALLOWED for custody balance and missing verified payout authorization/network quote contract; fee settings are not applied to legacy manual requests
