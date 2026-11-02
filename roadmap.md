@@ -1,4 +1,5 @@
 # TeleShop roadmap
+- [ ] Configure NOWPayments API key/IPN secret and verify a real checkout through Telegram delivery: awaiting secure credentials, stocked product, linked Telegram buyer and user-funded payment; validate payment amount/currency/invoice before live delivery
 - [x] Complete dedicated admin revenue page, currency filters and clear report states; revenue/pricing tests pass
 - [ ] Verify populated revenue filters and CSV end-to-end: waiting on an authorized admin account and paid orders (current account gets 403; no admin exists)
 - [x] Actual-receipt Stars settlement and safe seller wallet accounting
@@ -10,7 +11,7 @@
 - [x] Digital delivery: seller stores code/link per product, buyer sees it after payment
 - [x] Code pool: one code/link per unit, stock auto-syncs, buyer can resend code via Telegram, order search (buyer + seller)
 - [x] Rewards: daily check-in, tasks (channel, invite, purchase, spend, custom), lucky draws by admin and shops
-- [ ] Waiting on user: Telegram bot token + username, NOWPayments API key + IPN secret, admin Telegram IDs
+- [ ] Waiting on user: Telegram bot username, NOWPayments API key + IPN secret, admin Telegram IDs (bot token is configured)
 - [ ] Decide payment direction: Telegram Stars required for digital goods inside Mini Apps (policy), NOWPayments only for physical/real-world items
 - [x] Product options: auto-send code via Telegram, highlights, after-purchase guide
 - [x] Admin panel tabs: overview, users (admin role), orders, products (hide/show), tasks & draws
@@ -20,4 +21,4 @@
 - [ ] Promo 4: private time-limited promo codes via shop channel
 - [x] Promotions: vouchers sent via Telegram, buy-X-get-Y, quantity tiers
 - [x] Telegram Stars payment with admin on/off + rates
-- [ ] Waiting on user: bot token, then press "Connect bot" in Admin → Payments to receive Stars
+- [ ] Connect configured bot in Admin → Payments to receive Stars
