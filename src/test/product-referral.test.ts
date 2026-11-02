@@ -13,3 +13,10 @@ describe('product attribution and cost rules',()=>{
  it('does not count refunded proceeds as profit',()=>expect(summarizeReferralCosts([{...o,escrow_status:'refunded'}])[0]?.net).toBe(0));
  it('quiz cannot name a non-existent correct answer',()=>expect(quizSchema.safeParse({campaignId:'12345678-1234-1234-1234-1234567890ab',title:'Test quiz',question:'Question?',options:['A','B'],correct:3,points:10,entries:1}).success).toBe(false));
 });
+
+import { quizSchema as qs } from '@/lib/product-referral';
+describe('quiz rewards', () => {
+  const base = { campaignId: '00000000-0000-4000-8000-000000000000', title: 'Quiz', question: 'Câu?', options: ['a', 'b'], correct: 0, points: 10, entries: 1 };
+  it('requires a voucher code for voucher rewards', () => { expect(qs.safeParse({ ...base, rewardKind: 'voucher' }).success).toBe(false); });
+  it('requires stocked codes for product-code rewards', () => { expect(qs.safeParse({ ...base, rewardKind: 'code', codes: [] }).success).toBe(false); expect(qs.safeParse({ ...base, rewardKind: 'code', codes: ['X1'] }).success).toBe(true); });
+});
