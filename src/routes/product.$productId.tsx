@@ -35,10 +35,10 @@ function ProductPage() {
  const total = round6(effectivePrice(p)*qty*(1-pct/100));
  const available = p.status==='active' && qty+free<=p.stock;
  const offers = tiers.length>0 || (!!p.buy_x && !!p.get_y);
- const buy = <Button className="min-w-0 flex-1" disabled={!available} asChild={available}><Link to="/checkout" search={{productId:p.id,quantity:qty}}><ShoppingBag/>{available?t('product.buyNow'):p.stock===0?t('product.outOfStock'):text.unavailable}</Link></Button>;
+ const buy = available ? <Button className="min-w-0 flex-1" asChild><Link to="/checkout" search={{productId:p.id,quantity:qty}}><ShoppingBag/>{t('product.buyNow')}</Link></Button> : <Button className="min-w-0 flex-1" disabled>{p.stock===0?t('product.outOfStock'):text.unavailable}</Button>;
  const affiliate = async()=>{setBusy(true);try{const r=await referral({data:{productId}});shareLink(r.url,`${p.name} · TeleShop`);toast.success(`${r.percent}% · ${text.affiliateNote}`);}catch(e){toast.error(e instanceof Error?e.message:text.referralError);}finally{setBusy(false);}};
  return <div className="pb-24">
-  <PageHeader title={t('product.description')} action={<ShareActions path={`/product/${p.id}`} name={p.name}/>}/>
+  <PageHeader title={p.name} action={<ShareActions path={`/product/${p.id}`} name={p.name}/>}/>
   <div className="space-y-4 p-4">
    <section className="space-y-3">
     <div className="flex items-start gap-3">
