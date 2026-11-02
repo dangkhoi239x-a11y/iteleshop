@@ -34,3 +34,4 @@
 - Shop quiz answers remain service-only and quiz awards use a unique shop-points ledger plus capped free entries; Telegram receipts are explicit recipient callbacks, never inferred read status. Why: prevents duplicate rewards and false read receipts.
 
 - Storefront badges and prices use shared ProductMerchandising components and existing pricing helpers; quantity selections are passed to checkout through validated search parameters. Why: offers stay factual and purchase previews match checkout.
+- Product purchase docking repositions the same purchase control using its stable scroll anchor rather than rendering a second CTA. Why: preserves one purchase action and the selected-quantity total without layout shifts.

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useServerFn } from '@tanstack/react-start';
 import { ArrowRight, ChevronDown, Flame, Gift, Loader2, Minus, Package, Plus, Send, ShieldCheck, ShoppingBag, Store, Users } from 'lucide-react';
@@ -26,8 +26,20 @@ function ProductPage() {
  const { productId } = Route.useParams(); const { t, i18n } = useTranslation(); const text = storefrontText(i18n.language);
  const { userId } = useAuth(); const referral = useServerFn(createProductReferral);
  const [qty,setQty] = useState(1); const [busy,setBusy] = useState(false);
+ const purchaseAnchor = useRef<HTMLDivElement>(null);
+ const [purchaseDocked,setPurchaseDocked] = useState(false);
  const {data:p,isLoading,isError} = useQuery(productQuery(productId));
  const {data:related} = useQuery({...shopQuery(p?.shop_id??''),enabled:!!p?.shop_id});
+ useEffect(()=>{
+  const update = ()=>{
+   const anchor = purchaseAnchor.current;
+   setPurchaseDocked(!!anchor && anchor.getBoundingClientRect().bottom<0 && window.scrollY>window.innerHeight*0.75);
+  };
+  update();
+  window.addEventListener('scroll',update,{passive:true});
+  window.addEventListener('resize',update);
+  return ()=>{window.removeEventListener('scroll',update);window.removeEventListener('resize',update);};
+ },[p?.id,userId]);
  if(isLoading) return <div className="space-y-3 p-4"><Skeleton className="h-32 rounded-lg"/><Skeleton className="h-24 rounded-lg"/></div>;
  if(!p || isError) return <EmptyState title="404"/>;
  const own = p.shops?.owner_id===userId; const tiers = parseBulkTiers(p.bulk_discounts); const flash = isFlashSaleActive(p);
@@ -38,29 +50,19 @@ function ProductPage() {
  const buy = available ? <Button className="min-w-0 flex-1" asChild><Link to="/checkout" search={{productId:p.id,quantity:qty}}><ShoppingBag/>{t('product.buyNow')}</Link></Button> : <Button className="min-w-0 flex-1" disabled>{p.stock===0?t('product.outOfStock'):text.unavailable}</Button>;
  const affiliate = async()=>{setBusy(true);try{const r=await referral({data:{productId}});shareLink(r.url,`${p.name} · TeleShop`);toast.success(`${r.percent}% · ${text.affiliateNote}`);}catch(e){toast.error(e instanceof Error?e.message:text.referralError);}finally{setBusy(false);}};
  return <div>
-  <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-   <div className="flex items-center gap-2.5 px-3 py-2">
-    <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">{p.image_url?<img src={p.image_url} alt={p.name} className="h-full w-full object-contain p-1"/>:<Package className="size-5 text-muted-foreground"/>}</div>
-    <div className="min-w-0 flex-1">
-     <h1 className="truncate text-sm font-semibold leading-tight">{p.name}</h1>
-     <ProductPrice p={p}/>
-    </div>
-    {!own && <div className="flex w-28 shrink-0">{buy}</div>}
-   </div>
-   <div className="flex items-center gap-2 border-t border-border/60 px-3 py-1.5">
-    <ShareActions path={`/product/${p.id}`} name={p.name}/>
-    {!own && <Button variant="outline" size="sm" className="h-7 flex-1 gap-1.5 text-[11px]" disabled={busy} onClick={userId?affiliate:undefined} asChild={!userId}>{userId?<>{busy?<Loader2 className="size-3.5 animate-spin"/>:<Users className="size-3.5"/>}{text.referral}</>:<Link to="/auth"><Users className="size-3.5"/>{text.referral}</Link>}</Button>}
-   </div>
-  </header>
   <div className="space-y-4 p-4">
    <section className="space-y-3">
     <div className="flex items-start gap-3">
      <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">{p.image_url?<img src={p.image_url} alt={p.name} className="h-full w-full object-contain p-1"/>:<Package className="size-6 text-muted-foreground"/>}</div>
-     <div className="min-w-0 flex-1"><h2 className="mb-1 break-words font-display text-base font-bold leading-snug">{p.name}</h2><ProductPrice p={p} prominent/><p className="mt-1 text-[11px] text-muted-foreground">{t('product.sold',{n:p.sold_count})} · <span className={p.stock>0?'text-success':''}>{p.stock>0?t('product.stock',{n:p.stock}):t('product.outOfStock')}</span></p></div>
+     <div className="min-w-0 flex-1"><h1 className="mb-1 break-words font-display text-base font-bold leading-snug">{p.name}</h1><ProductPrice p={p} prominent/><p className="mt-1 text-[11px] text-muted-foreground">{t('product.sold',{n:p.sold_count})} · <span className={p.stock>0?'text-success':''}>{p.stock>0?t('product.stock',{n:p.stock}):t('product.outOfStock')}</span></p></div>
     </div>
     <ProductBadges p={p}/>
     {flash && p.flash_sale_end && <div className="flex flex-wrap items-center justify-between gap-1 border-l-2 border-flash bg-flash/10 px-3 py-2 text-xs"><span className="flex items-center gap-1 font-semibold text-flash"><Flame className="size-3.5"/>{t('home.flashSale')}</span><span>{t('home.endsIn')} <Countdown end={p.flash_sale_end}/></span></div>}
     <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground"><span className="flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-success"/>{p.warranty_type==='none'?t('product.warrantyNone',{days:p.escrow_release_days}):t('product.warrantyStandard')}</span>{p.auto_send_telegram && <span className="flex items-center gap-1.5"><Send className="size-3.5 text-primary"/>{text.delivery}</span>}</div>
+    <div className="flex flex-wrap items-center gap-2">
+     <ShareActions path={`/product/${p.id}`} name={p.name}/>
+     {!own && <Button variant="outline" size="sm" className="h-auto min-h-8 min-w-0 flex-1 gap-1.5 whitespace-normal py-1.5 text-[11px]" disabled={busy} onClick={userId?affiliate:undefined} asChild={!userId}>{userId?<>{busy?<Loader2 className="size-3.5 shrink-0 animate-spin"/>:<Users className="size-3.5 shrink-0"/>}{text.referral}</>:<Link to="/auth"><Users className="size-3.5 shrink-0"/>{text.referral}</Link>}</Button>}
+    </div>
    </section>
    {offers && <section className="space-y-2 border-y border-border py-3">
     <h2 className="flex items-center gap-2 text-sm font-semibold"><Gift className="size-4 text-warning"/>{text.buyMore}</h2>
@@ -70,7 +72,11 @@ function ProductPage() {
    {!own && <section className="space-y-2">
     <div className="flex items-center justify-between gap-2"><span className="text-xs text-muted-foreground">{text.quantity}</span><div className="flex items-center gap-2"><Button variant="secondary" size="icon" className="size-8" aria-label="Decrease quantity" disabled={qty<=1} onClick={()=>setQty(q=>q-1)}><Minus/></Button><span className="tabular w-8 text-center text-sm font-semibold" aria-live="polite">{qty}</span><Button variant="secondary" size="icon" className="size-8" aria-label="Increase quantity" disabled={qty>=100 || qty+1+freeUnits(qty+1,p.buy_x,p.get_y)>p.stock} onClick={()=>setQty(q=>q+1)}><Plus/></Button></div></div>
     {free>0 && <p className="text-xs text-success">{t('extra.freeGot',{n:free})}</p>}
-    <div className="flex items-center gap-3"><div className="min-w-0"><p className="text-[10px] text-muted-foreground">{text.total}{pct>0?` · −${pct}%`:''}</p><p className="tabular break-words text-sm font-bold text-primary">{money(total,p.currency)}</p></div>{buy}</div>
+    <div ref={purchaseAnchor} className="min-h-14">
+     <div className={purchaseDocked?'fixed inset-x-0 top-0 z-30 mx-auto flex min-h-14 w-full max-w-md items-center gap-3 border-b border-border bg-background/95 px-4 py-2 backdrop-blur':'flex min-h-14 items-center gap-3'}>
+      <div className="min-w-0"><p className="text-[10px] text-muted-foreground">{text.total}{pct>0?` · −${pct}%`:''}</p><p className="tabular break-words text-sm font-bold text-primary">{money(total,p.currency)}</p></div>{buy}
+     </div>
+    </div>
    </section>}
    {own && <p className="text-sm text-muted-foreground">{t('product.ownShop')}</p>}
    {p.shops && <Link to="/shop/$shopId" params={{shopId:p.shops.id}} className="flex items-center gap-2.5 border-y border-border py-3">{p.shops.logo_url?<img src={p.shops.logo_url} alt="" className="size-9 rounded-lg object-cover"/>:<Store className="size-5 text-primary"/>}<span className="min-w-0 flex-1"><span className="block text-[10px] text-muted-foreground">{text.shopLabel}</span><span className="block truncate text-sm font-semibold">{p.shops.name}</span></span><ArrowRight className="size-4 text-muted-foreground"/></Link>}
