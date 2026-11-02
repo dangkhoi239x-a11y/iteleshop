@@ -1265,6 +1265,92 @@ export type Database = {
           },
         ]
       }
+      shop_quiz_codes: {
+        Row: {
+          awarded_at: string | null
+          awarded_to: string | null
+          content: string
+          id: string
+          quiz_id: string
+        }
+        Insert: {
+          awarded_at?: string | null
+          awarded_to?: string | null
+          content: string
+          id?: string
+          quiz_id: string
+        }
+        Update: {
+          awarded_at?: string | null
+          awarded_to?: string | null
+          content?: string
+          id?: string
+          quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_quiz_codes_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "shop_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_quiz_rewards: {
+        Row: {
+          created_at: string
+          delivered_content: string | null
+          entries: number
+          id: string
+          kind: string
+          points: number
+          quiz_id: string
+          shop_id: string
+          telegram_state: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_content?: string | null
+          entries?: number
+          id?: string
+          kind: string
+          points: number
+          quiz_id: string
+          shop_id: string
+          telegram_state?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivered_content?: string | null
+          entries?: number
+          id?: string
+          kind?: string
+          points?: number
+          quiz_id?: string
+          shop_id?: string
+          telegram_state?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_quiz_rewards_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "shop_quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_quiz_rewards_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_quizzes: {
         Row: {
           campaign_id: string
@@ -1274,6 +1360,8 @@ export type Database = {
           options: Json
           points: number
           question: string
+          reward_kind: string
+          reward_voucher_code: string | null
           shop_id: string
           title: string
         }
@@ -1285,6 +1373,8 @@ export type Database = {
           options: Json
           points: number
           question: string
+          reward_kind?: string
+          reward_voucher_code?: string | null
           shop_id: string
           title: string
         }
@@ -1296,6 +1386,8 @@ export type Database = {
           options?: Json
           points?: number
           question?: string
+          reward_kind?: string
+          reward_voucher_code?: string | null
           shop_id?: string
           title?: string
         }
@@ -1660,6 +1752,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      configure_quiz_reward: {
+        Args: {
+          _actor: string
+          _codes: string[]
+          _kind: string
+          _quiz: string
+          _voucher: string
+        }
+        Returns: number
+      }
       create_growth_campaign: {
         Args: {
           _actor: string
@@ -1722,6 +1824,10 @@ export type Database = {
       play_shop_quiz: {
         Args: { _answer: number; _quiz: string; _user: string }
         Returns: number
+      }
+      play_shop_quiz_reward: {
+        Args: { _answer: number; _quiz: string; _user: string }
+        Returns: Json
       }
       refund_order_escrow: { Args: { _order_id: string }; Returns: boolean }
       release_order_escrow: { Args: { _order_id: string }; Returns: boolean }
