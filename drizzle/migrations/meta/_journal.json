@@ -71,6 +71,13 @@
       "when": 1793596263116,
       "tag": "0009_telegram_channels_and_notification_history",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793596755151,
+      "tag": "0010_shop_growth_gift_wheel",
+      "breakpoints": true
     }
   ]
 }
