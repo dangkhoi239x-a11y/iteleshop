@@ -18,6 +18,7 @@ import { RewardsManager } from "@/components/app/RewardsManager";
 import { PaymentSettings } from "@/components/app/PaymentSettings";
 import { RevenueReport, useFinanceText, useRevenueText } from "@/components/app/RevenueReport";
 import { StarsSettlement } from "@/components/app/StarsSettlement";
+import { TelegramAdmin } from '@/components/app/TelegramAdmin';
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin · TeleShop" }, { name: "description", content: "TeleShop platform administration." }, { property: "og:title", content: "Admin · TeleShop" }, { property: "og:description", content: "Administration." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -63,8 +64,10 @@ function Admin() {
           <TabsTrigger value="rewards">{t("extra.tabRewards")}</TabsTrigger>
           <TabsTrigger value="payments">{t("extra.tabPayments")}</TabsTrigger>
           <TabsTrigger value="revenue">{finance.title}</TabsTrigger>
+          <TabsTrigger value="telegram">Telegram</TabsTrigger>
         </TabsList>
         <TabsContent value="users"><AdminLists kind="users" /></TabsContent>
+        <TabsContent value="telegram"><TelegramAdmin /></TabsContent>
         <TabsContent value="orders"><AdminLists kind="orders" /></TabsContent>
         <TabsContent value="products"><AdminLists kind="products" /></TabsContent>
         <TabsContent value="rewards" className="-mx-4"><RewardsManager shopId={null} /></TabsContent>

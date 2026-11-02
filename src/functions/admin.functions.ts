@@ -39,7 +39,8 @@ export const adminWithdrawal = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), approve: z.boolean(), txHash: z.string().max(200).optional() }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
-    await db.from("wallet_transactions").update({ status: data.approve ? "completed" : "rejected", tx_hash: data.txHash ?? null }).eq("id", data.id).eq("status", "pending");
+    const { error } = await db.rpc('finish_withdrawal', { _actor: context.userId, _id: data.id, _approve: data.approve, _tx_hash: data.txHash ?? '' });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 

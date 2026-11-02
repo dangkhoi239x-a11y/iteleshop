@@ -1,0 +1,9 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { useServerFn } from '@tanstack/react-start';
+import { getWallet } from '@/functions/orders.functions';
+import { PageHeader } from '@/components/app/ui-bits';
+import { money } from '@/lib/format';
+import { useAuth } from '@/lib/auth';
+export const Route=createFileRoute('/_authenticated/withdrawals')({head:()=>({meta:[{title:'Withdrawal history · TeleShop'},{name:'description',content:'External USDT and TON withdrawal requests and transaction references.'},{property:'og:title',content:'Withdrawal history · TeleShop'},{property:'og:description',content:'Track withdrawal processing and external transaction references.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:Page});
+function Page(){const {userId}=useAuth(),load=useServerFn(getWallet);const {data,error}=useQuery({queryKey:['wallet',userId],queryFn:()=>load(),enabled:!!userId});const rows=data?.transactions.filter(t=>t.type==='withdrawal');return <div><PageHeader title="Lịch sử rút tiền"/><section className="space-y-4 p-4">{error&&<p role="alert">Không tải được lịch sử</p>}{rows?.length===0&&<p>Chưa có yêu cầu rút tiền</p>}{rows?.map(t=><div key={t.id} className="space-y-1 border-b border-border py-3 text-sm"><p>{money(-Number(t.amount),t.currency)} · {t.status}</p><p className="break-all text-muted-foreground">{t.to_address}</p>{t.tx_hash&&<p className="break-all">{t.tx_hash}</p>}<p className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleString()}</p></div>)}</section></div>;}
