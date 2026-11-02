@@ -39,7 +39,6 @@ function OrderPage() {
   const update = useServerFn(updateOrder);
   const dispute = useServerFn(openDispute);
   const respond = useServerFn(respondDispute);
-  const resend = useServerFn(resendDelivery);
   const [busy, setBusy] = useState(false);
   const [showDispute, setShowDispute] = useState(false);
   const [reason, setReason] = useState<string>("not_received");
