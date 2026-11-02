@@ -7,7 +7,7 @@ import { ArrowRight, ChevronDown, Flame, Gift, Loader2, Minus, Package, Plus, Se
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Countdown, EmptyState, PageHeader, ProductCard } from '@/components/app/ui-bits';
+import { Countdown, EmptyState, ProductCard } from '@/components/app/ui-bits';
 import { ProductBadges, ProductPrice } from '@/components/app/ProductMerchandising';
 import { ShareActions } from '@/components/app/ShareActions';
 import { productQuery, shopQuery } from '@/lib/queries';
