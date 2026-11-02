@@ -27,6 +27,7 @@ import { Route as AuthenticatedWithdrawalsRouteImport } from './routes/_authenti
 import { Route as ProductProductIdRouteImport } from './routes/product.$productId'
 import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
+import { Route as AuthenticatedDashboardBudgetRouteImport } from './routes/_authenticated/dashboard.budget'
 import { Route as AuthenticatedDashboardFlashSalesRouteImport } from './routes/_authenticated/dashboard.flash-sales'
 import { Route as AuthenticatedDashboardGrowthRouteImport } from './routes/_authenticated/dashboard.growth'
 import { Route as AuthenticatedDashboardOrdersRouteImport } from './routes/_authenticated/dashboard.orders'
@@ -137,6 +138,12 @@ const AuthenticatedDashboardIndexRoute =
     path: '/dashboard/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDashboardBudgetRoute =
+  AuthenticatedDashboardBudgetRouteImport.update({
+    id: '/dashboard/budget',
+    path: '/dashboard/budget',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardFlashSalesRoute =
   AuthenticatedDashboardFlashSalesRouteImport.update({
     id: '/dashboard/flash-sales',
@@ -244,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/withdrawals': typeof AuthenticatedWithdrawalsRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
   '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
   '/dashboard/growth': typeof AuthenticatedDashboardGrowthRoute
   '/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
@@ -278,6 +286,7 @@ export interface FileRoutesByTo {
   '/withdrawals': typeof AuthenticatedWithdrawalsRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
   '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
   '/dashboard/growth': typeof AuthenticatedDashboardGrowthRoute
   '/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
@@ -314,6 +323,7 @@ export interface FileRoutesById {
   '/_authenticated/withdrawals': typeof AuthenticatedWithdrawalsRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/_authenticated/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
   '/_authenticated/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
   '/_authenticated/dashboard/growth': typeof AuthenticatedDashboardGrowthRoute
   '/_authenticated/dashboard/orders': typeof AuthenticatedDashboardOrdersRoute
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/withdrawals'
     | '/product/$productId'
     | '/shop/$shopId'
+    | '/dashboard/budget'
     | '/dashboard/flash-sales'
     | '/dashboard/growth'
     | '/dashboard/orders'
@@ -384,6 +395,7 @@ export interface FileRouteTypes {
     | '/withdrawals'
     | '/product/$productId'
     | '/shop/$shopId'
+    | '/dashboard/budget'
     | '/dashboard/flash-sales'
     | '/dashboard/growth'
     | '/dashboard/orders'
@@ -419,6 +431,7 @@ export interface FileRouteTypes {
     | '/_authenticated/withdrawals'
     | '/product/$productId'
     | '/shop/$shopId'
+    | '/_authenticated/dashboard/budget'
     | '/_authenticated/dashboard/flash-sales'
     | '/_authenticated/dashboard/growth'
     | '/_authenticated/dashboard/orders'
@@ -578,6 +591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/budget': {
+      id: '/_authenticated/dashboard/budget'
+      path: '/dashboard/budget'
+      fullPath: '/dashboard/budget'
+      preLoaderRoute: typeof AuthenticatedDashboardBudgetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/flash-sales': {
       id: '/_authenticated/dashboard/flash-sales'
       path: '/dashboard/flash-sales'
@@ -696,6 +716,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRewardsAdminRoute: typeof AuthenticatedRewardsAdminRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedWithdrawalsRoute: typeof AuthenticatedWithdrawalsRoute
+  AuthenticatedDashboardBudgetRoute: typeof AuthenticatedDashboardBudgetRoute
   AuthenticatedDashboardFlashSalesRoute: typeof AuthenticatedDashboardFlashSalesRoute
   AuthenticatedDashboardGrowthRoute: typeof AuthenticatedDashboardGrowthRoute
   AuthenticatedDashboardOrdersRoute: typeof AuthenticatedDashboardOrdersRoute
@@ -722,6 +743,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRewardsAdminRoute: AuthenticatedRewardsAdminRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedWithdrawalsRoute: AuthenticatedWithdrawalsRoute,
+  AuthenticatedDashboardBudgetRoute: AuthenticatedDashboardBudgetRoute,
   AuthenticatedDashboardFlashSalesRoute: AuthenticatedDashboardFlashSalesRoute,
   AuthenticatedDashboardGrowthRoute: AuthenticatedDashboardGrowthRoute,
   AuthenticatedDashboardOrdersRoute: AuthenticatedDashboardOrdersRoute,

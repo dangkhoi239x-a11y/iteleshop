@@ -6,7 +6,7 @@ import { EmptyState, PageHeader } from '@/components/app/ui-bits';
 import { Button } from '@/components/ui/button';
 import { getGrowthBudget } from '@/functions/growth-budget.functions';
 import { forecastBudget } from '@/lib/growth-budget';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/auth';
 
 export const Route = createFileRoute('/_authenticated/dashboard/budget')({ head: () => ({ meta: [{ title: 'Ngân sách chiến dịch · TeleShop' }, { name: 'description', content: 'Pool budget, delivered prizes, remaining stock and forecasts per shop campaign.' }, { property: 'og:title', content: 'Ngân sách chiến dịch · TeleShop' }, { property: 'og:description', content: 'Track prize pool budget and forecasts for each campaign.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }), component: Page });
 
