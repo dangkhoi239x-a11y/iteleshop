@@ -1,0 +1,1 @@
+ALTER TABLE public.product_codes ADD COLUMN IF NOT EXISTS received_at timestamptz;
