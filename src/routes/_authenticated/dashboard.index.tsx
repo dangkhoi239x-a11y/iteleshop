@@ -31,6 +31,7 @@ function Dashboard({ shop }: { shop: ShopRow }) {
   });
   const actions = [
     { to: '/dashboard/growth', icon: Gift, label: growth.title },
+    { to: '/dashboard/budget', icon: TrendingUp, label: 'Ngân sách chiến dịch' },
     { to: "/dashboard/revenue", icon: TrendingUp, label: finance.title },
     { to: '/dashboard/settlements', icon: TrendingUp, label: 'Đối soát Stars' },
     { to: '/withdrawals', icon: Truck, label: 'Lịch sử rút tiền' },
