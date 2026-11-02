@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, BookOpen, Copy, Gift, Loader2, Send, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Loader2, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,10 @@ import { EmptyState, Field, PageHeader, StatusPill, errMsg } from "@/components/
 import { orderQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
-import { openDispute, payOrder, resendDelivery, respondDispute, updateOrder } from "@/functions/orders.functions";
+import { openDispute, payOrder, respondDispute, updateOrder } from "@/functions/orders.functions";
 import { haptic, openExternal } from "@/lib/telegram";
 import { CodeIssues } from "@/components/app/CodeIssues";
+import { OrderDelivery } from "@/components/app/OrderDelivery";
 
 export const Route = createFileRoute("/_authenticated/orders/$orderId")({
   validateSearch: z.object({ paid: z.coerce.number().optional() }),
