@@ -6,7 +6,7 @@ import { Gift, Share2, Copy, RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EmptyState, PageHeader, errMsg } from '@/components/app/ui-bits';
-import { getGrowth, joinGrowth, spinGrowth } from '@/functions/growth.functions';
+import { getGrowth, joinGrowth, spinGrowth,playQuiz,resendGrowthPrize } from '@/functions/growth.functions';
 import { useAuth } from '@/lib/auth';
 import { growthLink, prizeChance } from '@/lib/growth';
 import { useGrowthText } from '@/lib/growth-text';
@@ -17,6 +17,7 @@ import { PrizeWheel } from './PrizeWheel';
 export function GrowthCampaigns({campaignId}:{campaignId?:string}){
  const t=useGrowthText();const {userId,profile}=useAuth();const qc=useQueryClient();
  const get=useServerFn(getGrowth),join=useServerFn(joinGrowth),spin=useServerFn(spinGrowth);
+ const quiz=useServerFn(playQuiz),resend=useServerFn(resendGrowthPrize);
  const query=useQuery({queryKey:['growth',userId],queryFn:()=>get({data:{manage:false}}),enabled:!!userId});
  const [busy,setBusy]=useState(false),[rotation,setRotation]=useState(0),[result,setResult]=useState<{label:string;content:string}|null>(null);
  const [request,setRequest]=useState<string|null>(null);
@@ -49,7 +50,9 @@ export function GrowthCampaigns({campaignId}:{campaignId?:string}){
     <div className="border-t border-border pt-4 space-y-3"><h2 className="font-semibold">{t.invite}</h2><p className="text-sm text-muted-foreground">{t.guide}</p><p className="text-xs break-all font-mono">{growthLink(c.own.invite_code)}</p><div className="flex gap-2"><Button variant="outline" onClick={()=>shareLink(growthLink(c.own?.invite_code??''),c.title)}><Share2/>{t.invite}</Button><Button variant="outline" onClick={()=>navigator.clipboard.writeText(growthLink(c.own?.invite_code??'')).then(()=>toast.success(t.copied))}><Copy/>{t.copy}</Button></div></div>
    </>}
    <section className="space-y-2 border-t border-border pt-4"><h2 className="font-semibold">{t.rules}</h2><p className="text-sm whitespace-pre-wrap break-words">{c.rules}</p><p className="text-xs text-muted-foreground">{shortDate(c.starts_at)} → {shortDate(c.ends_at)} · {t.max}: {c.max_entries} · {t.bonus}: {c.referral_entries}</p></section>
+   <p className="text-xs text-muted-foreground">{c.fee_terms} · Hạn nhận: {shortDate(c.claim_until??c.ends_at)}</p>
+   <section className="space-y-3"><h2 className="font-semibold">Quiz · Điểm shop: {query.data?.points.filter(p=>p.shop_id===c.shop_id).reduce((s,p)=>s+p.amount,0)??0}</h2>{query.data?.quizzes.filter(q=>q.campaign_id===c.id).map(q=><div className="border-t border-border pt-3 space-y-2" key={q.id}><h3 className="font-semibold">{q.title}</h3><p className="text-sm">{q.question}</p><p className="text-xs text-accent">+{q.points} điểm · +{q.entries} lượt quay</p>{(q.options as string[]).map((answer,i)=><Button key={i} variant="outline" className="w-full h-auto whitespace-normal text-left justify-start" disabled={busy||!c.own||!!query.data?.points.some(p=>p.quiz_id===q.id)} onClick={()=>action(()=>quiz({data:{id:q.id,answer:i}}))}>{answer}</Button>)}</div>)}</section>
   </>}
-  {!!history.length&&<section className="space-y-2"><h2 className="font-semibold">{t.history}</h2>{history.map(h=><div key={h.id} className="border-b border-border py-3"><p className="text-sm font-semibold">{h.growth_prizes?.label} · {shortDate(h.created_at)}</p><p className="text-sm font-mono break-all whitespace-pre-wrap">{h.delivered_content}</p></div>)}</section>}
+  {!!history.length&&<section className="space-y-2"><h2 className="font-semibold">{t.history}</h2>{history.map(h=><div key={h.id} className="border-b border-border py-3 space-y-2"><p className="text-sm font-semibold">{h.growth_prizes?.label} · {shortDate(h.created_at)}</p><p className="text-sm font-mono break-all whitespace-pre-wrap">{h.delivered_content}</p><p className="text-xs text-muted-foreground">Telegram: {h.telegram_state}</p>{['pending','failed'].includes(h.telegram_state)&&<Button size="sm" variant="outline" disabled={busy} onClick={()=>action(()=>resend({data:{id:h.id}}))}>Gửi quà Telegram</Button>}</div>)}</section>}
  </div></div>;
 }
