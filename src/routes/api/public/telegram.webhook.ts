@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { isTelegramStart, telegramStoreUrl } from '@/lib/telegram-start';
 
 // Telegram bot webhook: handles Telegram Stars checkout. Verified via X-Telegram-Bot-Api-Secret-Token.
 export const Route = createFileRoute("/api/public/telegram/webhook")({
@@ -10,6 +11,15 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         if (!process.env["TELEGRAM_BOT_TOKEN"] || !safeEqual(request.headers.get("x-telegram-bot-api-secret-token") ?? "", await webhookSecret())) return new Response("unauthorized", { status: 401 });
         const u = (await request.json().catch(() => null)) as Record<string, any> | null;
         if (!u) return new Response("ok");
+        const message = u['message'];
+        if (message?.chat?.type === 'private' && isTelegramStart(message.text)) {
+          await tgApi('sendMessage', {
+            chat_id: message.chat.id,
+            text: '🛍 Chào mừng anh/chị đến TeleShop!\nMở cửa hàng để xem sản phẩm, đặt hàng và nhận mã ngay trong Telegram.',
+            reply_markup: { inline_keyboard: [[{ text: '🛍 Mở TeleShop', web_app: { url: telegramStoreUrl(request.url) } }]] },
+          });
+          return new Response('ok');
+        }
         const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
         const pcq = u["pre_checkout_query"];
         if (pcq) {

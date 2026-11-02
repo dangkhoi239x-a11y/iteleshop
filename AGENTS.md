@@ -26,3 +26,4 @@
 - Stars actual receipts are allocated proportionally by invoice Stars in service-role-only settlement SQL; seller credits require both settlement and escrow release. Why: checkout prices are not realized cash proceeds and credits must be idempotent.
 - Revenue reports aggregate all paginated paid orders by shop, UTC+7 payment day, payment method and settlement currency; never combine TON and USDT. Why: reporting must reconcile to the realized seller ledger without mixing assets.
 - The shared revenue view serves the dedicated platform report and seller report; report query keys include the authenticated user and filters. Why: consistent accounting and no cross-account cached financial data.
+- Telegram private Start messages are handled by the authenticated bot webhook and link to the public app host, not the editor preview host. Why: new buyers can open the Mini App without a Lovable login redirect.
