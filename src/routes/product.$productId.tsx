@@ -38,12 +38,25 @@ function ProductPage() {
  const buy = available ? <Button className="min-w-0 flex-1" asChild><Link to="/checkout" search={{productId:p.id,quantity:qty}}><ShoppingBag/>{t('product.buyNow')}</Link></Button> : <Button className="min-w-0 flex-1" disabled>{p.stock===0?t('product.outOfStock'):text.unavailable}</Button>;
  const affiliate = async()=>{setBusy(true);try{const r=await referral({data:{productId}});shareLink(r.url,`${p.name} · TeleShop`);toast.success(`${r.percent}% · ${text.affiliateNote}`);}catch(e){toast.error(e instanceof Error?e.message:text.referralError);}finally{setBusy(false);}};
  return <div className="pb-24">
-  <PageHeader title={p.name} action={<ShareActions path={`/product/${p.id}`} name={p.name}/>}/>
+  <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+   <div className="flex items-center gap-2.5 px-3 py-2">
+    <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">{p.image_url?<img src={p.image_url} alt={p.name} className="h-full w-full object-contain p-1"/>:<Package className="size-5 text-muted-foreground"/>}</div>
+    <div className="min-w-0 flex-1">
+     <h1 className="truncate text-sm font-semibold leading-tight">{p.name}</h1>
+     <ProductPrice p={p}/>
+    </div>
+    {!own && <div className="flex w-28 shrink-0">{buy}</div>}
+   </div>
+   <div className="flex items-center gap-2 border-t border-border/60 px-3 py-1.5">
+    <ShareActions path={`/product/${p.id}`} name={p.name}/>
+    {!own && <Button variant="outline" size="sm" className="h-7 flex-1 gap-1.5 text-[11px]" disabled={busy} onClick={userId?affiliate:undefined} asChild={!userId}>{userId?<>{busy?<Loader2 className="size-3.5 animate-spin"/>:<Users className="size-3.5"/>}{text.referral}</>:<Link to="/auth"><Users className="size-3.5"/>{text.referral}</Link>}</Button>}
+   </div>
+  </header>
   <div className="space-y-4 p-4">
    <section className="space-y-3">
     <div className="flex items-start gap-3">
-     <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">{p.image_url?<img src={p.image_url} alt={p.name} className="h-full w-full object-contain p-1.5"/>:<Package className="size-8 text-muted-foreground"/>}</div>
-     <div className="min-w-0 flex-1"><h1 className="mb-1.5 break-words font-display text-lg font-bold leading-snug">{p.name}</h1><ProductPrice p={p} prominent/><p className="mt-1 text-[11px] text-muted-foreground">{t('product.sold',{n:p.sold_count})} · <span className={p.stock>0?'text-success':''}>{p.stock>0?t('product.stock',{n:p.stock}):t('product.outOfStock')}</span></p></div>
+     <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">{p.image_url?<img src={p.image_url} alt={p.name} className="h-full w-full object-contain p-1"/>:<Package className="size-6 text-muted-foreground"/>}</div>
+     <div className="min-w-0 flex-1"><h2 className="mb-1 break-words font-display text-base font-bold leading-snug">{p.name}</h2><ProductPrice p={p} prominent/><p className="mt-1 text-[11px] text-muted-foreground">{t('product.sold',{n:p.sold_count})} · <span className={p.stock>0?'text-success':''}>{p.stock>0?t('product.stock',{n:p.stock}):t('product.outOfStock')}</span></p></div>
     </div>
     <ProductBadges p={p}/>
     {flash && p.flash_sale_end && <div className="flex flex-wrap items-center justify-between gap-1 border-l-2 border-flash bg-flash/10 px-3 py-2 text-xs"><span className="flex items-center gap-1 font-semibold text-flash"><Flame className="size-3.5"/>{t('home.flashSale')}</span><span>{t('home.endsIn')} <Countdown end={p.flash_sale_end}/></span></div>}
