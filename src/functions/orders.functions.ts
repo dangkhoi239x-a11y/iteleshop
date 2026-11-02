@@ -227,16 +227,22 @@ export const getWallet = createServerFn({ method: "POST" })
     const db = await admin();
     const { data: txs } = await db.from("wallet_transactions").select("*").eq("user_id", context.userId).order("created_at", { ascending: false }).limit(200);
     const balances: Record<string, { available: number; pendingWithdraw: number; escrow: number }> = { USDT: { available: 0, pendingWithdraw: 0, escrow: 0 }, TON: { available: 0, pendingWithdraw: 0, escrow: 0 } };
-    const { data: all } = await db.from("wallet_transactions").select("amount, currency, status").eq("user_id", context.userId).neq("status", "rejected");
+    for (let offset = 0;; offset += 500) {
+    const { data: all, error } = await db.from("wallet_transactions").select("amount, currency, status").eq("user_id", context.userId).neq("status", "rejected").order('id').range(offset, offset + 499);
+    if (error) throw new Error(error.message);
     for (const t of all ?? []) {
       const b = (balances[t.currency] ??= { available: 0, pendingWithdraw: 0, escrow: 0 });
       b.available += Number(t.amount);
       if (t.status === "pending") b.pendingWithdraw += -Number(t.amount);
     }
+    if (!all || all.length < 500) break;
+    }
     let pendingStars = 0;
     const { data: shop } = await db.from("shops").select("id").eq("owner_id", context.userId).maybeSingle();
     if (shop) {
-      const { data: held } = await db.from("orders").select("total_amount, commission_amount, affiliate_percent, affiliate_user_id, currency, pay_method, stars_amount, settled_currency, settled_net, escrow_status").eq("shop_id", shop.id).in("escrow_status", ["holding", "frozen", "released"]);
+      for (let offset = 0;; offset += 500) {
+      const { data: held, error } = await db.from("orders").select("total_amount, commission_amount, affiliate_percent, affiliate_user_id, currency, pay_method, stars_amount, settled_currency, settled_net, escrow_status").eq("shop_id", shop.id).in("escrow_status", ["holding", "frozen", "released"]).order('id').range(offset, offset + 499);
+      if (error) throw new Error(error.message);
       for (const o of held ?? []) {
         if (o.pay_method === 'stars' && !o.settled_currency) { pendingStars += o.stars_amount ?? 0; continue; }
         if (o.escrow_status === 'released') continue;
@@ -244,6 +250,8 @@ export const getWallet = createServerFn({ method: "POST" })
         if (!cur) continue;
         const net = o.pay_method === 'stars' ? Number(o.settled_net??0) : Number(o.total_amount)-Number(o.commission_amount)-(o.affiliate_user_id?Number(o.total_amount)*Number(o.affiliate_percent)/100:0);
         (balances[cur] ??= { available: 0, pendingWithdraw: 0, escrow: 0 }).escrow += net;
+      }
+      if (!held || held.length < 500) break;
       }
     }
     return { balances, pendingStars, transactions: txs ?? [] };
