@@ -873,6 +873,7 @@ export type Database = {
           id: string
           order_id: string | null
           product_id: string
+          received_at: string | null
           sold_at: string | null
           status: string
         }
@@ -882,6 +883,7 @@ export type Database = {
           id?: string
           order_id?: string | null
           product_id: string
+          received_at?: string | null
           sold_at?: string | null
           status?: string
         }
@@ -891,6 +893,7 @@ export type Database = {
           id?: string
           order_id?: string | null
           product_id?: string
+          received_at?: string | null
           sold_at?: string | null
           status?: string
         }
