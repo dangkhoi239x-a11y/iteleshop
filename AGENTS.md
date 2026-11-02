@@ -27,3 +27,5 @@
 - Revenue reports aggregate all paginated paid orders by shop, UTC+7 payment day, payment method and settlement currency; never combine TON and USDT. Why: reporting must reconcile to the realized seller ledger without mixing assets.
 - The shared revenue view serves the dedicated platform report and seller report; report query keys include the authenticated user and filters. Why: consistent accounting and no cross-account cached financial data.
 - Telegram Start and menu buttons use the verified published app URL (optional TELEGRAM_APP_URL override), never a preview or webhook host; webhook registration is separate. Why: public webhook access does not imply public frontend access.
+- Telegram send results are recorded without message contents or credentials, and channel administration is server-role checked. Why: auditable notifications without exposing delivered codes.
+- Automated payouts stay disabled until provider custody permissions, network quotes and verified payout lifecycle are available; financial completion uses a locked service-role RPC. Why: fee settings alone cannot transfer real funds or prove receipt.

@@ -1,16 +1,16 @@
 # TeleShop roadmap
-- [ ] Explain current NOWPayments fees from official sources
-- [ ] Build seller Stars pending/settlement and withdrawal pages with real-receipt accounting
-- [ ] Build fee-aware USDT/TON withdrawals to external wallets with payout history
-- [ ] Build Admin Telegram channel management and buyer/seller notification history
-- [ ] Grant verified Telegram 999511304 admin, enable Stars and create sample code product
-- [ ] Verify user-funded Stars purchase, Telegram code delivery, shop/day revenue and actual settlement/wallet reconciliation
+- [x] Explain current NOWPayments fees from official sources
+- [x] Add seller Stars pending/settlement and withdrawal history pages
+- [ ] Automated NOWPayments withdrawals: fee settings added; blocked by provider ENDPOINT_NOT_ALLOWED for custody balance and missing verified payout authorization/network quote contract; fee settings are not applied to legacy manual requests
+- [x] Add Admin Telegram channel management, test-send and redacted buyer/seller notification history
+- [x] Grant verified Telegram 999511304 admin, enable Stars and create 1-Star sample code product
+- [ ] Verify user-funded Stars purchase, code delivery and revenue/settlement reconciliation: needs another Telegram buyer (owner cannot buy own product), actual Stars payment and actual received TON/USDT; new code not yet published
 - [x] Correct blank Telegram menu: verified published page returns 200 and renders; menu updated and corrected button delivered to requested Telegram account; 4 URL/Start tests pass
 - [x] Fix silent Telegram Start: store-opening reply and menu added, webhook registered; Telegram drained 2 pending updates with no delivery errors, 3 tests pass
 - [x] Configure NOWPayments API key/IPN secret; public callback rejects unsigned requests
-- [ ] Verify real Stars checkout through Telegram delivery: bot @iteleshop_bot verified and webhook registered; Stars disabled, no stocked products or linked Telegram buyers; admin requested for Telegram 999511304, user delegated sample product creation; waiting on verified Telegram login and user-funded Stars payment
+- [ ] Verify real Stars checkout through Telegram delivery: configured and sample stocked; waiting on separate Telegram buyer and user-funded payment
 - [x] Complete dedicated admin revenue page, currency filters and clear report states; revenue/pricing tests pass
-- [ ] Verify populated revenue filters and CSV end-to-end: waiting on an authorized admin account and paid orders (current account gets 403; no admin exists)
+- [ ] Verify populated revenue filters and CSV end-to-end: admin exists; waiting on paid orders
 - [x] Actual-receipt Stars settlement and safe seller wallet accounting
 - [x] Shop/day revenue report separating Stars and crypto
 - [x] Buyer code issue reports, seller review/replacement, order history
@@ -20,7 +20,7 @@
 - [x] Digital delivery: seller stores code/link per product, buyer sees it after payment
 - [x] Code pool: one code/link per unit, stock auto-syncs, buyer can resend code via Telegram, order search (buyer + seller)
 - [x] Rewards: daily check-in, tasks (channel, invite, purchase, spend, custom), lucky draws by admin and shops
-- [ ] Waiting on user: Telegram bot username and admin Telegram IDs (bot token and NOWPayments credentials are configured)
+- [x] Bot username @iteleshop_bot and admin Telegram 999511304 configured
 - [ ] Decide payment direction: Telegram Stars required for digital goods inside Mini Apps (policy), NOWPayments only for physical/real-world items
 - [x] Product options: auto-send code via Telegram, highlights, after-purchase guide
 - [x] Admin panel tabs: overview, users (admin role), orders, products (hide/show), tasks & draws

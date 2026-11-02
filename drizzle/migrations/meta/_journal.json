@@ -64,6 +64,13 @@
       "when": 1793589896799,
       "tag": "0008_stars_actual_settlement",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793596263116,
+      "tag": "0009_telegram_channels_and_notification_history",
+      "breakpoints": true
     }
   ]
 }

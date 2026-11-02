@@ -12,6 +12,12 @@ export async function onOrderPaid(orderId: string, paymentId: string, payCurrenc
   const { data: bot } = await db.from("shop_bots").select("*").eq("shop_id", o.shop_id).maybeSingle();
   const { data: buyer } = await db.from("profiles").select("telegram_id, username").eq("id", o.buyer_id).single();
   const amt = o.pay_method === "stars" ? `${o.stars_amount} ⭐` : `${Number(o.total_amount).toFixed(2)} ${o.currency}`;
+  const { data: shop } = await db.from('shops').select('owner_id').eq('id', o.shop_id).single();
+  const { data: seller } = shop ? await db.from('profiles').select('telegram_id').eq('id', shop.owner_id).single() : { data: null };
+  const notice = `🛒 Đơn đã thanh toán #${o.order_number}\n${escapeHtml(o.product_name)} × ${o.quantity}\n💰 ${amt}`;
+  await sendTelegramMessage(tok, seller?.telegram_id, notice);
+  const { data: channels } = await db.from('telegram_channels').select('chat_id').eq('enabled', true);
+  for (const channel of channels ?? []) await sendTelegramMessage(tok, channel.chat_id, notice);
   await sendTelegramMessage(bot?.bot_token, bot?.notification_chat_id, `🛒 <b>New paid order #${o.order_number}</b>\n${escapeHtml(o.product_name)} × ${o.quantity}\n💰 ${amt}\n👤 ${buyer?.username ? "@" + escapeHtml(buyer.username) : "buyer"}${o.delivery_address ? `\n📍 ${escapeHtml(o.delivery_address)}` : ""}`);
   await sendTelegramMessage(tok, buyer?.telegram_id, `✅ Payment received for order #${o.order_number} (${amt}). Funds are held in escrow until you confirm receipt.`);
   const { data: prod } = await db.from("products").select("auto_send_telegram, buyer_guide").eq("id", o.product_id).maybeSingle();

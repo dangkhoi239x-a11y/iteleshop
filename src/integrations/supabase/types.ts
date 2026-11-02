@@ -996,6 +996,63 @@ export type Database = {
           },
         ]
       }
+      telegram_channels: {
+        Row: {
+          chat_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          name: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      telegram_delivery_logs: {
+        Row: {
+          chat_id: string
+          created_at: string
+          error_code: string | null
+          event: string
+          id: string
+          message_id: number | null
+          recipient_user_id: string | null
+          status: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          error_code?: string | null
+          event: string
+          id?: string
+          message_id?: number | null
+          recipient_user_id?: string | null
+          status: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          error_code?: string | null
+          event?: string
+          id?: string
+          message_id?: number | null
+          recipient_user_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1117,6 +1174,33 @@ export type Database = {
           },
         ]
       }
+      withdrawal_policies: {
+        Row: {
+          currency: string
+          enabled: boolean
+          fee_mode: string
+          fee_value: number
+          minimum: number
+          updated_at: string
+        }
+        Insert: {
+          currency: string
+          enabled?: boolean
+          fee_mode?: string
+          fee_value?: number
+          minimum?: number
+          updated_at?: string
+        }
+        Update: {
+          currency?: string
+          enabled?: boolean
+          fee_mode?: string
+          fee_value?: number
+          minimum?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1126,6 +1210,15 @@ export type Database = {
       credit_stars_order: { Args: { _order_id: string }; Returns: boolean }
       daily_checkin: { Args: { _user: string }; Returns: number }
       enter_draw: { Args: { _draw: string; _user: string }; Returns: boolean }
+      finish_withdrawal: {
+        Args: {
+          _actor: string
+          _approve: boolean
+          _id: string
+          _tx_hash: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -24,15 +24,26 @@ export async function validateInitData(initData: string, botToken: string, maxAg
 
 export async function sendTelegramMessage(botToken: string | undefined | null, chatId: string | undefined | null, text: string) {
   if (!botToken || !chatId || !/^-?\d+$/.test(chatId)) return;
+  let status: 'sent' | 'failed' = 'failed';
+  let messageId: number | null = null;
+  let errorCode = 'NETWORK_ERROR';
   try {
-    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
     });
-  } catch (e) {
-    console.warn("Telegram notify failed", e);
+    const result = await response.json() as { ok?: boolean; result?: { message_id?: number }; error_code?: number };
+    if (response.ok && result.ok) { status = 'sent'; messageId = result.result?.message_id ?? null; }
+    else errorCode = String(result.error_code ?? response.status);
+  } catch {
+    console.warn("Telegram notification could not be delivered");
   }
+  const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
+  const { data: recipient } = await db.from('profiles').select('id').eq('telegram_id', chatId).maybeSingle();
+  const { error } = await db.from('telegram_delivery_logs').insert({ recipient_user_id: recipient?.id ?? null, chat_id: chatId, event: 'notification', status, message_id: messageId, error_code: status === 'sent' ? null : errorCode });
+  if (error) console.warn('Telegram delivery history could not be saved');
+  return status === 'sent';
 }
 
 export const escapeHtml = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);

@@ -23,6 +23,7 @@ import { Route as AuthenticatedRegisterShopRouteImport } from './routes/_authent
 import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
 import { Route as AuthenticatedRewardsAdminRouteImport } from './routes/_authenticated/rewards-admin'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
+import { Route as AuthenticatedWithdrawalsRouteImport } from './routes/_authenticated/withdrawals'
 import { Route as ProductProductIdRouteImport } from './routes/product.$productId'
 import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
@@ -32,6 +33,7 @@ import { Route as AuthenticatedDashboardProductsRouteImport } from './routes/_au
 import { Route as AuthenticatedDashboardRevenueRouteImport } from './routes/_authenticated/dashboard.revenue'
 import { Route as AuthenticatedDashboardRewardsRouteImport } from './routes/_authenticated/dashboard.rewards'
 import { Route as AuthenticatedDashboardSettingsRouteImport } from './routes/_authenticated/dashboard.settings'
+import { Route as AuthenticatedDashboardSettlementsRouteImport } from './routes/_authenticated/dashboard.settlements'
 import { Route as AuthenticatedDashboardVouchersRouteImport } from './routes/_authenticated/dashboard.vouchers'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
@@ -110,6 +112,12 @@ const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWithdrawalsRoute =
+  AuthenticatedWithdrawalsRouteImport.update({
+    id: '/withdrawals',
+    path: '/withdrawals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ProductProductIdRoute = ProductProductIdRouteImport.update({
   id: '/product/$productId',
   path: '/product/$productId',
@@ -162,6 +170,12 @@ const AuthenticatedDashboardSettingsRoute =
     path: '/dashboard/settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDashboardSettlementsRoute =
+  AuthenticatedDashboardSettlementsRouteImport.update({
+    id: '/dashboard/settlements',
+    path: '/dashboard/settlements',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardVouchersRoute =
   AuthenticatedDashboardVouchersRouteImport.update({
     id: '/dashboard/vouchers',
@@ -206,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/revenue': typeof AuthenticatedRevenueRoute
   '/rewards-admin': typeof AuthenticatedRewardsAdminRoute
   '/wallet': typeof AuthenticatedWalletRoute
+  '/withdrawals': typeof AuthenticatedWithdrawalsRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
@@ -214,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/dashboard/rewards': typeof AuthenticatedDashboardRewardsRoute
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
+  '/dashboard/settlements': typeof AuthenticatedDashboardSettlementsRoute
   '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
@@ -235,6 +251,7 @@ export interface FileRoutesByTo {
   '/revenue': typeof AuthenticatedRevenueRoute
   '/rewards-admin': typeof AuthenticatedRewardsAdminRoute
   '/wallet': typeof AuthenticatedWalletRoute
+  '/withdrawals': typeof AuthenticatedWithdrawalsRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
@@ -243,6 +260,7 @@ export interface FileRoutesByTo {
   '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/dashboard/rewards': typeof AuthenticatedDashboardRewardsRoute
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
+  '/dashboard/settlements': typeof AuthenticatedDashboardSettlementsRoute
   '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
@@ -266,6 +284,7 @@ export interface FileRoutesById {
   '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
   '/_authenticated/rewards-admin': typeof AuthenticatedRewardsAdminRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
+  '/_authenticated/withdrawals': typeof AuthenticatedWithdrawalsRoute
   '/product/$productId': typeof ProductProductIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/_authenticated/dashboard/flash-sales': typeof AuthenticatedDashboardFlashSalesRoute
@@ -274,6 +293,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/_authenticated/dashboard/rewards': typeof AuthenticatedDashboardRewardsRoute
   '/_authenticated/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
+  '/_authenticated/dashboard/settlements': typeof AuthenticatedDashboardSettlementsRoute
   '/_authenticated/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
@@ -297,6 +317,7 @@ export interface FileRouteTypes {
     | '/revenue'
     | '/rewards-admin'
     | '/wallet'
+    | '/withdrawals'
     | '/product/$productId'
     | '/shop/$shopId'
     | '/dashboard/flash-sales'
@@ -305,6 +326,7 @@ export interface FileRouteTypes {
     | '/dashboard/revenue'
     | '/dashboard/rewards'
     | '/dashboard/settings'
+    | '/dashboard/settlements'
     | '/dashboard/vouchers'
     | '/orders/$orderId'
     | '/dashboard/'
@@ -326,6 +348,7 @@ export interface FileRouteTypes {
     | '/revenue'
     | '/rewards-admin'
     | '/wallet'
+    | '/withdrawals'
     | '/product/$productId'
     | '/shop/$shopId'
     | '/dashboard/flash-sales'
@@ -334,6 +357,7 @@ export interface FileRouteTypes {
     | '/dashboard/revenue'
     | '/dashboard/rewards'
     | '/dashboard/settings'
+    | '/dashboard/settlements'
     | '/dashboard/vouchers'
     | '/orders/$orderId'
     | '/dashboard'
@@ -356,6 +380,7 @@ export interface FileRouteTypes {
     | '/_authenticated/revenue'
     | '/_authenticated/rewards-admin'
     | '/_authenticated/wallet'
+    | '/_authenticated/withdrawals'
     | '/product/$productId'
     | '/shop/$shopId'
     | '/_authenticated/dashboard/flash-sales'
@@ -364,6 +389,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/revenue'
     | '/_authenticated/dashboard/rewards'
     | '/_authenticated/dashboard/settings'
+    | '/_authenticated/dashboard/settlements'
     | '/_authenticated/dashboard/vouchers'
     | '/_authenticated/orders/$orderId'
     | '/_authenticated/dashboard/'
@@ -485,6 +511,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWalletRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/withdrawals': {
+      id: '/_authenticated/withdrawals'
+      path: '/withdrawals'
+      fullPath: '/withdrawals'
+      preLoaderRoute: typeof AuthenticatedWithdrawalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/product/$productId': {
       id: '/product/$productId'
       path: '/product/$productId'
@@ -548,6 +581,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/settlements': {
+      id: '/_authenticated/dashboard/settlements'
+      path: '/dashboard/settlements'
+      fullPath: '/dashboard/settlements'
+      preLoaderRoute: typeof AuthenticatedDashboardSettlementsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/vouchers': {
       id: '/_authenticated/dashboard/vouchers'
       path: '/dashboard/vouchers'
@@ -595,12 +635,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
   AuthenticatedRewardsAdminRoute: typeof AuthenticatedRewardsAdminRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
+  AuthenticatedWithdrawalsRoute: typeof AuthenticatedWithdrawalsRoute
   AuthenticatedDashboardFlashSalesRoute: typeof AuthenticatedDashboardFlashSalesRoute
   AuthenticatedDashboardOrdersRoute: typeof AuthenticatedDashboardOrdersRoute
   AuthenticatedDashboardProductsRoute: typeof AuthenticatedDashboardProductsRoute
   AuthenticatedDashboardRevenueRoute: typeof AuthenticatedDashboardRevenueRoute
   AuthenticatedDashboardRewardsRoute: typeof AuthenticatedDashboardRewardsRoute
   AuthenticatedDashboardSettingsRoute: typeof AuthenticatedDashboardSettingsRoute
+  AuthenticatedDashboardSettlementsRoute: typeof AuthenticatedDashboardSettlementsRoute
   AuthenticatedDashboardVouchersRoute: typeof AuthenticatedDashboardVouchersRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
@@ -616,12 +658,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
   AuthenticatedRewardsAdminRoute: AuthenticatedRewardsAdminRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
+  AuthenticatedWithdrawalsRoute: AuthenticatedWithdrawalsRoute,
   AuthenticatedDashboardFlashSalesRoute: AuthenticatedDashboardFlashSalesRoute,
   AuthenticatedDashboardOrdersRoute: AuthenticatedDashboardOrdersRoute,
   AuthenticatedDashboardProductsRoute: AuthenticatedDashboardProductsRoute,
   AuthenticatedDashboardRevenueRoute: AuthenticatedDashboardRevenueRoute,
   AuthenticatedDashboardRewardsRoute: AuthenticatedDashboardRewardsRoute,
   AuthenticatedDashboardSettingsRoute: AuthenticatedDashboardSettingsRoute,
+  AuthenticatedDashboardSettlementsRoute:
+    AuthenticatedDashboardSettlementsRoute,
   AuthenticatedDashboardVouchersRoute: AuthenticatedDashboardVouchersRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,

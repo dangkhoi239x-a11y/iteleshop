@@ -18,6 +18,8 @@ import { RewardsManager } from "@/components/app/RewardsManager";
 import { PaymentSettings } from "@/components/app/PaymentSettings";
 import { RevenueReport, useFinanceText, useRevenueText } from "@/components/app/RevenueReport";
 import { StarsSettlement } from "@/components/app/StarsSettlement";
+import { TelegramAdmin } from '@/components/app/TelegramAdmin';
+import { WithdrawalPolicy } from '@/components/app/WithdrawalPolicy';
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin · TeleShop" }, { name: "description", content: "TeleShop platform administration." }, { property: "og:title", content: "Admin · TeleShop" }, { property: "og:description", content: "Administration." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -63,12 +65,14 @@ function Admin() {
           <TabsTrigger value="rewards">{t("extra.tabRewards")}</TabsTrigger>
           <TabsTrigger value="payments">{t("extra.tabPayments")}</TabsTrigger>
           <TabsTrigger value="revenue">{finance.title}</TabsTrigger>
+          <TabsTrigger value="telegram">Telegram</TabsTrigger>
         </TabsList>
         <TabsContent value="users"><AdminLists kind="users" /></TabsContent>
+        <TabsContent value="telegram"><TelegramAdmin /></TabsContent>
         <TabsContent value="orders"><AdminLists kind="orders" /></TabsContent>
         <TabsContent value="products"><AdminLists kind="products" /></TabsContent>
         <TabsContent value="rewards" className="-mx-4"><RewardsManager shopId={null} /></TabsContent>
-        <TabsContent value="payments"><PaymentSettings /><StarsSettlement /></TabsContent>
+        <TabsContent value="payments"><PaymentSettings /><WithdrawalPolicy /><StarsSettlement /></TabsContent>
         <TabsContent value="revenue" className="space-y-4"><div className="flex justify-end"><Button asChild variant="outline" size="sm"><Link to="/revenue">{revenueLabels.open}<ArrowUpRight /></Link></Button></div><RevenueReport admin /></TabsContent>
         <TabsContent value="overview" className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
