@@ -1,12 +1,12 @@
 # TeleShop roadmap
-- [ ] Product referral sharing and paid-conversion cost reports by shop/UTC+7 day
-- [ ] Automatic Telegram prize delivery, recipient acknowledgement and admin history
-- [ ] Admin campaign creation, budgets and schedules; shop quiz with points and free entries
+- [x] Product referral links, verified Telegram capture, order commission snapshots and shop/UTC+7 daily referral cost reports; 29 tests pass
+- [x] Automatic Telegram gift-code delivery with retry state, recipient acknowledgement callback and admin history implemented; live gift delivery/acknowledgement awaits eligible participant
+- [x] Admin campaign creation, planned budgets/claim deadlines and schedules; shop quiz awards points plus capped free spins; creation/activation/quiz readback verified in signed-in admin UI
 - [ ] Real Telegram referral-to-purchase verification — requires separate Telegram buyer and user-funded purchase
 - [x] Growth first release: shop-scoped referral campaigns, free gift wheel, private prize inventory, admin approval and participation reports; shop creation/admin activation/mobile display/owner rejection verified; 16 tests pass
 - [ ] Growth participant verification: first signup referral bonus, actual free spin/gift readback and concurrent retries need a separate verified Telegram participant; no other linked Telegram account exists
-- [ ] Growth: TON-funded pools and automatic token prizes — blocked by verified custody/payout access and promotional compliance review; no real funds accepted in first release
-- [ ] Growth: additional quiz/unlock/team minigames — remaining phase; campaign-specific rules and prize fulfillment require definition
+- [ ] Growth: TON-funded pools and automatic token prizes — user will provide treasury address later; blocked by verified custody/payout access and promotional compliance review; no funding accepted and planned budgets are not deposited funds
+- [ ] Growth: direct quiz-to-voucher/product-code redemption and unlock/team minigames — direct delivery is currently through earned wheel entries; remaining prize redemption rules require definition
 - [x] Explain current NOWPayments fees from official sources
 - [x] Add seller Stars pending/settlement and withdrawal history pages
 - [ ] Automated NOWPayments withdrawals: fee settings added; blocked by provider ENDPOINT_NOT_ALLOWED for custody balance and missing verified payout authorization/network quote contract; fee settings are not applied to legacy manual requests

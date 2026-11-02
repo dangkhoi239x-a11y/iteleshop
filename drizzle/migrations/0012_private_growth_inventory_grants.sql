@@ -1,0 +1,1 @@
+REVOKE ALL ON public.shop_quiz_answers, public.growth_prize_secrets FROM anon, authenticated; GRANT ALL ON public.shop_quiz_answers, public.growth_prize_secrets TO service_role;
