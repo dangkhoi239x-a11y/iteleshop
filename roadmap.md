@@ -1,4 +1,5 @@
 # TeleShop roadmap
+- [ ] Simplify product details: remove duplicated header, move share/referral beneath Telegram delivery, and dock the single price/buy control only on deep scroll; verify short and long content.
 - [x] Refresh product, shop and shop-list UI: compact imagery, visible price/buy/share, factual promotion badges and related items; live stocked product, 360/390/843 layouts, purchase-to-sign-in, search/offer filter, copy/share and details verified; 23 pricing/referral tests pass. Current catalog has no configured offers or related items for populated verification.
 - [x] Product referral links, verified Telegram capture, order commission snapshots and shop/UTC+7 daily referral cost reports; 29 tests pass
 - [x] Automatic Telegram gift-code delivery with retry state, recipient acknowledgement callback and admin history implemented; live gift delivery/acknowledgement awaits eligible participant
@@ -40,5 +41,5 @@
 - [x] Promotions: vouchers sent via Telegram, buy-X-get-Y, quantity tiers
 - [x] Telegram Stars payment with admin on/off + rates
 - [x] Connect configured bot to receive Telegram Start and Stars updates
-- [x] Product page: sticky header with small image, price, buy, share/referral
+- [x] Product page: compact image and price, share/referral next to delivery, single purchase action
 - [x] After-purchase guide: product field, order page highlight, Telegram auto-send
