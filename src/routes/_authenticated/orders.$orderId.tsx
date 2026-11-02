@@ -89,9 +89,13 @@ function OrderPage() {
               <p className="line-clamp-2 text-sm font-medium">{o.product_name}</p>
               <StatusPill status={o.status} label={t(`order.status.${o.status}`)} />
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{o.shops?.name}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{o.shops?.name}</p>
           </div>
         </div>
+
+        {!["awaiting_payment", "cancelled", "expired"].includes(o.status) && (
+          <OrderDelivery orderId={orderId} shopId={o.shops?.id ?? ""} userId={userId} deliveredContent={o.delivered_content} buyerGuide={o.buyer_guide} isBuyer={isBuyer} />
+        )}
 
         <div className="space-y-2 rounded-2xl border border-border bg-card p-4 text-sm">
           <Row k={t("order.unit")} v={money(o.unit_price, o.currency)} />
