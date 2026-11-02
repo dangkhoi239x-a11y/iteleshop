@@ -100,7 +100,8 @@ export const createOrder = createServerFn({ method: "POST" })
     if (data.payMethod === "stars") {
       try {
         const { tgApi } = await import("@/server/order-paid.server");
-        const stars = starsFor(total, p.currency, settings!);
+        if (!settings) throw new Error("Payment settings missing");
+        const stars = starsFor(total, p.currency, settings);
         const link = await tgApi<string>("createInvoiceLink", { title: p.name.slice(0, 32), description: `TeleShop order × ${data.quantity + free}`.slice(0, 255), payload: order.id, currency: "XTR", prices: [{ label: p.name.slice(0, 32), amount: stars }] });
         await db.from("orders").update({ invoice_url: link, payment_status: "waiting" }).eq("id", order.id);
         return { orderId: order.id, invoiceUrl: link, stars: true };
@@ -120,9 +121,18 @@ export const payOrder = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ orderId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await admin();
-    const { data: o } = await db.from("orders").select("buyer_id, status, invoice_url").eq("id", data.orderId).single();
+    const { data: o } = await db.from("orders").select("buyer_id, status, invoice_url, pay_method, stars_amount, product_name, quantity").eq("id", data.orderId).single();
     if (!o || o.buyer_id !== context.userId) throw new Error("Order not found");
     if (o.status !== "awaiting_payment") throw new Error("This order is not awaiting payment");
+    if (o.pay_method === 'stars' && !o.invoice_url) {
+      const {data:settings}=await db.from('platform_settings').select('stars_enabled').maybeSingle();
+      if(!settings?.stars_enabled || !o.stars_amount) throw new Error('Stars payment unavailable');
+      const {tgApi}=await import('@/server/order-paid.server');
+      const link=await tgApi<string>('createInvoiceLink',{title:o.product_name.slice(0,32),description:`TeleShop order × ${o.quantity}`,payload:data.orderId,currency:'XTR',prices:[{label:o.product_name.slice(0,32),amount:o.stars_amount}]});
+      const {error}=await db.from('orders').update({invoice_url:link,payment_status:'waiting'}).eq('id',data.orderId);
+      if(error)throw new Error(error.message);
+      return {invoiceUrl:link};
+    }
     return { invoiceUrl: o.invoice_url ?? (await attachInvoice(data.orderId)) };
   });
 
@@ -144,7 +154,8 @@ export const updateOrder = createServerFn({ method: "POST" })
     } else if (data.action === "deliver" && isSeller && o.status === "shipped") {
       await db.from("orders").update({ status: "delivered", updated_at: now }).eq("id", o.id);
     } else if (data.action === "confirm" && isBuyer && ["paid", "shipped", "delivered"].includes(o.status)) {
-      await db.rpc("release_order_escrow", { _order_id: o.id });
+      const {error}=await db.rpc("release_order_escrow", { _order_id: o.id });
+      if(error)throw new Error(error.message);
     } else if (data.action === "cancel" && isBuyer && o.status === "awaiting_payment") {
       await db.from("orders").update({ status: "cancelled", updated_at: now }).eq("id", o.id);
     } else {
@@ -222,15 +233,20 @@ export const getWallet = createServerFn({ method: "POST" })
       b.available += Number(t.amount);
       if (t.status === "pending") b.pendingWithdraw += -Number(t.amount);
     }
+    let pendingStars = 0;
     const { data: shop } = await db.from("shops").select("id").eq("owner_id", context.userId).maybeSingle();
     if (shop) {
-      const { data: held } = await db.from("orders").select("total_amount, commission_amount, affiliate_percent, currency").eq("shop_id", shop.id).in("escrow_status", ["holding", "frozen"]);
+      const { data: held } = await db.from("orders").select("total_amount, commission_amount, affiliate_percent, affiliate_user_id, currency, pay_method, stars_amount, settled_currency, settled_net, escrow_status").eq("shop_id", shop.id).in("escrow_status", ["holding", "frozen", "released"]);
       for (const o of held ?? []) {
-        const net = Number(o.total_amount) - Number(o.commission_amount) - (Number(o.total_amount) * Number(o.affiliate_percent)) / 100;
-        (balances[o.currency] ??= { available: 0, pendingWithdraw: 0, escrow: 0 }).escrow += net;
+        if (o.pay_method === 'stars' && !o.settled_currency) { pendingStars += o.stars_amount ?? 0; continue; }
+        if (o.escrow_status === 'released') continue;
+        const cur = o.pay_method === 'stars' ? o.settled_currency : o.currency;
+        if (!cur) continue;
+        const net = o.pay_method === 'stars' ? Number(o.settled_net??0) : Number(o.total_amount)-Number(o.commission_amount)-(o.affiliate_user_id?Number(o.total_amount)*Number(o.affiliate_percent)/100:0);
+        (balances[cur] ??= { available: 0, pendingWithdraw: 0, escrow: 0 }).escrow += net;
       }
     }
-    return { balances, transactions: txs ?? [] };
+    return { balances, pendingStars, transactions: txs ?? [] };
   });
 
 export const requestWithdrawal = createServerFn({ method: "POST" })

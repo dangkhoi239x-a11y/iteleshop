@@ -13,6 +13,7 @@ import { EmptyState, Field, PageHeader, Section, StatusPill, errMsg } from "@/co
 import { getWallet, requestWithdrawal } from "@/functions/orders.functions";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
+import { useFinanceText } from "@/components/app/RevenueReport";
 
 export const Route = createFileRoute("/_authenticated/wallet")({
   head: () => ({ meta: [{ title: "Wallet · TeleShop" }, { name: "description", content: "Your USDT and TON balances, escrow and withdrawals." }, { property: "og:title", content: "Wallet · TeleShop" }, { property: "og:description", content: "Balances and withdrawals." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/wallet")({
 });
 
 function WalletPage() {
+  const finance = useFinanceText();
   const { t } = useTranslation();
   const { userId } = useAuth();
   const qc = useQueryClient();
@@ -52,6 +54,7 @@ function WalletPage() {
     <div>
       <PageHeader title={t("wallet.title")} back={false} />
       <div className="space-y-5 p-4">
+        {(data?.pendingStars ?? 0) > 0 && <p className="border-l-2 border-warning pl-3 text-sm">{finance.pendingWallet}: <strong>{data?.pendingStars} ⭐</strong></p>}
         <Tabs value={cur} onValueChange={(v) => setCur(v as "USDT" | "TON")}>
           <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="USDT">USDT</TabsTrigger><TabsTrigger value="TON">TON</TabsTrigger></TabsList>
         </Tabs>

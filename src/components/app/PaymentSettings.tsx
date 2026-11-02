@@ -9,8 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import { Field, errMsg } from "@/components/app/ui-bits";
 import { supabase } from "@/integrations/supabase/client";
 import { adminRegisterWebhook, adminSaveSettings } from "@/functions/admin.functions";
+import { useFinanceText } from './RevenueReport';
 
 export function PaymentSettings() {
+  const finance = useFinanceText();
   const { t } = useTranslation();
   const qc = useQueryClient();
   const save = useServerFn(adminSaveSettings);
@@ -23,7 +25,7 @@ export function PaymentSettings() {
   };
   return (
     <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
-      <p className="text-xs text-muted-foreground">{t("extra.starsNote")}</p>
+      <p className="text-xs text-muted-foreground">{finance.quote}</p>
       <label className="flex items-center justify-between text-sm">{t("extra.starsOn")}<Switch checked={f.stars_enabled} onCheckedChange={(c) => setF({ ...f, stars_enabled: c })} /></label>
       <label className="flex items-center justify-between text-sm">{t("extra.cryptoOn")}<Switch checked={f.crypto_enabled} onCheckedChange={(c) => setF({ ...f, crypto_enabled: c })} /></label>
       <div className="grid grid-cols-2 gap-3">

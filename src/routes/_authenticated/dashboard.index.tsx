@@ -7,6 +7,7 @@ import { PageHeader, Section, StatCard } from "@/components/app/ui-bits";
 import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { shopOrdersQuery } from "@/lib/queries";
 import { money } from "@/lib/format";
+import { useFinanceText } from "@/components/app/RevenueReport";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({ meta: [{ title: "Merchant dashboard · TeleShop" }, { name: "description", content: "Revenue, orders and tools for your TeleShop store." }, { property: "og:title", content: "Merchant dashboard · TeleShop" }, { property: "og:description", content: "Manage your shop." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -14,18 +15,20 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 });
 
 function Dashboard({ shop }: { shop: ShopRow }) {
+  const finance = useFinanceText();
   const { t } = useTranslation();
   const { data: orders = [] } = useQuery(shopOrdersQuery(shop.id));
   const done = orders.filter((o) => o.status === "completed");
-  const revenue = (cur: string) => done.filter((o) => o.currency === cur).reduce((s, o) => s + Number(o.total_amount) - Number(o.commission_amount), 0);
+  const revenue = (cur: string) => done.reduce((s,o)=>s+(o.pay_method==='stars' ? o.settled_currency===cur ? Number(o.settled_net??0) : 0 : o.currency===cur ? Number(o.total_amount)-Number(o.commission_amount)-(o.affiliate_user_id?Number(o.total_amount)*Number(o.affiliate_percent)/100:0) : 0),0);
   const toShip = orders.filter((o) => o.status === "paid").length;
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
     const key = d.toISOString().slice(0, 10);
-    return { day: d.toLocaleDateString(undefined, { weekday: "narrow" }), v: done.filter((o) => (o.completed_at ?? "").slice(0, 10) === key).reduce((s, o) => s + Number(o.total_amount), 0) };
+    return { day: d.toLocaleDateString(undefined, { weekday: "narrow" }), v: done.filter((o) => (o.completed_at ?? "").slice(0, 10) === key && (o.pay_method==='stars'?o.settled_currency:o.currency)==='USDT').reduce((s, o) => s + (o.pay_method==='stars'?Number(o.settled_net??0):Number(o.total_amount)-Number(o.commission_amount)-(o.affiliate_user_id?Number(o.total_amount)*Number(o.affiliate_percent)/100:0)), 0) };
   });
   const actions = [
+    { to: "/dashboard/revenue", icon: TrendingUp, label: finance.title },
     { to: "/dashboard/products", icon: Package, label: t("dash.products") },
     { to: "/dashboard/orders", icon: Truck, label: t("dash.orders") },
     { to: "/dashboard/flash-sales", icon: Flame, label: t("dash.flash") },
@@ -44,7 +47,7 @@ function Dashboard({ shop }: { shop: ShopRow }) {
           <StatCard label={t("dash.ordersCount")} value={orders.length} icon={ShoppingBag} tone="success" />
           <StatCard label={t("dash.toShip")} value={toShip} icon={Truck} tone="warning" />
         </div>
-        <Section title={t("dash.last7")}>
+        <Section title={`${t("dash.last7")} · USDT`}>
           <div className="h-36 rounded-2xl border border-border bg-card p-3">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={days}><XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={11} stroke="var(--muted-foreground)" /><Bar dataKey="v" fill="var(--primary)" radius={[6, 6, 0, 0]} /></BarChart>

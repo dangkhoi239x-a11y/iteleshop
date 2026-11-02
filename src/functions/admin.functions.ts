@@ -48,10 +48,14 @@ export const adminResolveDispute = createServerFn({ method: "POST" })
     const db = await assertAdmin(context);
     const { data: d } = await db.from("disputes").select("order_id, status").eq("id", data.id).single();
     if (!d || d.status !== "open") throw new Error("Dispute is not open");
-    if (data.outcome === "refund") await db.rpc("refund_order_escrow", { _order_id: d.order_id });
+    if (data.outcome === "refund") {
+      const {error}=await db.rpc("refund_order_escrow", { _order_id: d.order_id });
+      if(error)throw new Error(error.message);
+    }
     else {
       await db.from("orders").update({ escrow_status: "holding" }).eq("id", d.order_id).eq("escrow_status", "frozen");
-      await db.rpc("release_order_escrow", { _order_id: d.order_id });
+      const {error}=await db.rpc("release_order_escrow", { _order_id: d.order_id });
+      if(error)throw new Error(error.message);
     }
     await db.from("disputes").update({ status: data.outcome === "refund" ? "resolved_refund" : "resolved_release", admin_note: data.note ?? null, resolved_at: new Date().toISOString() }).eq("id", data.id);
     return { ok: true };
