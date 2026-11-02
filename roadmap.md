@@ -7,7 +7,7 @@
 - [x] Growth first release: shop-scoped referral campaigns, free gift wheel, private prize inventory, admin approval and participation reports; shop creation/admin activation/mobile display/owner rejection verified; 16 tests pass
 - [ ] Growth participant verification: first signup referral bonus, actual free spin/gift readback and concurrent retries need a separate verified Telegram participant; no other linked Telegram account exists
 - [ ] Growth: TON-funded pools and automatic token prizes — user will provide treasury address later; blocked by verified custody/payout access and promotional compliance review; no funding accepted and planned budgets are not deposited funds
-- [ ] Growth: direct quiz-to-voucher/product-code redemption and unlock/team minigames — direct delivery is currently through earned wheel entries; remaining prize redemption rules require definition
+- [x] Growth: quiz minigame rewards voucher, private product code or spins, with history, shop points and Telegram delivery
 - [x] Explain current NOWPayments fees from official sources
 - [x] Add seller Stars pending/settlement and withdrawal history pages
 - [ ] Automated NOWPayments withdrawals: fee settings added; blocked by provider ENDPOINT_NOT_ALLOWED for custody balance and missing verified payout authorization/network quote contract; fee settings are not applied to legacy manual requests
