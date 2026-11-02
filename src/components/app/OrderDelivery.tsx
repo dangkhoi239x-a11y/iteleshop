@@ -44,14 +44,13 @@ export function OrderDelivery({ orderId, shopId, userId, deliveredContent, buyer
   const codeList = codes ?? [];
   const gameList = games ?? [];
   const showGuide = !!buyerGuide;
-  const showGames = gameList.length > 0;
 
   return (
     <Tabs defaultValue="codes" className="rounded-2xl border border-border bg-card p-3">
       <TabsList className="flex w-full">
         <TabsTrigger value="codes" className="flex-1 gap-1"><Gift className="h-3.5 w-3.5" />{t("order.tabCodes")}{codeList.length ? ` · ${codeList.length}` : ""}</TabsTrigger>
         {showGuide && <TabsTrigger value="guide" className="flex-1 gap-1"><BookOpen className="h-3.5 w-3.5" />{t("order.tabGuide")}</TabsTrigger>}
-        {showGames && <TabsTrigger value="games" className="flex-1 gap-1"><Gamepad2 className="h-3.5 w-3.5" />{t("order.tabGames")}</TabsTrigger>}
+        <TabsTrigger value="games" className="flex-1 gap-1"><Gamepad2 className="h-3.5 w-3.5" />{t("order.tabGames")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="codes" className="space-y-2">
@@ -78,25 +77,24 @@ export function OrderDelivery({ orderId, shopId, userId, deliveredContent, buyer
         </TabsContent>
       )}
 
-      {showGames && (
-        <TabsContent value="games" className="space-y-2">
-          {gameList.map(r => (
-            <div key={r.id} className="space-y-1 rounded-xl bg-background/60 p-3">
-              <p className="text-sm font-medium">{r.shop_quizzes?.title} · {shortDate(r.created_at)}</p>
-              <p className="text-xs text-accent">+{r.points} {t("order.gamePoints")}{r.entries ? ` · +${r.entries} ${t("order.gameSpins")}` : ""}</p>
-              {r.delivered_content && (
-                <div className="flex items-start justify-between gap-2">
-                  <p className="min-w-0 flex-1 break-all whitespace-pre-wrap font-mono text-sm">{r.delivered_content}</p>
-                  <Button size="icon" variant="ghost" aria-label={t("common.copy")} className="h-7 w-7 shrink-0" onClick={() => copy(r.delivered_content!)}><Copy className="h-3.5 w-3.5" /></Button>
-                </div>
-              )}
-              {isBuyer && ["pending", "failed"].includes(r.telegram_state) && r.delivered_content && (
-                <Button size="sm" variant="outline" disabled={busy} onClick={() => resend(() => resendGame({ data: { id: r.id, quiz: true } }))}><Send /> {t("order.resend")}</Button>
-              )}
-            </div>
-          ))}
-        </TabsContent>
-      )}
+      <TabsContent value="games" className="space-y-2">
+        {gameList.map(r => (
+          <div key={r.id} className="space-y-1 rounded-xl bg-background/60 p-3">
+            <p className="text-sm font-medium">{r.shop_quizzes?.title} · {shortDate(r.created_at)}</p>
+            <p className="text-xs text-accent">+{r.points} {t("order.gamePoints")}{r.entries ? ` · +${r.entries} ${t("order.gameSpins")}` : ""}</p>
+            {r.delivered_content && (
+              <div className="flex items-start justify-between gap-2">
+                <p className="min-w-0 flex-1 break-all whitespace-pre-wrap font-mono text-sm">{r.delivered_content}</p>
+                <Button size="icon" variant="ghost" aria-label={t("common.copy")} className="h-7 w-7 shrink-0" onClick={() => copy(r.delivered_content!)}><Copy className="h-3.5 w-3.5" /></Button>
+              </div>
+            )}
+            {isBuyer && ["pending", "failed"].includes(r.telegram_state) && r.delivered_content && (
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => resend(() => resendGame({ data: { id: r.id, quiz: true } }))}><Send /> {t("order.resend")}</Button>
+            )}
+          </div>
+        ))}
+        {!gameList.length && <p className="text-sm text-muted-foreground">{t("order.noGames")}</p>}
+      </TabsContent>
     </Tabs>
   );
 }
