@@ -1,4 +1,8 @@
 import { round6 } from './pricing';
+export type RevenueFilters = { method: 'all' | 'stars' | 'crypto'; currency: 'all' | 'USDT' | 'TON' | 'XTR' };
+export function filterRevenue<T extends { method: string; currency: string }>(rows: T[], filters: RevenueFilters) {
+ return rows.filter(row => (filters.method === 'all' || row.method === filters.method) && (filters.currency === 'all' || row.currency === filters.currency));
+}
 export type RevenueOrder = { id: string; shop_id: string; paid_at: string | null; pay_method: string; currency: string; total_amount: number; commission_amount: number; affiliate_percent: number; affiliate_user_id: string | null; escrow_status: string; stars_amount: number | null; settled_amount: number | null; settled_currency: string | null; settled_fee: number | null; settled_affiliate: number | null; settled_net: number | null };
 export function revenueDay(iso: string) { return new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit' }).format(new Date(iso)); }
 export function proceeds(o: RevenueOrder) {
