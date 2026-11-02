@@ -110,24 +110,6 @@ function OrderPage() {
           {o.tracking_info && <Row k={t("order.tracking")} v={o.tracking_info} />}
         </div>
 
-        {o.delivered_content && (isBuyer || isSeller) && (
-          <div className="space-y-2 rounded-2xl border border-accent/50 bg-accent/10 p-4">
-            <p className="flex items-center gap-2 text-sm font-semibold text-accent"><Gift className="h-4 w-4" />{t("order.yourItem")}</p>
-            <p className="whitespace-pre-wrap break-all rounded-xl bg-background/60 p-3 font-mono text-sm">{o.delivered_content}</p>
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" onClick={() => { if (o.delivered_content) void navigator.clipboard.writeText(o.delivered_content).then(() => toast.success(t("common.copied"))).catch(e => toast.error(errMsg(e))); }}><Copy /> {t("common.copy")}</Button>
-              {isBuyer && <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => resend({ data: { orderId } }), t("order.resent"))}><Send /> {t("order.resend")}</Button>}
-            </div>
-          </div>
-        )}
-
-        {o.buyer_guide && (isBuyer || isSeller) && !["awaiting_payment", "cancelled", "expired"].includes(o.status) && (
-          <div className="space-y-2 rounded-2xl border border-primary/40 bg-primary/5 p-4">
-            <p className="flex items-center gap-2 text-sm font-semibold text-primary"><BookOpen className="h-4 w-4" />{t("extra.guideTitle")}</p>
-            <p className="whitespace-pre-line break-words text-sm">{o.buyer_guide}</p>
-          </div>
-        )}
-
         {(isBuyer || isSeller) && <CodeIssues orderId={orderId} isBuyer={isBuyer} isSeller={isSeller} eligible={!!o.delivered_content && ["paid","shipped","delivered","completed","disputed"].includes(o.status)} />}
 
         {isBuyer && ["paid", "shipped", "delivered"].includes(o.status) && (
