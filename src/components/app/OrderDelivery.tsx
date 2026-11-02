@@ -45,7 +45,6 @@ export function OrderDelivery({ orderId, shopId, userId, deliveredContent, buyer
   const gameList = games ?? [];
   const showGuide = !!buyerGuide;
   const showGames = gameList.length > 0;
-  const showCodes = !["cancelled", "expired"].includes("");
 
   return (
     <Tabs defaultValue="codes" className="rounded-2xl border border-border bg-card p-3">
