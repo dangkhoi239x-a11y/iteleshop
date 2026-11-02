@@ -1,0 +1,16 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useServerFn } from '@tanstack/react-start';
+import { Download,RefreshCw } from 'lucide-react';
+import { getReferralReport } from '@/functions/referrals.functions';
+import { useAuth } from '@/lib/auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Field } from './ui-bits';
+export function ReferralReport({shopId}:{shopId?:string|undefined}){
+ const {userId,isAdmin}=useAuth();const call=useServerFn(getReferralReport);const today=new Date().toISOString().slice(0,10);
+ const [from,setFrom]=useState(today.slice(0,8)+'01'),[to,setTo]=useState(today),[selected,setSelected]=useState(shopId??'');
+ const q=useQuery({queryKey:['referralReport',userId,selected,from,to],queryFn:()=>call({data:{shopId:selected||undefined,from,to}}),enabled:from<=to});
+ const csv=()=>{const content=['Day,Shop,Currency,Referrers,Orders,Revenue,Referral cost,Platform fees,Net proceeds,Pending Stars',...(q.data?.rows??[]).map(r=>[r.day,r.shopId,r.currency,r.referrers,r.orders,r.gross,r.cost,r.fees,r.net,r.pendingStars].join(','))].join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+content],{type:'text/csv'}));a.download='teleshop-ref-costs.csv';a.click();URL.revokeObjectURL(a.href)};
+ return <section className="space-y-4"><h2 className="font-semibold">Chi phí giới thiệu · theo ngày</h2><div className="grid grid-cols-2 gap-2"><Field label="Từ ngày"><Input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></Field><Field label="Đến ngày"><Input type="date" value={to} onChange={e=>setTo(e.target.value)}/></Field></div>{isAdmin&&<Field label="Shop"><select className="w-full border border-border bg-card rounded-lg p-2" value={selected} onChange={e=>setSelected(e.target.value)}><option value="">Tất cả shop</option>{q.data?.shops.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>}<p className="text-xs text-muted-foreground">UTC+7 · TON và USDT tách riêng · Stars chưa đối soát không ghi doanh thu thực nhận. Sau phí chưa trừ giá vốn và chi phí quà.</p><div className="flex gap-2"><Button variant="outline" size="sm" onClick={()=>q.refetch()}><RefreshCw/>Cập nhật</Button><Button variant="outline" size="sm" disabled={!q.data?.rows.length} onClick={csv}><Download/>CSV</Button></div>{q.isPending?<p>Đang tải</p>:q.error?<p role="alert" className="text-destructive">{q.error.message}</p>:!q.data?.rows.length?<p className="text-muted-foreground">Chưa có đơn giới thiệu đã thanh toán</p>:<div className="overflow-x-auto"><table className="w-full text-xs whitespace-nowrap"><thead><tr>{['Ngày','Shop','Tiền','Người giới thiệu','Đơn','Doanh thu','Phí ref','Phí sàn','Sau phí','Stars chờ'].map(x=><th key={x} className="p-2 text-left border-b border-border">{x}</th>)}</tr></thead><tbody>{q.data.rows.map(r=><tr key={[r.day,r.shopId,r.currency].join('|')}>{[r.day,q.data.shops.find(s=>s.id===r.shopId)?.name??r.shopId,r.currency,r.referrers,r.orders,r.gross,r.cost,r.fees,r.net,r.pendingStars].map((v,i)=><td className="p-2 border-b border-border" key={i}>{v}</td>)}</tr>)}</tbody></table></div>}</section>;
+}

@@ -1,0 +1,4 @@
+import { z } from 'zod';
+export function parseProductRef(value:string|undefined){const m=/^prod_([a-f0-9]{32})$/i.exec(value??'');const s=m?.[1];return s?`${s.slice(0,8)}-${s.slice(8,12)}-${s.slice(12,16)}-${s.slice(16,20)}-${s.slice(20)}`:null;}
+export const productReferralLink=(id:string)=>`https://t.me/iteleshop_bot?startapp=prod_${id.replaceAll('-','')}`;
+export const quizSchema=z.object({campaignId:z.string().uuid(),title:z.string().trim().min(3).max(120),question:z.string().trim().min(3).max(1000),options:z.array(z.string().trim().min(1).max(200)).min(2).max(4),correct:z.number().int().min(0).max(3),points:z.number().int().min(1).max(10000),entries:z.number().int().min(1).max(10)}).refine(v=>v.correct<v.options.length,'Correct answer not present');

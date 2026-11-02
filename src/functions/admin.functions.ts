@@ -151,6 +151,6 @@ export const adminRegisterWebhook = createServerFn({ method: "POST" })
     const { tgApi, webhookSecret } = await import("@/server/order-paid.server");
     const origin = new URL(getRequest().url).origin.replace("id-preview--", "project--").replace(/(project--[0-9a-f-]+)(\.)/, (m, a, b) => (a.endsWith("-dev") ? m : `${a}-dev${b}`));
     const url = `${origin}/api/public/telegram/webhook`;
-    await tgApi("setWebhook", { url, secret_token: await webhookSecret(), allowed_updates: ["message", "pre_checkout_query"] });
+    await tgApi("setWebhook", { url, secret_token: await webhookSecret(), allowed_updates: ["message", "pre_checkout_query", "callback_query"] });
     return { url };
   });

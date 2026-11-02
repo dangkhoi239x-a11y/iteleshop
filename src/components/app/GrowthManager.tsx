@@ -13,22 +13,28 @@ import { useGrowthText } from '@/lib/growth-text';
 import { useAuth } from '@/lib/auth';
 import { campaignSchema } from '@/lib/growth';
 import { shortDate } from '@/lib/format';
+import { supabase } from '@/integrations/supabase/client';
+import { GrowthTerms } from './GrowthTerms';
+import { ReferralReport } from './ReferralReport';
 
 export function GrowthManager({shopId}:{shopId?:string}){
  const t=useGrowthText();const {userId,isAdmin}=useAuth();const qc=useQueryClient();
  const get=useServerFn(getGrowth),create=useServerFn(createGrowth),status=useServerFn(setGrowthStatus);
  const q=useQuery({queryKey:['growth',userId,'manage',shopId],queryFn:()=>get({data:{manage:true,shopId}})});
  const [busy,setBusy]=useState(false);
+ const [selectedShop,setSelectedShop]=useState(shopId??'');
+ const shops=useQuery({queryKey:['growthShopChoices',userId],queryFn:async()=>{const r=await supabase.from('shops').select('id,name').order('name');if(r.error)throw new Error(r.error.message);return r.data},enabled:isAdmin&&!shopId});
  const [form,setForm]=useState({title:'',rules:'',starts:'',ends:'',max:'5',bonus:'1'});
  const [prizes,setPrizes]=useState([{label:'',codes:''},{label:'',codes:''}]);
  const act=async(fn:()=>Promise<unknown>)=>{setBusy(true);try{await fn();toast.success(t.created);await qc.invalidateQueries({queryKey:['growth']})}catch(e){toast.error(errMsg(e))}finally{setBusy(false)}};
  const save=()=>act(async()=>{
-  const data=campaignSchema.parse({shopId,title:form.title,rules:form.rules,startsAt:new Date(form.starts).toISOString(),endsAt:new Date(form.ends).toISOString(),maxEntries:Number(form.max),referralEntries:Number(form.bonus),prizes:prizes.map(p=>({label:p.label,codes:p.codes.split('\n').map(s=>s.trim()).filter(Boolean)}))});
+  const data=campaignSchema.parse({shopId:selectedShop,title:form.title,rules:form.rules,startsAt:new Date(form.starts).toISOString(),endsAt:new Date(form.ends).toISOString(),maxEntries:Number(form.max),referralEntries:Number(form.bonus),prizes:prizes.map(p=>({label:p.label,codes:p.codes.split('\n').map(s=>s.trim()).filter(Boolean)}))});
   await create({data});setForm({...form,title:'',rules:''});setPrizes([{label:'',codes:''},{label:'',codes:''}]);
  });
  return <div className="space-y-6">
   <section className="flex gap-3 border-b border-border pb-4"><LockKeyhole className="size-5 shrink-0 text-warning"/><div><h2 className="font-semibold">{t.pool}</h2><p className="text-sm text-muted-foreground">{t.blocked}</p></div></section>
-  {shopId&&<section className="space-y-4"><h2 className="font-semibold">{t.new}</h2><p className="text-xs text-muted-foreground">{t.createHint}</p>
+  {!shopId&&isAdmin&&<Field label="Shop tổ chức"><select className="w-full border border-border bg-card rounded-lg p-2" value={selectedShop} onChange={e=>setSelectedShop(e.target.value)}><option value="">Chọn shop</option>{shops.data?.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>}
+  {selectedShop&&<section className="space-y-4"><h2 className="font-semibold">{t.new}</h2><p className="text-xs text-muted-foreground">{t.createHint}</p>
    <Field label={t.name}><Input maxLength={120} value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></Field>
    <Field label={t.rules}><Textarea maxLength={4000} value={form.rules} onChange={e=>setForm({...form,rules:e.target.value})}/></Field>
    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Field label={t.start}><Input type="datetime-local" value={form.starts} onChange={e=>setForm({...form,starts:e.target.value})}/></Field><Field label={t.end}><Input type="datetime-local" value={form.ends} onChange={e=>setForm({...form,ends:e.target.value})}/></Field><Field label={t.max}><Input type="number" min={1} max={100} value={form.max} onChange={e=>setForm({...form,max:e.target.value})}/></Field><Field label={t.bonus}><Input type="number" min={1} max={10} value={form.bonus} onChange={e=>setForm({...form,bonus:e.target.value})}/></Field></div>
@@ -41,9 +47,12 @@ export function GrowthManager({shopId}:{shopId?:string}){
     <div className="grid grid-cols-3 gap-2 text-xs">{[[t.users,c.stats?.users??0],[t.referrals,c.stats?.referrals??0],[t.spins,c.stats?.spins??0]].map(([label,n])=><div key={label}><p className="text-muted-foreground">{label}</p><p className="font-semibold text-lg">{n}</p></div>)}</div>
     <p className="text-xs text-muted-foreground whitespace-pre-wrap break-words">{c.rules}</p>
     <div className="text-sm">{c.prizes.map(p=><p key={p.id}>{p.label}: {p.remaining}</p>)}</div>
+    <p className="text-xs text-warning">Ngân sách dự kiến: {Number(c.budget_ton)} TON · chưa xác nhận tiền nạp</p>
+    <GrowthTerms id={c.id} ends={c.ends_at} refresh={()=>qc.invalidateQueries({queryKey:['growth']})}/>
     <div className="flex flex-wrap gap-2">{isAdmin&&c.status!=='active'&&<Button size="sm" disabled={busy} onClick={()=>act(()=>status({data:{id:c.id,status:'active'}}))}>{t.approve}</Button>}{c.status==='active'&&<><Button size="sm" variant="outline" disabled={busy} onClick={()=>act(()=>status({data:{id:c.id,status:'paused'}}))}>{t.pause}</Button><Button asChild size="sm" variant="outline"><Link to="/growth/$campaignId" params={{campaignId:c.id}}>{t.open}</Link></Button></>}</div>
     <details><summary className="text-xs cursor-pointer">{t.events}</summary>{c.events.map(e=><p key={e.id} className="text-xs text-muted-foreground mt-2">{shortDate(e.created_at)} · {e.event}</p>)}</details>
    </article>)}
   </section>
+  <ReferralReport shopId={shopId}/>
  </div>;
 }

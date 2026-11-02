@@ -62,6 +62,42 @@ export type Database = {
         }
         Relationships: []
       }
+      buyer_product_referrals: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          product_id: string
+          referral_id: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          product_id: string
+          referral_id: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          product_id?: string
+          referral_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_product_referrals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_product_referrals_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "product_referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkins: {
         Row: {
           created_at: string
@@ -319,9 +355,12 @@ export type Database = {
       }
       growth_campaigns: {
         Row: {
+          budget_ton: number
+          claim_until: string | null
           created_at: string
           created_by: string
           ends_at: string
+          fee_terms: string
           id: string
           max_entries: number
           referral_entries: number
@@ -332,9 +371,12 @@ export type Database = {
           title: string
         }
         Insert: {
+          budget_ton?: number
+          claim_until?: string | null
           created_at?: string
           created_by: string
           ends_at: string
+          fee_terms?: string
           id?: string
           max_entries?: number
           referral_entries?: number
@@ -345,9 +387,12 @@ export type Database = {
           title: string
         }
         Update: {
+          budget_ton?: number
+          claim_until?: string | null
           created_at?: string
           created_by?: string
           ends_at?: string
+          fee_terms?: string
           id?: string
           max_entries?: number
           referral_entries?: number
@@ -513,6 +558,7 @@ export type Database = {
           id: string
           prize_id: string
           request_id: string
+          telegram_state: string
           user_id: string
         }
         Insert: {
@@ -522,6 +568,7 @@ export type Database = {
           id?: string
           prize_id: string
           request_id: string
+          telegram_state?: string
           user_id: string
         }
         Update: {
@@ -531,6 +578,7 @@ export type Database = {
           id?: string
           prize_id?: string
           request_id?: string
+          telegram_state?: string
           user_id?: string
         }
         Relationships: [
@@ -640,6 +688,7 @@ export type Database = {
           product_id: string
           product_image: string | null
           product_name: string
+          product_referral_id: string | null
           quantity: number
           settled_affiliate: number | null
           settled_amount: number | null
@@ -689,6 +738,7 @@ export type Database = {
           product_id: string
           product_image?: string | null
           product_name: string
+          product_referral_id?: string | null
           quantity?: number
           settled_affiliate?: number | null
           settled_amount?: number | null
@@ -738,6 +788,7 @@ export type Database = {
           product_id?: string
           product_image?: string | null
           product_name?: string
+          product_referral_id?: string | null
           quantity?: number
           settled_affiliate?: number | null
           settled_amount?: number | null
@@ -763,6 +814,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_product_referral_id_fkey"
+            columns: ["product_referral_id"]
+            isOneToOne: false
+            referencedRelation: "product_referrals"
             referencedColumns: ["id"]
           },
           {
@@ -846,6 +904,35 @@ export type Database = {
           },
           {
             foreignKeyName: "product_codes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_referrals: {
+        Row: {
+          affiliate_user_id: string
+          created_at: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          affiliate_user_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          affiliate_user_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_referrals_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -1113,6 +1200,122 @@ export type Database = {
           },
         ]
       }
+      shop_points: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          quiz_id: string
+          shop_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          quiz_id: string
+          shop_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          quiz_id?: string
+          shop_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_points_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "shop_quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_points_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_quiz_answers: {
+        Row: {
+          correct_index: number
+          quiz_id: string
+        }
+        Insert: {
+          correct_index: number
+          quiz_id: string
+        }
+        Update: {
+          correct_index?: number
+          quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_quiz_answers_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: true
+            referencedRelation: "shop_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_quizzes: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          entries: number
+          id: string
+          options: Json
+          points: number
+          question: string
+          shop_id: string
+          title: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          entries?: number
+          id?: string
+          options: Json
+          points: number
+          question: string
+          shop_id: string
+          title: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          entries?: number
+          id?: string
+          options?: Json
+          points?: number
+          question?: string
+          shop_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_quizzes_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "growth_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_quizzes_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shops: {
         Row: {
           affiliate_percent: number
@@ -1255,6 +1458,7 @@ export type Database = {
       }
       telegram_delivery_logs: {
         Row: {
+          acknowledged_at: string | null
           chat_id: string
           created_at: string
           error_code: string | null
@@ -1265,6 +1469,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          acknowledged_at?: string | null
           chat_id: string
           created_at?: string
           error_code?: string | null
@@ -1275,6 +1480,7 @@ export type Database = {
           status: string
         }
         Update: {
+          acknowledged_at?: string | null
           chat_id?: string
           created_at?: string
           error_code?: string | null
@@ -1440,6 +1646,20 @@ export type Database = {
     }
     Functions: {
       award_task: { Args: { _task: string; _user: string }; Returns: number }
+      bind_product_referral: {
+        Args: { _buyer: string; _referral: string }
+        Returns: string
+      }
+      configure_growth_terms: {
+        Args: {
+          _actor: string
+          _budget: number
+          _campaign: string
+          _claim: string
+          _fees: string
+        }
+        Returns: undefined
+      }
       create_growth_campaign: {
         Args: {
           _actor: string
@@ -1450,6 +1670,19 @@ export type Database = {
           _rules: string
           _shop: string
           _starts: string
+          _title: string
+        }
+        Returns: string
+      }
+      create_shop_quiz: {
+        Args: {
+          _actor: string
+          _campaign: string
+          _correct: number
+          _entries: number
+          _options: Json
+          _points: number
+          _question: string
           _title: string
         }
         Returns: string
@@ -1485,6 +1718,10 @@ export type Database = {
       mark_order_paid: {
         Args: { _order_id: string; _pay_currency: string; _payment_id: string }
         Returns: boolean
+      }
+      play_shop_quiz: {
+        Args: { _answer: number; _quiz: string; _user: string }
+        Returns: number
       }
       refund_order_escrow: { Args: { _order_id: string }; Returns: boolean }
       release_order_escrow: { Args: { _order_id: string }; Returns: boolean }

@@ -6,6 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { telegramLogin } from "@/functions/auth.functions";
 import { inTelegram, tg } from "@/lib/telegram";
 import i18n from "@/lib/i18n";
+import { captureProductReferral } from '@/functions/referrals.functions';
+import { parseProductRef } from '@/lib/product-referral';
+import { useNavigate } from '@tanstack/react-router';
 
 type Profile = { id: string; telegram_id: string; username: string | null; first_name: string | null; last_name: string | null; photo_url: string | null; language: string; referral_code: string };
 
@@ -28,6 +31,9 @@ const Ctx = createContext<AuthCtx | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const login = useServerFn(telegramLogin);
+  const captureRef=useServerFn(captureProductReferral);
+  const navigate=useNavigate();
+  const [captured,setCaptured]=useState<string|null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
@@ -68,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loginTelegram = useCallback(
-    () => finish(login({ data: { initData: tg()!.initData, ref: localStorage.getItem("ts_ref") ?? undefined } })),
+    () => {const initData=tg()?.initData;if(!initData)return Promise.resolve();return finish(login({ data: { initData, ref: localStorage.getItem("ts_ref") ?? undefined } }));},
     [finish, login],
   );
   const loginDemo = useCallback(() => {
@@ -86,14 +92,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [ready, session, signingIn, loginError, loginTelegram]);
 
   const userId = session?.user.id ?? null;
+  useEffect(()=>{
+    const w=tg();const start=w?.initDataUnsafe?.start_param;
+    if(!userId||!w?.initData||!parseProductRef(start)||captured===userId)return;
+    setCaptured(userId);
+    void captureRef({data:{initData:w.initData}}).then(r=>{if(r.productId)void navigate({to:'/product/$productId',params:{productId:r.productId}})}).catch(()=>setLoginError('Link giới thiệu không đủ điều kiện.'));
+  },[userId,captured,captureRef,navigate]);
   const { data: me } = useQuery({
     queryKey: ["me", userId],
     enabled: !!userId,
     queryFn: async () => {
+      if(!userId)return {profile:null,isAdmin:false,shop:null};
       const [p, r, s] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", userId!).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", userId!),
-        supabase.from("shops").select("id, name, status").eq("owner_id", userId!).maybeSingle(),
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", userId),
+        supabase.from("shops").select("id, name, status").eq("owner_id", userId).maybeSingle(),
       ]);
       return { profile: p.data as Profile | null, isAdmin: !!r.data?.some((x) => x.role === "admin"), shop: s.data };
     },
