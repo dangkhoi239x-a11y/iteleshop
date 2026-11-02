@@ -10,6 +10,11 @@ import { productQuery } from "@/lib/queries";
 import { effectivePrice, isFlashSaleActive } from "@/lib/pricing";
 import { money } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
+import { useServerFn } from '@tanstack/react-start';
+import { createProductReferral } from '@/functions/referrals.functions';
+import { shareLink } from '@/lib/telegram';
+import { Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const Route = createFileRoute("/product/$productId")({
   head: () => ({
@@ -29,6 +34,7 @@ function ProductPage() {
   const { productId } = Route.useParams();
   const { t } = useTranslation();
   const { userId } = useAuth();
+  const referral=useServerFn(createProductReferral);
   const { data: p, isLoading } = useQuery(productQuery(productId));
   if (isLoading) return <div className="space-y-3 p-4"><Skeleton className="aspect-square rounded-2xl" /><Skeleton className="h-24 rounded-2xl" /></div>;
   if (!p) return <EmptyState title="404" />;
@@ -41,10 +47,11 @@ function ProductPage() {
         {p.image_url ? <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><Package className="h-12 w-12 text-muted-foreground" /></div>}
       </div>
       <div className="space-y-4 p-4">
+        {!own&&userId&&<Button variant="outline" className="w-full" onClick={async()=>{try{const r=await referral({data:{productId}});shareLink(r.url,`${p.name} · TeleShop`);toast.success(`Hoa hồng ${r.percent}% · Stars tính theo tiền thực nhận`)}catch(e){toast.error(e instanceof Error?e.message:'Không tạo được link')}}}><Share2/>Chia sẻ nhận hoa hồng</Button>}
         {flash && (
           <div className="flex items-center justify-between rounded-xl bg-flash-gradient px-3 py-2 text-sm">
             <span className="flex items-center gap-1.5 font-semibold text-flash"><Flame className="h-4 w-4" /> {t("home.flashSale")}</span>
-            <span>{t("home.endsIn")} <Countdown end={p.flash_sale_end!} className="font-bold" /></span>
+            <span>{t("home.endsIn")} <Countdown end={p.flash_sale_end??''} className="font-bold" /></span>
           </div>
         )}
         <div>
