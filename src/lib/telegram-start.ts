@@ -1,8 +1,10 @@
 export function isTelegramStart(text: unknown): boolean {
  return typeof text === 'string' && /^\/start(?:@[a-z0-9_]+)?(?:\s|$)/i.test(text);
 }
-export function telegramStoreUrl(origin: string): string {
- const url = new URL(origin);
- url.hostname = url.hostname.replace(/^id-preview--([0-9a-f-]+)\./, 'project--$1-dev.');
+export function telegramStoreUrl(publicUrl = 'https://iteleshop.lovable.app'): string {
+ const url = new URL(publicUrl);
+ if (url.protocol !== 'https:' || /^(?:id-preview|preview|project)--/.test(url.hostname)) {
+  throw new Error('Telegram store requires a published HTTPS app URL');
+ }
  return `${url.origin}/`;
 }

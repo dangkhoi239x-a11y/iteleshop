@@ -10,7 +10,11 @@ describe('Telegram Start', () => {
   expect(isTelegramStart('/starting')).toBe(false);
   expect(isTelegramStart(null)).toBe(false);
  });
- it('opens the public app host instead of the editor login host', () => {
-  expect(telegramStoreUrl('https://id-preview--940f544b-e568-4ddc-bad7-5ad08819e404.lovable.app')).toBe('https://project--940f544b-e568-4ddc-bad7-5ad08819e404-dev.lovable.app/');
+ it('opens the published app, not the webhook host', () => {
+  expect(telegramStoreUrl()).toBe('https://iteleshop.lovable.app/');
+ });
+ it('rejects preview hosts for store navigation', () => {
+  expect(()=>telegramStoreUrl('https://project--940f544b-e568-4ddc-bad7-5ad08819e404-dev.lovable.app')).toThrow();
+  expect(()=>telegramStoreUrl('https://id-preview--940f544b-e568-4ddc-bad7-5ad08819e404.lovable.app')).toThrow();
  });
 });

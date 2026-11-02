@@ -1,4 +1,5 @@
 # TeleShop roadmap
+- [ ] Correct blank Telegram menu: point menu and Start buttons to verified published app, not blocked dev frontend
 - [x] Fix silent Telegram Start: store-opening reply and menu added, webhook registered; Telegram drained 2 pending updates with no delivery errors, 3 tests pass
 - [x] Configure NOWPayments API key/IPN secret; public callback rejects unsigned requests
 - [ ] Verify real Stars checkout through Telegram delivery: bot @iteleshop_bot verified and webhook registered; Stars disabled, no stocked products or linked Telegram buyers; admin requested for Telegram 999511304, user delegated sample product creation; waiting on verified Telegram login and user-funded Stars payment
