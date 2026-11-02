@@ -16,7 +16,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           await tgApi('sendMessage', {
             chat_id: message.chat.id,
             text: '🛍 Chào mừng anh/chị đến TeleShop!\nMở cửa hàng để xem sản phẩm, đặt hàng và nhận mã ngay trong Telegram.',
-            reply_markup: { inline_keyboard: [[{ text: '🛍 Mở TeleShop', web_app: { url: telegramStoreUrl(request.url) } }]] },
+            reply_markup: { inline_keyboard: [[{ text: '🛍 Mở TeleShop', web_app: { url: telegramStoreUrl(process.env['TELEGRAM_APP_URL']) } }]] },
           });
           return new Response('ok');
         }
