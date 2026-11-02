@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Copy, Gift, Loader2, Send, ShieldCheck } from "lucide-react";
+import { AlertTriangle, BookOpen, Copy, Gift, Loader2, Send, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -118,9 +118,9 @@ function OrderPage() {
         )}
 
         {o.buyer_guide && (isBuyer || isSeller) && !["awaiting_payment", "cancelled", "expired"].includes(o.status) && (
-          <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="mb-1 text-sm font-semibold">{t("extra.guideTitle")}</p>
-            <p className="whitespace-pre-line text-sm text-muted-foreground">{o.buyer_guide}</p>
+          <div className="space-y-2 rounded-2xl border border-primary/40 bg-primary/5 p-4">
+            <p className="flex items-center gap-2 text-sm font-semibold text-primary"><BookOpen className="h-4 w-4" />{t("extra.guideTitle")}</p>
+            <p className="whitespace-pre-line break-words text-sm">{o.buyer_guide}</p>
           </div>
         )}
 
