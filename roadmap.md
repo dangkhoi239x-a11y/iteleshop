@@ -1,7 +1,7 @@
 # TeleShop roadmap
-- [ ] Fix silent Telegram Start: add store-opening reply, register webhook and verify real pending messages
+- [x] Fix silent Telegram Start: store-opening reply and menu added, webhook registered; Telegram drained 2 pending updates with no delivery errors, 3 tests pass
 - [x] Configure NOWPayments API key/IPN secret; public callback rejects unsigned requests
-- [ ] Verify real Stars checkout through Telegram delivery: bot @iteleshop_bot verified; webhook unset, Stars disabled, no stocked products or linked Telegram buyers; admin requested for Telegram 999511304, user delegated sample product creation; waiting on verified Telegram login and user-funded Stars payment
+- [ ] Verify real Stars checkout through Telegram delivery: bot @iteleshop_bot verified and webhook registered; Stars disabled, no stocked products or linked Telegram buyers; admin requested for Telegram 999511304, user delegated sample product creation; waiting on verified Telegram login and user-funded Stars payment
 - [x] Complete dedicated admin revenue page, currency filters and clear report states; revenue/pricing tests pass
 - [ ] Verify populated revenue filters and CSV end-to-end: waiting on an authorized admin account and paid orders (current account gets 403; no admin exists)
 - [x] Actual-receipt Stars settlement and safe seller wallet accounting
@@ -23,4 +23,4 @@
 - [ ] Promo 4: private time-limited promo codes via shop channel
 - [x] Promotions: vouchers sent via Telegram, buy-X-get-Y, quantity tiers
 - [x] Telegram Stars payment with admin on/off + rates
-- [ ] Connect configured bot in Admin → Payments to receive Stars
+- [x] Connect configured bot to receive Telegram Start and Stars updates
