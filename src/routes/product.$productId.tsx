@@ -37,7 +37,7 @@ function ProductPage() {
  const offers = tiers.length>0 || (!!p.buy_x && !!p.get_y);
  const buy = available ? <Button className="min-w-0 flex-1" asChild><Link to="/checkout" search={{productId:p.id,quantity:qty}}><ShoppingBag/>{t('product.buyNow')}</Link></Button> : <Button className="min-w-0 flex-1" disabled>{p.stock===0?t('product.outOfStock'):text.unavailable}</Button>;
  const affiliate = async()=>{setBusy(true);try{const r=await referral({data:{productId}});shareLink(r.url,`${p.name} · TeleShop`);toast.success(`${r.percent}% · ${text.affiliateNote}`);}catch(e){toast.error(e instanceof Error?e.message:text.referralError);}finally{setBusy(false);}};
- return <div className="pb-24">
+ return <div>
   <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
    <div className="flex items-center gap-2.5 px-3 py-2">
     <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">{p.image_url?<img src={p.image_url} alt={p.name} className="h-full w-full object-contain p-1"/>:<Package className="size-5 text-muted-foreground"/>}</div>
@@ -77,6 +77,5 @@ function ProductPage() {
    {(p.description || p.highlights) && <details className="group border-b border-border pb-3"><summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">{text.details}<ChevronDown className="size-4 transition-transform group-open:rotate-180"/></summary><div className="space-y-3 pt-3 text-sm text-muted-foreground">{p.highlights && <ul className="list-disc space-y-1 pl-4">{p.highlights.split('\n').filter(l=>l.trim()).map((l,i)=><li key={i}>{l}</li>)}</ul>}{p.description && <p className="whitespace-pre-line break-words">{p.description}</p>}</div></details>}
    {!!related?.products.filter(item=>item.id!==p.id).length && <section className="space-y-3"><div><h2 className="text-sm font-semibold">{text.related}</h2><p className="text-[10px] text-muted-foreground">{text.relatedNote}</p></div><div className="grid grid-cols-2 gap-3">{related.products.filter(item=>item.id!==p.id).slice(0,4).map(item=><ProductCard key={item.id} p={item}/>)}</div></section>}
   </div>
-  {!own && <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md items-center gap-3 border-t border-border bg-background/95 px-4 py-2.5 backdrop-blur"><span className="tabular min-w-0 flex-1 break-words text-sm font-bold text-primary">{money(total,p.currency)}</span><div className="flex w-40 shrink-0">{buy}</div></div>}
  </div>;
 }
