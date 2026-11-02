@@ -94,7 +94,7 @@ function OrderPage() {
         </div>
 
         {!["awaiting_payment", "cancelled", "expired"].includes(o.status) && (
-          <OrderDelivery orderId={orderId} shopId={o.shops?.id ?? ""} userId={userId} deliveredContent={o.delivered_content} buyerGuide={o.buyer_guide} isBuyer={isBuyer} />
+          <OrderDelivery orderId={orderId} shopId={o.shops?.id ?? ""} userId={userId ?? ""} deliveredContent={o.delivered_content} buyerGuide={o.buyer_guide} isBuyer={isBuyer} />
         )}
 
         <div className="space-y-2 rounded-2xl border border-border bg-card p-4 text-sm">
