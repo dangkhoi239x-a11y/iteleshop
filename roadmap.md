@@ -1,4 +1,7 @@
 # TeleShop roadmap
+- [ ] Growth: shop-scoped referral campaigns, free gift wheel, private prize inventory, admin approval and participation reports
+- [ ] Growth: TON-funded pools and automatic token prizes — blocked by verified custody/payout access and promotional compliance review; no real funds accepted in first release
+- [ ] Growth: additional quiz/unlock/team minigames — follow gift-wheel release
 - [x] Explain current NOWPayments fees from official sources
 - [x] Add seller Stars pending/settlement and withdrawal history pages
 - [ ] Automated NOWPayments withdrawals: fee settings added; blocked by provider ENDPOINT_NOT_ALLOWED for custody balance and missing verified payout authorization/network quote contract; fee settings are not applied to legacy manual requests

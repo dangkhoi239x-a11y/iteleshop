@@ -132,3 +132,6 @@
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
+@media (prefers-reduced-motion: reduce) {
+  svg[aria-label="Prize wheel"] { transition: none !important; }
+}

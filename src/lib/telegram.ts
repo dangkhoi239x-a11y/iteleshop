@@ -18,7 +18,7 @@ declare global {
 }
 
 // Set to your bot's username (without @) and Mini App short name to build t.me deep links.
-export const BOT_USERNAME = "TeleShopMarketBot";
+export const BOT_USERNAME = "iteleshop_bot";
 export const MINI_APP_NAME = "app";
 
 export const tg = () => (typeof window !== "undefined" ? window.Telegram?.WebApp : undefined);
@@ -39,7 +39,7 @@ export function haptic(kind: "success" | "error" | "light" = "light") {
 }
 
 export function referralLink(code: string) {
-  return `https://t.me/${BOT_USERNAME}/${MINI_APP_NAME}?startapp=ref_${code}`;
+  return `https://t.me/${BOT_USERNAME}?startapp=ref_${code}`;
 }
 
 export function shareLink(url: string, text: string) {

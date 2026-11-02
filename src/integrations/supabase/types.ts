@@ -317,6 +317,239 @@ export type Database = {
           },
         ]
       }
+      growth_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string
+          ends_at: string
+          id: string
+          max_entries: number
+          referral_entries: number
+          rules: string
+          shop_id: string
+          starts_at: string
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          ends_at: string
+          id?: string
+          max_entries?: number
+          referral_entries?: number
+          rules: string
+          shop_id: string
+          starts_at: string
+          status?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          ends_at?: string
+          id?: string
+          max_entries?: number
+          referral_entries?: number
+          rules?: string
+          shop_id?: string
+          starts_at?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_campaigns_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_events: {
+        Row: {
+          actor_id: string
+          campaign_id: string
+          created_at: string
+          event: string
+          id: string
+        }
+        Insert: {
+          actor_id: string
+          campaign_id: string
+          created_at?: string
+          event: string
+          id?: string
+        }
+        Update: {
+          actor_id?: string
+          campaign_id?: string
+          created_at?: string
+          event?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "growth_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_members: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          entries: number
+          invite_code: string
+          referrer_id: string | null
+          used_entries: number
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          entries?: number
+          invite_code?: string
+          referrer_id?: string | null
+          used_entries?: number
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          entries?: number
+          invite_code?: string
+          referrer_id?: string | null
+          used_entries?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_members_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "growth_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_prize_secrets: {
+        Row: {
+          awarded_at: string | null
+          awarded_to: string | null
+          content: string
+          id: string
+          prize_id: string
+        }
+        Insert: {
+          awarded_at?: string | null
+          awarded_to?: string | null
+          content: string
+          id?: string
+          prize_id: string
+        }
+        Update: {
+          awarded_at?: string | null
+          awarded_to?: string | null
+          content?: string
+          id?: string
+          prize_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_prize_secrets_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "growth_prizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_prizes: {
+        Row: {
+          campaign_id: string
+          id: string
+          label: string
+          position: number
+        }
+        Insert: {
+          campaign_id: string
+          id?: string
+          label: string
+          position: number
+        }
+        Update: {
+          campaign_id?: string
+          id?: string
+          label?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_prizes_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "growth_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_spins: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          delivered_content: string
+          id: string
+          prize_id: string
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          delivered_content: string
+          id?: string
+          prize_id: string
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          delivered_content?: string
+          id?: string
+          prize_id?: string
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_spins_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "growth_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_spins_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "growth_prizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lucky_draws: {
         Row: {
           created_at: string
@@ -1207,6 +1440,20 @@ export type Database = {
     }
     Functions: {
       award_task: { Args: { _task: string; _user: string }; Returns: number }
+      create_growth_campaign: {
+        Args: {
+          _actor: string
+          _bonus: number
+          _ends: string
+          _max: number
+          _prizes: Json
+          _rules: string
+          _shop: string
+          _starts: string
+          _title: string
+        }
+        Returns: string
+      }
       credit_stars_order: { Args: { _order_id: string }; Returns: boolean }
       daily_checkin: { Args: { _user: string }; Returns: number }
       enter_draw: { Args: { _draw: string; _user: string }; Returns: boolean }
@@ -1225,6 +1472,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      join_growth_campaign: {
+        Args: {
+          _campaign: string
+          _invite?: string
+          _new_telegram?: boolean
+          _user: string
+        }
+        Returns: undefined
       }
       mark_order_paid: {
         Args: { _order_id: string; _pay_currency: string; _payment_id: string }
@@ -1255,6 +1511,10 @@ export type Database = {
         Returns: boolean
       }
       run_draw: { Args: { _actor: string; _draw: string }; Returns: number }
+      set_growth_status: {
+        Args: { _actor: string; _campaign: string; _status: string }
+        Returns: undefined
+      }
       settle_stars_orders: {
         Args: {
           _actor: string
@@ -1262,6 +1522,15 @@ export type Database = {
           _currency: string
           _orders: string[]
           _reference: string
+        }
+        Returns: string
+      }
+      spin_growth_campaign: {
+        Args: {
+          _campaign: string
+          _random: number
+          _request: string
+          _user: string
         }
         Returns: string
       }
