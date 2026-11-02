@@ -1,4 +1,5 @@
 # TeleShop roadmap
+- [ ] Complete dedicated admin revenue page, currency filters, clear report states and verification
 - [x] Actual-receipt Stars settlement and safe seller wallet accounting
 - [x] Shop/day revenue report separating Stars and crypto
 - [x] Buyer code issue reports, seller review/replacement, order history
