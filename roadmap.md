@@ -1,4 +1,5 @@
 # TeleShop roadmap
+- [ ] Refresh product, shop and shop-list UI: compact imagery, visible price/buy/share, factual promotion badges and related items; verify live views.
 - [x] Product referral links, verified Telegram capture, order commission snapshots and shop/UTC+7 daily referral cost reports; 29 tests pass
 - [x] Automatic Telegram gift-code delivery with retry state, recipient acknowledgement callback and admin history implemented; live gift delivery/acknowledgement awaits eligible participant
 - [x] Admin campaign creation, planned budgets/claim deadlines and schedules; shop quiz awards points plus capped free spins; creation/activation/quiz readback verified in signed-in admin UI
