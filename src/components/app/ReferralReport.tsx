@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field } from './ui-bits';
-export function ReferralReport({shopId}:{shopId?:string}){
+export function ReferralReport({shopId}:{shopId?:string|undefined}){
  const {userId,isAdmin}=useAuth();const call=useServerFn(getReferralReport);const today=new Date().toISOString().slice(0,10);
  const [from,setFrom]=useState(today.slice(0,8)+'01'),[to,setTo]=useState(today),[selected,setSelected]=useState(shopId??'');
  const q=useQuery({queryKey:['referralReport',userId,selected,from,to],queryFn:()=>call({data:{shopId:selected||undefined,from,to}}),enabled:from<=to});

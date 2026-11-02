@@ -8,6 +8,7 @@ import { inTelegram, tg } from "@/lib/telegram";
 import i18n from "@/lib/i18n";
 import { captureProductReferral } from '@/functions/referrals.functions';
 import { parseProductRef } from '@/lib/product-referral';
+import { useNavigate } from '@tanstack/react-router';
 
 type Profile = { id: string; telegram_id: string; username: string | null; first_name: string | null; last_name: string | null; photo_url: string | null; language: string; referral_code: string };
 
@@ -31,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const login = useServerFn(telegramLogin);
   const captureRef=useServerFn(captureProductReferral);
+  const navigate=useNavigate();
   const [captured,setCaptured]=useState<string|null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
@@ -94,8 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const w=tg();const start=w?.initDataUnsafe?.start_param;
     if(!userId||!w?.initData||!parseProductRef(start)||captured===userId)return;
     setCaptured(userId);
-    void captureRef({data:{initData:w.initData}}).then(r=>{if(r.productId)window.location.assign(`/product/${r.productId}`)}).catch(()=>setLoginError('Link giới thiệu không đủ điều kiện.'));
-  },[userId,captured,captureRef]);
+    void captureRef({data:{initData:w.initData}}).then(r=>{if(r.productId)void navigate({to:'/product/$productId',params:{productId:r.productId}})}).catch(()=>setLoginError('Link giới thiệu không đủ điều kiện.'));
+  },[userId,captured,captureRef,navigate]);
   const { data: me } = useQuery({
     queryKey: ["me", userId],
     enabled: !!userId,

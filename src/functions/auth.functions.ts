@@ -31,7 +31,7 @@ export const telegramLogin = createServerFn({ method: "POST" })
       const v = await validateInitData(data.initData, bot);
       if (!v) throw new Error("Invalid Telegram session. Please reopen the app from Telegram.");
       tg = { id: String(v.user.id), first_name: v.user.first_name, last_name: v.user.last_name, username: v.user.username, photo_url: v.user.photo_url, lang: v.user.language_code };
-      if (v.startParam?.startsWith("ref_")) ref = v.startParam.slice(4);
+      ref = v.startParam?.startsWith('ref_') ? v.startParam.slice(4) : undefined;
       growthInvite = parseGrowthInvite(v.startParam);
     } else if (data.demoId) {
       tg = { id: `demo_${data.demoId}`, first_name: "Demo", last_name: "User", };
