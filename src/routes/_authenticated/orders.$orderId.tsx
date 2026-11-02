@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, BookOpen, Copy, Gift, Loader2, Send, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Loader2, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,10 @@ import { EmptyState, Field, PageHeader, StatusPill, errMsg } from "@/components/
 import { orderQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
-import { openDispute, payOrder, resendDelivery, respondDispute, updateOrder } from "@/functions/orders.functions";
+import { openDispute, payOrder, respondDispute, updateOrder } from "@/functions/orders.functions";
 import { haptic, openExternal } from "@/lib/telegram";
 import { CodeIssues } from "@/components/app/CodeIssues";
+import { OrderDelivery } from "@/components/app/OrderDelivery";
 
 export const Route = createFileRoute("/_authenticated/orders/$orderId")({
   validateSearch: z.object({ paid: z.coerce.number().optional() }),
@@ -38,7 +39,6 @@ function OrderPage() {
   const update = useServerFn(updateOrder);
   const dispute = useServerFn(openDispute);
   const respond = useServerFn(respondDispute);
-  const resend = useServerFn(resendDelivery);
   const [busy, setBusy] = useState(false);
   const [showDispute, setShowDispute] = useState(false);
   const [reason, setReason] = useState<string>("not_received");
@@ -89,9 +89,13 @@ function OrderPage() {
               <p className="line-clamp-2 text-sm font-medium">{o.product_name}</p>
               <StatusPill status={o.status} label={t(`order.status.${o.status}`)} />
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{o.shops?.name}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{o.shops?.name}</p>
           </div>
         </div>
+
+        {!["awaiting_payment", "cancelled", "expired"].includes(o.status) && (
+          <OrderDelivery orderId={orderId} shopId={o.shops?.id ?? ""} userId={userId ?? ""} deliveredContent={o.delivered_content} buyerGuide={o.buyer_guide} isBuyer={isBuyer} />
+        )}
 
         <div className="space-y-2 rounded-2xl border border-border bg-card p-4 text-sm">
           <Row k={t("order.unit")} v={money(o.unit_price, o.currency)} />
@@ -105,24 +109,6 @@ function OrderPage() {
           {o.note && <Row k={t("checkout.note")} v={o.note} />}
           {o.tracking_info && <Row k={t("order.tracking")} v={o.tracking_info} />}
         </div>
-
-        {o.delivered_content && (isBuyer || isSeller) && (
-          <div className="space-y-2 rounded-2xl border border-accent/50 bg-accent/10 p-4">
-            <p className="flex items-center gap-2 text-sm font-semibold text-accent"><Gift className="h-4 w-4" />{t("order.yourItem")}</p>
-            <p className="whitespace-pre-wrap break-all rounded-xl bg-background/60 p-3 font-mono text-sm">{o.delivered_content}</p>
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" onClick={() => { if (o.delivered_content) void navigator.clipboard.writeText(o.delivered_content).then(() => toast.success(t("common.copied"))).catch(e => toast.error(errMsg(e))); }}><Copy /> {t("common.copy")}</Button>
-              {isBuyer && <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => resend({ data: { orderId } }), t("order.resent"))}><Send /> {t("order.resend")}</Button>}
-            </div>
-          </div>
-        )}
-
-        {o.buyer_guide && (isBuyer || isSeller) && !["awaiting_payment", "cancelled", "expired"].includes(o.status) && (
-          <div className="space-y-2 rounded-2xl border border-primary/40 bg-primary/5 p-4">
-            <p className="flex items-center gap-2 text-sm font-semibold text-primary"><BookOpen className="h-4 w-4" />{t("extra.guideTitle")}</p>
-            <p className="whitespace-pre-line break-words text-sm">{o.buyer_guide}</p>
-          </div>
-        )}
 
         {(isBuyer || isSeller) && <CodeIssues orderId={orderId} isBuyer={isBuyer} isSeller={isSeller} eligible={!!o.delivered_content && ["paid","shipped","delivered","completed","disputed"].includes(o.status)} />}
 
