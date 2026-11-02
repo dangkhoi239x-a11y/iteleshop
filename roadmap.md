@@ -1,4 +1,8 @@
 # TeleShop roadmap
+- [ ] Product referral sharing and paid-conversion cost reports by shop/UTC+7 day
+- [ ] Automatic Telegram prize delivery, recipient acknowledgement and admin history
+- [ ] Admin campaign creation, budgets and schedules; shop quiz with points and free entries
+- [ ] Real Telegram referral-to-purchase verification — requires separate Telegram buyer and user-funded purchase
 - [x] Growth first release: shop-scoped referral campaigns, free gift wheel, private prize inventory, admin approval and participation reports; shop creation/admin activation/mobile display/owner rejection verified; 16 tests pass
 - [ ] Growth participant verification: first signup referral bonus, actual free spin/gift readback and concurrent retries need a separate verified Telegram participant; no other linked Telegram account exists
 - [ ] Growth: TON-funded pools and automatic token prizes — blocked by verified custody/payout access and promotional compliance review; no real funds accepted in first release
