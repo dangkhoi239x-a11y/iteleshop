@@ -1,4 +1,6 @@
 # TeleShop roadmap
+- [x] Complete dedicated admin revenue page, currency filters and clear report states; revenue/pricing tests pass
+- [ ] Verify populated revenue filters and CSV end-to-end: waiting on an authorized admin account and paid orders (current account gets 403; no admin exists)
 - [x] Actual-receipt Stars settlement and safe seller wallet accounting
 - [x] Shop/day revenue report separating Stars and crypto
 - [x] Buyer code issue reports, seller review/replacement, order history
