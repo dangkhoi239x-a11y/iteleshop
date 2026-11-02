@@ -20,6 +20,7 @@ import { Route as AuthenticatedAffiliateRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
 import { Route as AuthenticatedKolOnboardingRouteImport } from './routes/_authenticated/kol-onboarding'
 import { Route as AuthenticatedRegisterShopRouteImport } from './routes/_authenticated/register-shop'
+import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
 import { Route as AuthenticatedRewardsAdminRouteImport } from './routes/_authenticated/rewards-admin'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as ProductProductIdRouteImport } from './routes/product.$productId'
@@ -93,6 +94,11 @@ const AuthenticatedRegisterShopRoute =
     path: '/register-shop',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRevenueRoute = AuthenticatedRevenueRouteImport.update({
+  id: '/revenue',
+  path: '/revenue',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRewardsAdminRoute =
   AuthenticatedRewardsAdminRouteImport.update({
     id: '/rewards-admin',
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/kol-onboarding': typeof AuthenticatedKolOnboardingRoute
   '/register-shop': typeof AuthenticatedRegisterShopRoute
+  '/revenue': typeof AuthenticatedRevenueRoute
   '/rewards-admin': typeof AuthenticatedRewardsAdminRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/product/$productId': typeof ProductProductIdRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/kol-onboarding': typeof AuthenticatedKolOnboardingRoute
   '/register-shop': typeof AuthenticatedRegisterShopRoute
+  '/revenue': typeof AuthenticatedRevenueRoute
   '/rewards-admin': typeof AuthenticatedRewardsAdminRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/product/$productId': typeof ProductProductIdRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/_authenticated/kol-onboarding': typeof AuthenticatedKolOnboardingRoute
   '/_authenticated/register-shop': typeof AuthenticatedRegisterShopRoute
+  '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
   '/_authenticated/rewards-admin': typeof AuthenticatedRewardsAdminRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/product/$productId': typeof ProductProductIdRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/kol-onboarding'
     | '/register-shop'
+    | '/revenue'
     | '/rewards-admin'
     | '/wallet'
     | '/product/$productId'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/kol-onboarding'
     | '/register-shop'
+    | '/revenue'
     | '/rewards-admin'
     | '/wallet'
     | '/product/$productId'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/_authenticated/checkout'
     | '/_authenticated/kol-onboarding'
     | '/_authenticated/register-shop'
+    | '/_authenticated/revenue'
     | '/_authenticated/rewards-admin'
     | '/_authenticated/wallet'
     | '/product/$productId'
@@ -450,6 +462,13 @@ declare module '@tanstack/react-router' {
       path: '/register-shop'
       fullPath: '/register-shop'
       preLoaderRoute: typeof AuthenticatedRegisterShopRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/revenue': {
+      id: '/_authenticated/revenue'
+      path: '/revenue'
+      fullPath: '/revenue'
+      preLoaderRoute: typeof AuthenticatedRevenueRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/rewards-admin': {
@@ -573,6 +592,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
   AuthenticatedKolOnboardingRoute: typeof AuthenticatedKolOnboardingRoute
   AuthenticatedRegisterShopRoute: typeof AuthenticatedRegisterShopRoute
+  AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
   AuthenticatedRewardsAdminRoute: typeof AuthenticatedRewardsAdminRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedDashboardFlashSalesRoute: typeof AuthenticatedDashboardFlashSalesRoute
@@ -593,6 +613,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
   AuthenticatedKolOnboardingRoute: AuthenticatedKolOnboardingRoute,
   AuthenticatedRegisterShopRoute: AuthenticatedRegisterShopRoute,
+  AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
   AuthenticatedRewardsAdminRoute: AuthenticatedRewardsAdminRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedDashboardFlashSalesRoute: AuthenticatedDashboardFlashSalesRoute,
