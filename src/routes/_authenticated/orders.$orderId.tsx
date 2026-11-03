@@ -67,7 +67,7 @@ function OrderPage() {
   };
 
   return (
-    <div className="pb-6">
+    <div className="min-w-0 pb-6 [overflow-wrap:anywhere]">
       <PageHeader title={t("order.number", { n: o.order_number })} />
       <div className="space-y-4 p-4">
         {o.status === "awaiting_payment" && (
@@ -82,11 +82,11 @@ function OrderPage() {
           </div>
         )}
 
-        <div className="flex gap-3 rounded-2xl border border-border bg-card p-3">
+        <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-2xl border border-border bg-card p-3">
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted">{o.product_image && <img src={o.product_image} alt="" className="h-full w-full object-cover" />}</div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <p className="line-clamp-2 text-sm font-medium">{o.product_name}</p>
+            <div className="flex min-w-0 flex-col items-start gap-2 sm:flex-row sm:justify-between">
+              <p className="min-w-0 text-sm font-medium">{o.product_name}</p>
               <StatusPill status={o.status} label={t(`order.status.${o.status}`)} />
             </div>
           <p className="mt-1 text-xs text-muted-foreground">{o.shops?.name}</p>
@@ -159,9 +159,9 @@ function OrderPage() {
 
 function Row({ k, v, bold }: { k: string; v: string; bold?: boolean }) {
   return (
-    <div className="flex justify-between gap-4">
-      <span className="text-muted-foreground">{k}</span>
-      <span className={`tabular text-right ${bold ? "font-display font-bold text-primary" : ""}`}>{v}</span>
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-3">
+      <span className="min-w-0 text-muted-foreground">{k}</span>
+      <span className={`min-w-0 whitespace-pre-wrap tabular text-right ${bold ? "font-display font-bold text-primary" : ""}`}>{v}</span>
     </div>
   );
 }
