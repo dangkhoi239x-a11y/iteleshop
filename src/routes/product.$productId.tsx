@@ -47,12 +47,12 @@ function ProductPage() {
  const total = round6(effectivePrice(p)*qty*(1-pct/100));
  const available = p.status==='active' && qty+free<=p.stock;
  const offers = tiers.length>0 || (!!p.buy_x && !!p.get_y);
- const buy = available ? <Button className="min-w-0 flex-1" asChild><Link to="/checkout" search={{productId:p.id,quantity:qty}}><ShoppingBag/>{t('product.buyNow')}</Link></Button> : <Button className="min-w-0 flex-1" disabled>{p.stock===0?t('product.outOfStock'):text.unavailable}</Button>;
+ const buy = available ? <Button className="h-auto min-h-11 min-w-0 whitespace-normal py-2" asChild><Link to="/checkout" search={{productId:p.id,quantity:qty}}><ShoppingBag/>{t('product.buyNow')}</Link></Button> : <Button className="h-auto min-h-11 min-w-0 whitespace-normal py-2" disabled>{p.stock===0?t('product.outOfStock'):text.unavailable}</Button>;
  const affiliate = async()=>{setBusy(true);try{const r=await referral({data:{productId}});shareLink(r.url,`${p.name} · TeleShop`);toast.success(`${r.percent}% · ${text.affiliateNote}`);}catch(e){toast.error(e instanceof Error?e.message:text.referralError);}finally{setBusy(false);}};
- return <div>
+ return <div className="min-w-0 [overflow-wrap:anywhere]">
   <div className="space-y-4 p-4">
    <section className="space-y-3">
-    <div className="flex items-start gap-3">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
      <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">{p.image_url?<img src={p.image_url} alt={p.name} className="h-full w-full object-contain p-1"/>:<Package className="size-6 text-muted-foreground"/>}</div>
      <div className="min-w-0 flex-1"><h1 className="mb-1 break-words font-display text-base font-bold leading-snug">{p.name}</h1><ProductPrice p={p} prominent/><p className="mt-1 text-[11px] text-muted-foreground">{t('product.sold',{n:p.sold_count})} · <span className={p.stock>0?'text-success':''}>{p.stock>0?t('product.stock',{n:p.stock}):t('product.outOfStock')}</span></p></div>
     </div>
@@ -73,13 +73,13 @@ function ProductPage() {
     <div className="flex items-center justify-between gap-2"><span className="text-xs text-muted-foreground">{text.quantity}</span><div className="flex items-center gap-2"><Button variant="secondary" size="icon" className="size-8" aria-label="Decrease quantity" disabled={qty<=1} onClick={()=>setQty(q=>q-1)}><Minus/></Button><span className="tabular w-8 text-center text-sm font-semibold" aria-live="polite">{qty}</span><Button variant="secondary" size="icon" className="size-8" aria-label="Increase quantity" disabled={qty>=100 || qty+1+freeUnits(qty+1,p.buy_x,p.get_y)>p.stock} onClick={()=>setQty(q=>q+1)}><Plus/></Button></div></div>
     {free>0 && <p className="text-xs text-success">{t('extra.freeGot',{n:free})}</p>}
     <div ref={purchaseAnchor} className="min-h-14">
-     <div className={purchaseDocked?'fixed inset-x-0 top-0 z-30 mx-auto flex min-h-14 w-full max-w-md items-center gap-3 border-b border-border bg-background/95 px-4 py-2 backdrop-blur':'flex min-h-14 items-center gap-3'}>
+     <div className={purchaseDocked?'fixed inset-x-0 top-0 z-30 mx-auto grid min-h-14 w-full max-w-md grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-border bg-background/95 px-4 py-2 backdrop-blur':'grid min-h-14 min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3'}>
       <div className="min-w-0"><p className="text-[10px] text-muted-foreground">{text.total}{pct>0?` · −${pct}%`:''}</p><p className="tabular break-words text-sm font-bold text-primary">{money(total,p.currency)}</p></div>{buy}
      </div>
     </div>
    </section>}
    {own && <p className="text-sm text-muted-foreground">{t('product.ownShop')}</p>}
-   {p.shops && <Link to="/shop/$shopId" params={{shopId:p.shops.id}} className="flex items-center gap-2.5 border-y border-border py-3">{p.shops.logo_url?<img src={p.shops.logo_url} alt="" className="size-9 rounded-lg object-cover"/>:<Store className="size-5 text-primary"/>}<span className="min-w-0 flex-1"><span className="block text-[10px] text-muted-foreground">{text.shopLabel}</span><span className="block truncate text-sm font-semibold">{p.shops.name}</span></span><ArrowRight className="size-4 text-muted-foreground"/></Link>}
+   {p.shops && <Link to="/shop/$shopId" params={{shopId:p.shops.id}} className="flex min-w-0 items-center gap-2.5 border-y border-border py-3">{p.shops.logo_url?<img src={p.shops.logo_url} alt="" className="size-9 shrink-0 rounded-lg object-cover"/>:<Store className="size-5 shrink-0 text-primary"/>}<span className="min-w-0 flex-1"><span className="block text-[10px] text-muted-foreground">{text.shopLabel}</span><span className="block text-sm font-semibold">{p.shops.name}</span></span><ArrowRight className="size-4 shrink-0 text-muted-foreground"/></Link>}
    {(p.description || p.highlights) && <details className="group border-b border-border pb-3"><summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">{text.details}<ChevronDown className="size-4 transition-transform group-open:rotate-180"/></summary><div className="space-y-3 pt-3 text-sm text-muted-foreground">{p.highlights && <ul className="list-disc space-y-1 pl-4">{p.highlights.split('\n').filter(l=>l.trim()).map((l,i)=><li key={i}>{l}</li>)}</ul>}{p.description && <p className="whitespace-pre-line break-words">{p.description}</p>}</div></details>}
    {!!related?.products.filter(item=>item.id!==p.id).length && <section className="space-y-3"><div><h2 className="text-sm font-semibold">{text.related}</h2><p className="text-[10px] text-muted-foreground">{text.relatedNote}</p></div><div className="grid grid-cols-2 gap-3">{related.products.filter(item=>item.id!==p.id).slice(0,4).map(item=><ProductCard key={item.id} p={item}/>)}</div></section>}
   </div>
