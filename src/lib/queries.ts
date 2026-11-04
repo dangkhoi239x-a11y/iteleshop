@@ -21,7 +21,7 @@ export const productsQuery = (search = "", category = "", pages = 1) =>
       let q = supabase.from("products").select(PRODUCT_COLS).eq("status", "active").order("sold_count", { ascending: false }).order("created_at", { ascending: false }).order("id").range(0, pages * 60 - 1);
       if (search) q = q.ilike("name", `%${search.replace(/[%_,()]/g, "")}%`);
       if (category) q = q.eq("category", category);
-      return must(await q);
+      return readAll((a,b)=>q.range(a,Math.min(b,pages*60-1)),60);
     },
   });
 
@@ -39,7 +39,7 @@ export const productQuery = (id: string) =>
   });
 
 export const shopsQuery = (search = "", pages = 1) =>
-  queryOptions({ queryKey: ["shops", search, pages], queryFn: async () => { let q = supabase.from("shops").select("*").eq("status", "active").order("total_sales", { ascending: false }).order("id").range(0,pages*100-1); if(search) q=q.ilike("name", `%${search.replace(/[%_,()]/g, "")}%`); return must(await q); } });
+  queryOptions({ queryKey: ["shops", search, pages], queryFn: async () => { let q = supabase.from("shops").select("*").eq("status", "active").order("total_sales", { ascending: false }).order("id").range(0,pages*100-1); if(search) q=q.ilike("name", `%${search.replace(/[%_,()]/g, "")}%`); return readAll((a,b)=>q.range(a,Math.min(b,pages*100-1)),100); } });
 
 export const shopQuery = (id: string) =>
   queryOptions({
