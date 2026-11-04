@@ -67,6 +67,11 @@ export const adminResolveDispute = createServerFn({ method: "POST" })
       starsRefunded = true;
     }
     requireTransition(await db.rpc("resolve_order_dispute", { _actor: context.userId, _dispute: data.id, _outcome: data.outcome, _note: data.note ?? "", _stars_refunded: starsRefunded }));
+    if (data.outcome === "release") {
+      const now = new Date().toISOString();
+      checked(await db.from("product_codes").update({ received_at: now }).eq("order_id", d.order_id).is("received_at", null).select("id"));
+      checked(await db.from("orders").update({ buyer_received_at: now }).eq("id", d.order_id).is("buyer_received_at", null).select("id"));
+    }
     return { ok: true };
   });
 
