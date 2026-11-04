@@ -66,3 +66,14 @@ export function starsFor(total: number, currency: string, rates: { stars_per_usd
   const rate = Number(currency === "TON" ? rates.stars_per_ton : rates.stars_per_usdt);
   return Math.max(1, Math.ceil(total * rate - 1e-9));
 }
+
+export function orderQuote(p: PriceProduct & { bulk_discounts?: string | null }, quantity: number, voucher?: PriceVoucher | null) {
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) throw new Error("Quantity must be between 1 and 100");
+  const unit = effectivePrice(p);
+  const gross = round6(unit * quantity);
+  const bulkOff = round6(gross * bulkPercent(parseBulkTiers(p.bulk_discounts), quantity) / 100);
+  const subtotal = round6(gross - bulkOff);
+  const applied = voucher ? voucherDiscount(voucher, subtotal) : null;
+  const voucherOff = applied?.ok ? applied.discount : 0;
+  return { unit, gross, bulkOff, subtotal, voucherOff, total: round6(subtotal - voucherOff), voucherValid: !applied || applied.ok };
+}
