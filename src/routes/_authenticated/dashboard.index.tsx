@@ -37,6 +37,7 @@ function Dashboard({ shop }: { shop: ShopRow }) {
     { to: '/withdrawals', icon: Truck, label: 'Lịch sử rút tiền' },
     { to: "/dashboard/products", icon: Package, label: t("dash.products") },
     { to: "/dashboard/orders", icon: Truck, label: t("dash.orders") },
+    { to: "/dashboard/disputes", icon: Truck, label: "Tranh chấp" },
     { to: "/dashboard/flash-sales", icon: Flame, label: t("dash.flash") },
     { to: "/dashboard/vouchers", icon: Tag, label: t("dash.vouchers") },
     { to: "/dashboard/rewards", icon: Gift, label: t("rewards.manage") },
