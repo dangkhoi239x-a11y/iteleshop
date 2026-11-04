@@ -26,7 +26,8 @@ function Rewards() {
   const { userId, session } = useAuth();
   const qc = useQueryClient();
   const pub = useQuery(rewardsQuery());
-  const mine = useQuery({ ...myRewardsQuery(userId ?? ""), enabled: !!userId });
+  const [pages,setPages]=useState(1);
+  const mine = useQuery({ ...myRewardsQuery(userId ?? "",pages), enabled: !!userId });
   const checkin = useServerFn(dailyCheckin);
   const claim = useServerFn(claimTask);
   const enter = useServerFn(enterDraw);
@@ -135,10 +136,11 @@ function Rewards() {
         {!!mine.data?.points.length && (
           <Section title={t("rewards.history")}>
             <div className="divide-y divide-border rounded-2xl border border-border bg-card text-sm">
-              {mine.data.points.slice(0, 20).map((p, i) => (
+              {mine.data.points.map((p, i) => (
                 <div key={i} className="flex justify-between px-3 py-2"><span className="truncate text-muted-foreground">{p.note ?? p.source} · {shortDate(p.created_at)}</span><span className={p.amount > 0 ? "text-success" : "text-destructive"}>{p.amount > 0 ? "+" : ""}{p.amount}</span></div>
               ))}
             </div>
+          {mine.data.points.length===pages*20&&<Button variant="outline" className="w-full" onClick={()=>setPages(n=>n+1)}>Tải thêm</Button>}
           </Section>
         )}
       </div>

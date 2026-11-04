@@ -25,11 +25,11 @@ export const productsQuery = (search = "", category = "", pages = 1) =>
     },
   });
 
-export const flashQuery = () =>
+export const flashQuery = (pages=1) =>
   queryOptions({
-    queryKey: ["flash"],
+    queryKey: ["flash",pages],
     queryFn: async () =>
-      must(await supabase.from("products").select(PRODUCT_COLS).eq("status", "active").not("flash_sale_price", "is", null).gt("flash_sale_end", new Date().toISOString()).order("flash_sale_end").limit(20)),
+      readWindow((a,b)=>supabase.from("products").select(PRODUCT_COLS).eq("status", "active").not("flash_sale_price", "is", null).gt("flash_sale_end", new Date().toISOString()).order("flash_sale_end").order("id").range(a,b),pages*20),
   });
 
 export const productQuery = (id: string) =>
@@ -100,18 +100,18 @@ export const rewardsQuery = (shopId?: string) =>
     },
   });
 
-export const myRewardsQuery = (userId: string) =>
+export const myRewardsQuery = (userId: string,pages=1) =>
   queryOptions({
-    queryKey: ["myRewards", userId],
+    queryKey: ["myRewards", userId,pages],
     queryFn: async () => {
       const [pts, ck, done, ent, balance] = await Promise.all([
-        supabase.from("reward_points").select("amount, source, note, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(500),
+        readWindow((a,b)=>supabase.from("reward_points").select("amount, source, note, created_at").eq("user_id", userId).order("created_at", { ascending: false }).order("id").range(a,b),pages*20),
         supabase.from("checkins").select("day, streak").eq("user_id", userId).order("day", { ascending: false }).limit(1),
         supabase.from("task_completions").select("task_id").eq("user_id", userId),
         supabase.from("draw_entries").select("draw_id").eq("user_id", userId),
         supabase.rpc("my_reward_balance"),
       ]);
-      return { balance: Number(checked(balance)), points: must(pts), lastCheckin: must(ck)[0] ?? null, done: must(done).map((d) => d.task_id), entries: must(ent).map((e) => e.draw_id) };
+      return { balance: Number(checked(balance)), points: pts, lastCheckin: must(ck)[0] ?? null, done: must(done).map((d) => d.task_id), entries: must(ent).map((e) => e.draw_id) };
     },
   });
 

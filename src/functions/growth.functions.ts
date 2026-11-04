@@ -1,12 +1,12 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
-import {checked,readAll} from '@/lib/data-result';
+import {checked,readWindow} from '@/lib/data-result';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { campaignSchema } from '@/lib/growth';
 import { quizSchema } from '@/lib/product-referral';
 
 export const getGrowth = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
- .inputValidator((i: unknown) => z.object({ shopId: z.string().uuid().optional(), manage: z.boolean().default(false), campaignId:z.string().uuid().optional() }).parse(i))
+ .inputValidator((i: unknown) => z.object({ shopId: z.string().uuid().optional(), manage: z.boolean().default(false), campaignId:z.string().uuid().optional(),pages:z.number().int().min(1).max(1000).default(1) }).parse(i))
  .handler(async ({ data, context }) => {
   const role=checked(await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'admin'}));
   const ownShop=checked(await context.supabase.from('shops').select('id').eq('owner_id',context.userId).maybeSingle());
@@ -29,11 +29,11 @@ export const getGrowth = createServerFn({ method: 'POST' }).middleware([requireS
    const events=manager?checked(await context.supabase.from('growth_events').select('id,event,created_at').eq('campaign_id',c.id).order('created_at',{ascending:false}).limit(30))??[]:[];
    return {...c,prizes:counts.sort((a,b)=>a.position-b.position),own:own.find(m=>m.campaign_id===c.id)??null,stats:manager?{users:Number(summary?.users??0),referrals:Number(summary?.referrals??0),spins:Number(summary?.spins??0)}:null,events};
   }));
-  let historyQuery=context.supabase.from('growth_spins').select('*,growth_prizes(label)').eq('user_id',context.userId).order('created_at',{ascending:false}).limit(50);
+  let historyQuery=context.supabase.from('growth_spins').select('*,growth_prizes(label)').eq('user_id',context.userId).order('created_at',{ascending:false}).order('id');
   let quizQuery=context.supabase.from('shop_quizzes').select('*');
   if(data.campaignId){historyQuery=historyQuery.eq('campaign_id',data.campaignId);quizQuery=quizQuery.eq('campaign_id',data.campaignId);}
-  const [history,quizzes,points,rewards]=await Promise.all([historyQuery,quizQuery,context.supabase.from('shop_points').select('*').eq('user_id',context.userId),context.supabase.from('shop_quiz_rewards').select('*,shop_quizzes(title),shops(name)').eq('user_id',context.userId).order('created_at',{ascending:false}).limit(50)]);
-  return {campaigns,history:checked(history)??[],quizzes:checked(quizzes)??[],points:checked(points)??[],rewards:checked(rewards)??[]};
+  const [history,quizzes,points,rewards]=await Promise.all([readWindow((a,b)=>historyQuery.range(a,b),data.pages*50),quizQuery,context.supabase.from('shop_points').select('*').eq('user_id',context.userId),readWindow((a,b)=>context.supabase.from('shop_quiz_rewards').select('*,shop_quizzes(title),shops(name)').eq('user_id',context.userId).order('created_at',{ascending:false}).order('id').range(a,b),data.pages*50)]);
+  return {campaigns,history,quizzes:checked(quizzes)??[],points:checked(points)??[],rewards};
  });
 export const createGrowth = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>campaignSchema.parse(i)).handler(async({data,context})=>{
  const {data:shop} = await context.supabase.from('shops').select('owner_id').eq('id',data.shopId).maybeSingle();
