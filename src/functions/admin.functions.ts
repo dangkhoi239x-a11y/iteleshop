@@ -24,7 +24,9 @@ export const adminOverview = createServerFn({ method: "POST" })
     ]);
     const volume: Record<string, number> = {};
     const fees: Record<string, number> = {};
-    for (const o of paid.data ?? []) {
+    checked(users); checked(shops); checked(orders); checked(paid);
+    const paidRows = await readAll((offset,end)=>db.from("orders").select("total_amount,commission_amount,currency,pay_method,settled_amount,settled_fee,settled_currency").in("escrow_status",["holding","released","frozen"]).order("id").range(offset,end));
+    for (const o of paidRows) {
       const currency = o.pay_method === 'stars' ? o.settled_currency : o.currency;
       if (!currency) continue;
       volume[currency] = (volume[currency] ?? 0) + Number(o.pay_method === 'stars' ? o.settled_amount : o.total_amount);
@@ -32,7 +34,8 @@ export const adminOverview = createServerFn({ method: "POST" })
     }
     const { data: withdrawals } = await db.from("wallet_transactions").select("*").eq("type", "withdrawal").eq("status", "pending").order("created_at");
     const { data: disputes } = await db.from("disputes").select("*, orders(order_number, product_name, total_amount, currency)").eq("status", "open").order("created_at");
-    return { users: users.count ?? 0, orders: orders.count ?? 0, shops: shops.data ?? [], volume, fees, withdrawals: withdrawals ?? [], disputes: disputes ?? [] };
+    const issues = checked(await db.from("orders").select("id,order_number,product_name,fulfillment_state,stars_refund_state").or("fulfillment_state.eq.shortage,stars_refund_state.eq.pending").order("created_at")) ?? [];
+    return { issues, users: users.count ?? 0, orders: orders.count ?? 0, shops: shops.data ?? [], volume, fees, withdrawals: withdrawals ?? [], disputes: disputes ?? [] };
   });
 
 export const adminWithdrawal = createServerFn({ method: "POST" })
@@ -94,26 +97,26 @@ const term = (s?: string) => (s ?? "").replace(/[%_,()]/g, "").trim();
 
 export const adminLists = createServerFn({ method: "POST" })
   .middleware([...adminMw])
-  .inputValidator((i: unknown) => z.object({ kind: z.enum(["users", "orders", "products"]), q: z.string().max(100).optional() }).parse(i))
+  .inputValidator((i: unknown) => z.object({ kind: z.enum(["users", "orders", "products"]), q: z.string().max(100).optional(), pages:z.number().int().min(1).max(1000).default(1) }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
     const q = term(data.q);
     if (data.kind === "users") {
-      let r = db.from("profiles").select("id, username, first_name, telegram_id, created_at").order("created_at", { ascending: false }).limit(100);
+      let r = db.from("profiles").select("id, username, first_name, telegram_id, created_at").order("created_at", { ascending: false }).order("id").range(0,data.pages*100-1);
       if (q) r = r.or(`username.ilike.%${q}%,first_name.ilike.%${q}%,telegram_id.ilike.%${q}%`);
-      const { data: users } = await r;
-      const { data: roles } = await db.from("user_roles").select("user_id").eq("role", "admin");
+      const users = checked(await r);
+      const roles = checked(await db.from("user_roles").select("user_id").eq("role", "admin"));
       const admins = new Set((roles ?? []).map((x) => x.user_id));
       return { users: (users ?? []).map((u) => ({ ...u, isAdmin: admins.has(u.id) })), orders: [], products: [] };
     }
     if (data.kind === "orders") {
-      let r = db.from("orders").select("id, order_number, product_name, total_amount, currency, status, created_at, shops(name)").order("created_at", { ascending: false }).limit(100);
+      let r = db.from("orders").select("id, order_number, product_name, total_amount, currency, status, created_at, shops(name)").order("created_at", { ascending: false }).order("id").range(0,data.pages*100-1);
       if (q) r = /^\d+$/.test(q) ? r.eq("order_number", Number(q)) : r.ilike("product_name", `%${q}%`);
-      return { users: [], orders: (await r).data ?? [], products: [] };
+      return { users: [], orders: checked(await r) ?? [], products: [] };
     }
-    let r = db.from("products").select("id, name, price, currency, stock, status, sold_count, shops(name)").neq("status", "archived").order("created_at", { ascending: false }).limit(100);
+    let r = db.from("products").select("id, name, price, currency, stock, status, sold_count, shops(name)").neq("status", "archived").order("created_at", { ascending: false }).order("id").range(0,data.pages*100-1);
     if (q) r = r.ilike("name", `%${q}%`);
-    return { users: [], orders: [], products: (await r).data ?? [] };
+    return { users: [], orders: [], products: checked(await r) ?? [] };
   });
 
 export const adminProductStatus = createServerFn({ method: "POST" })
@@ -157,3 +160,11 @@ export const adminRegisterWebhook = createServerFn({ method: "POST" })
     await tgApi("setWebhook", { url, secret_token: await webhookSecret(), allowed_updates: ["message", "pre_checkout_query", "callback_query"] });
     return { url };
   });
+
+export const retryOrderFulfillment = createServerFn({method:"POST"}).middleware([...adminMw]).inputValidator((i:unknown)=>z.object({id:z.string().uuid()}).parse(i)).handler(async({data,context})=>{
+ const db=await assertAdmin(context);
+ requireTransition(await db.rpc("fulfill_paid_order",{_order_id:data.id}));
+ const {sendOrderDelivery}=await import("@/server/order-paid.server");
+ await sendOrderDelivery(data.id);
+ return {ok:true};
+});

@@ -14,7 +14,7 @@ import { orderQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
 import { openDispute, payOrder, respondDispute, updateOrder } from "@/functions/orders.functions";
-import { haptic, openExternal } from "@/lib/telegram";
+import { haptic, openExternal, openStarsInvoice } from "@/lib/telegram";
 import { CodeIssues } from "@/components/app/CodeIssues";
 import { OrderDelivery } from "@/components/app/OrderDelivery";
 
@@ -75,13 +75,14 @@ function OrderPage() {
             <p className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin text-warning" />{t("order.paidBanner")}</p>
             {isBuyer && (
               <div className="mt-3 flex gap-2">
-                <Button className="flex-1" disabled={busy} onClick={() => run(async () => { const r = await pay({ data: { orderId } }); openExternal(r.invoiceUrl); })}>{t("order.pay")}</Button>
+                <Button className="flex-1" disabled={busy} onClick={() => run(async () => { const r = await pay({ data: { orderId } }); if(o.pay_method==="stars") openStarsInvoice(r.invoiceUrl); else openExternal(r.invoiceUrl); })}>{t("order.pay")}</Button>
                 <Button variant="outline" disabled={busy} onClick={() => run(() => update({ data: { orderId, action: "cancel" } }))}>{t("order.cancel")}</Button>
               </div>
             )}
           </div>
         )}
 
+        {o.fulfillment_state==="shortage"&&<p role="alert" className="border-l-4 border-warning bg-warning/10 p-3 text-sm">Đã nhận thanh toán, shop đang bổ sung mã. Tiền chưa được giải ngân; anh/chị có thể mở tranh chấp.</p>}
         <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-2xl border border-border bg-card p-3">
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted">{o.product_image && <img src={o.product_image} alt="" className="h-full w-full object-cover" />}</div>
           <div className="min-w-0 flex-1">
@@ -112,12 +113,12 @@ function OrderPage() {
 
         {(isBuyer || isSeller) && <CodeIssues orderId={orderId} isBuyer={isBuyer} isSeller={isSeller} eligible={!!o.delivered_content && ["paid","shipped","delivered","completed","disputed"].includes(o.status)} />}
 
-        {isBuyer && ["paid", "shipped", "delivered"].includes(o.status) && (
+        {isBuyer && ["paid", "shipped", "delivered", "completed"].includes(o.status) && !o.buyer_received_at && (
           <div className="space-y-2">
-            <Button size="lg" className="w-full" disabled={busy} onClick={() => { if (confirm(t("order.confirmAsk"))) void run(() => update({ data: { orderId, action: "confirm" } })); }}>
+            <Button size="lg" className="w-full" disabled={busy || o.fulfillment_state!=="ready"} onClick={() => { if (confirm(t("order.confirmAsk"))) void run(() => update({ data: { orderId, action: "confirm" } })); }}>
               <ShieldCheck /> {t("order.confirmReceipt")}
             </Button>
-            {!d && <Button variant="outline" className="w-full" onClick={() => setShowDispute((v) => !v)}><AlertTriangle /> {t("order.dispute")}</Button>}
+            {!d && o.escrow_status==="holding" && <Button variant="outline" className="w-full" onClick={() => setShowDispute((v) => !v)}><AlertTriangle /> {t("order.dispute")}</Button>}
           </div>
         )}
 

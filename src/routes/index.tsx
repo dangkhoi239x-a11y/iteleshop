@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Flame, Gift, Search, Store } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Countdown, EmptyState, ProductCard, Section } from "@/components/app/ui-bits";
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "TeleShop — Crypto marketplace in Telegram" },
-      { name: "description", content: "Buy and sell with USDT and TON inside Telegram. Escrow-protected orders, flash sales and affiliate rewards." },
+      { name: "description", content: "Digital goods with Telegram Stars and supported crypto payments. Escrow-protected orders, flash sales and affiliate rewards." },
       { property: "og:title", content: "TeleShop — Crypto marketplace in Telegram" },
       { property: "og:description", content: "Buy and sell with USDT and TON, escrow-protected." },
       { property: "og:type", content: "website" },
@@ -28,7 +29,8 @@ function Home() {
   const { t } = useTranslation();
   const { shop, session } = useAuth();
   const [q, setQ] = useState("");
-  const products = useQuery(productsQuery(q.trim()));
+  const [pages,setPages] = useState(1);
+  const products = useQuery(productsQuery(q.trim(),"",pages));
   const flash = useQuery(flashQuery());
   const soonestEnd = flash.data?.[0]?.flash_sale_end;
 
@@ -40,7 +42,7 @@ function Home() {
       </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("home.search")} className="rounded-full bg-card pl-9" />
+        <Input value={q} onChange={(e) => {setQ(e.target.value);setPages(1)}} placeholder={t("home.search")} className="rounded-full bg-card pl-9" />
       </div>
 
       {!q && (
@@ -88,13 +90,14 @@ function Home() {
       )}
 
       <Section title={t("home.trending")}>
-        {products.isLoading ? (
+        {products.isError ? <EmptyState title={products.error.message} /> : products.isLoading ? (
           <div className="grid grid-cols-2 gap-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-56 rounded-2xl" />)}</div>
         ) : products.data?.length ? (
           <div className="grid grid-cols-2 gap-3">{products.data.map((p) => <ProductCard key={p.id} p={p} />)}</div>
         ) : (
           <EmptyState title={t("home.noProducts")} />
         )}
+      {products.data?.length===pages*60&&<Button variant="outline" className="w-full mt-3" onClick={()=>setPages(n=>n+1)}>Tải thêm</Button>}
       </Section>
     </div>
   );
