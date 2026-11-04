@@ -995,6 +995,7 @@ export type Database = {
           flash_sale_end: string | null
           flash_sale_price: number | null
           get_y: number | null
+          goods_kind: string
           highlights: string | null
           id: string
           image_url: string | null
@@ -1019,6 +1020,7 @@ export type Database = {
           flash_sale_end?: string | null
           flash_sale_price?: number | null
           get_y?: number | null
+          goods_kind?: string
           highlights?: string | null
           id?: string
           image_url?: string | null
@@ -1043,6 +1045,7 @@ export type Database = {
           flash_sale_end?: string | null
           flash_sale_price?: number | null
           get_y?: number | null
+          goods_kind?: string
           highlights?: string | null
           id?: string
           image_url?: string | null
