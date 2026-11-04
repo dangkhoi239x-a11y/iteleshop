@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { checked, requireTransition, readAll } from "@/lib/data-result";
+import { checked, requireTransition, readAll, readWindow } from "@/lib/data-result";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const adminMw = [requireSupabaseAuth] as const;
@@ -104,7 +104,7 @@ export const adminLists = createServerFn({ method: "POST" })
     if (data.kind === "users") {
       let r = db.from("profiles").select("id, username, first_name, telegram_id, created_at").order("created_at", { ascending: false }).order("id").range(0,data.pages*100-1);
       if (q) r = r.or(`username.ilike.%${q}%,first_name.ilike.%${q}%,telegram_id.ilike.%${q}%`);
-      const users = checked(await r);
+      const users = await readWindow((a,b)=>r.range(a,b),data.pages*100);
       const roles = checked(await db.from("user_roles").select("user_id").eq("role", "admin"));
       const admins = new Set((roles ?? []).map((x) => x.user_id));
       return { users: (users ?? []).map((u) => ({ ...u, isAdmin: admins.has(u.id) })), orders: [], products: [] };
@@ -112,11 +112,11 @@ export const adminLists = createServerFn({ method: "POST" })
     if (data.kind === "orders") {
       let r = db.from("orders").select("id, order_number, product_name, total_amount, currency, status, created_at, shops(name)").order("created_at", { ascending: false }).order("id").range(0,data.pages*100-1);
       if (q) r = /^\d+$/.test(q) ? r.eq("order_number", Number(q)) : r.ilike("product_name", `%${q}%`);
-      return { users: [], orders: checked(await r) ?? [], products: [] };
+      return { users: [], orders: await readWindow((a,b)=>r.range(a,b),data.pages*100), products: [] };
     }
     let r = db.from("products").select("id, name, price, currency, stock, status, sold_count, shops(name)").neq("status", "archived").order("created_at", { ascending: false }).order("id").range(0,data.pages*100-1);
     if (q) r = r.ilike("name", `%${q}%`);
-    return { users: [], orders: [], products: checked(await r) ?? [] };
+    return { users: [], orders: [], products: await readWindow((a,b)=>r.range(a,b),data.pages*100) };
   });
 
 export const adminProductStatus = createServerFn({ method: "POST" })
