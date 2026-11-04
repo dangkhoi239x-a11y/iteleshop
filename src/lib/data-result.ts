@@ -16,3 +16,14 @@ export async function readAll<T>(page: (offset: number, end: number) => PromiseL
     if (batch.length < size) return rows;
   }
 }
+
+export async function readWindow<T>(page: (offset: number, end: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>, limit: number, size = 100): Promise<T[]> {
+  const rows: T[] = [];
+  for (let offset = 0; offset < limit; offset += size) {
+    const count = Math.min(size, limit - offset);
+    const batch = checked(await page(offset, offset + count - 1)) ?? [];
+    rows.push(...batch);
+    if (batch.length < count) break;
+  }
+  return rows;
+}
