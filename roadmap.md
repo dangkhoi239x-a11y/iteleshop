@@ -1,6 +1,9 @@
 # TeleShop roadmap
 - [x] Whole-app read-only code review and official-document research: confirmed defects, 61 tests passed, 8 preview pages checked and ordered repair plan prepared.
-- [ ] Implement reviewed repairs and Stars/operations additions — blocked on approval of the plan; no application changes before approval.
+- [x] Implement approved repairs: atomic full-quantity fulfillment/receipt/disputes, refund inventory, checked writes, voucher revalidation, full reward balance, paginated catalog/admin/Telegram/reward history, batched growth counts, digital Stars gate and recoverable Stars refund action; 76 tests pass, preview checkout/rewards/growth/wallet checked, build OK.
+- [ ] Verify new admin retry/Stars refund and seller workflows end-to-end — current injected preview account is not admin and has no shop; needs the intended admin/shop session. No privileges granted for testing.
+- [ ] Verify real Stars purchase/refund, referral activation, Telegram delivery and actual settlement — requires a separate verified Telegram buyer, user-funded purchase and actual received funds; test-only PostgreSQL checks are not real-payment evidence.
+- [ ] Resolve current security findings — requires a fresh deep scan from Security; latest available scan is stale and contains no deep-scan result.
 - [x] Optimize product/order mobile layouts: wrapped full codes, guides and minigame history, grid tabs and purchase controls; signed-in delivery tabs and product verified without horizontal overflow at 320/360/390/843 widths.
 - [x] Simplify product details: removed duplicated header, moved share/referral beneath Telegram delivery, and docked the single price/buy control only on deep scroll; verified live short product and simulated long content at 390/843 widths, purchase-to-sign-in, no runtime errors; 25 pricing/referral tests pass.
 - [x] Refresh product, shop and shop-list UI: compact imagery, visible price/buy/share, factual promotion badges and related items; live stocked product, 360/390/843 layouts, purchase-to-sign-in, search/offer filter, copy/share and details verified; 23 pricing/referral tests pass. Current catalog has no configured offers or related items for populated verification.
@@ -34,7 +37,7 @@
 - [x] Code pool: one code/link per unit, stock auto-syncs, buyer can resend code via Telegram, order search (buyer + seller)
 - [x] Rewards: daily check-in, tasks (channel, invite, purchase, spend, custom), lucky draws by admin and shops
 - [x] Bot username @iteleshop_bot and admin Telegram 999511304 configured
-- [ ] Decide payment direction: Telegram Stars required for digital goods inside Mini Apps (policy), NOWPayments only for physical/real-world items
+- [x] Enforce payment direction: explicitly classified digital goods use Telegram Stars, crypto checkout reserved for physical goods; goods-kind selector added for sellers.
 - [x] Product options: auto-send code via Telegram, highlights, after-purchase guide
 - [x] Admin panel tabs: overview, users (admin role), orders, products (hide/show), tasks & draws
 - [x] Promo 1: quantity discounts (buy more, save more)
