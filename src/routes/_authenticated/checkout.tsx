@@ -10,10 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, Field, PageHeader, errMsg } from "@/components/app/ui-bits";
-import { productQuery } from "@/lib/queries";
-import { bulkPercent, effectivePrice, freeUnits, parseBulkTiers, round6, starsFor } from "@/lib/pricing";
+import { productQuery, platformSettingsQuery } from "@/lib/queries";
+import { freeUnits, orderQuote, starsFor } from "@/lib/pricing";
 import { openStarsInvoice } from "@/lib/telegram";
-import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/format";
 import { checkVoucher } from "@/functions/market.functions";
 import { createOrder } from "@/functions/orders.functions";
@@ -21,7 +20,7 @@ import { haptic, openExternal } from "@/lib/telegram";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
   validateSearch: z.object({ productId: z.string(), quantity: z.coerce.number().int().min(1).max(100).optional() }),
-  head: () => ({ meta: [{ title: "Checkout · TeleShop" }, { name: "description", content: "Pay with crypto on TeleShop." }, { property: "og:title", content: "Checkout · TeleShop" }, { property: "og:description", content: "Pay with crypto." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Checkout · TeleShop" }, { name: "description", content: "Pay with Telegram Stars or supported crypto on TeleShop." }, { property: "og:title", content: "Checkout · TeleShop" }, { property: "og:description", content: "Telegram Stars checkout and supported crypto." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: Checkout,
 });
 
@@ -33,22 +32,21 @@ function Checkout() {
   const check = useServerFn(checkVoucher);
   const create = useServerFn(createOrder);
   const [qty, setQty] = useState(quantity ?? 1);
-  const { data: settings } = useQuery({ queryKey: ["platformSettings"], queryFn: async () => (await supabase.from("platform_settings").select("*").maybeSingle()).data });
+  const { data: settings, error: settingsError } = useQuery(platformSettingsQuery());
   const [method, setMethod] = useState<"crypto" | "stars" | null>(null);
-  const payMethod = method ?? (settings && !settings.crypto_enabled ? "stars" : "crypto");
+  const payMethod = p?.goods_kind === "digital" ? "stars" : method ?? (settings && !settings.crypto_enabled ? "stars" : "crypto");
   const [code, setCode] = useState("");
   const [applied, setApplied] = useState<{ code: string; discount: number } | null>(null);
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
 
+  if (settingsError) return <EmptyState title={errMsg(settingsError)} />;
   if (!p) return <EmptyState title={t("common.loading")} />;
-  const unit = effectivePrice(p);
-  const gross = round6(unit * qty);
-  const bulkOff = round6((gross * bulkPercent(parseBulkTiers(p.bulk_discounts), qty)) / 100);
-  const subtotal = round6(gross - bulkOff);
+  const {unit,gross,bulkOff,subtotal,total:beforeVoucher} = orderQuote(p,qty);
   const discount = applied ? Math.min(applied.discount, subtotal) : 0;
-  const total = round6(subtotal - discount);
+  const total = beforeVoucher-discount;
+  const changeQty = (next:number) => { setQty(Math.min(100,Math.max(1,next))); setApplied(null); };
   const free = freeUnits(qty, p.buy_x, p.get_y);
   const stars = settings ? starsFor(total, p.currency, settings) : 0;
 
@@ -98,13 +96,13 @@ function Checkout() {
         </div>
         <Field label={t("checkout.quantity")}>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" size="icon" onClick={() => setQty((q) => Math.max(1, q - 1))}><Minus /></Button>
+            <Button variant="secondary" size="icon" onClick={() => changeQty(qty-1)}><Minus /></Button>
             <span className="tabular w-8 text-center font-display text-lg font-bold">{qty}</span>
-            <Button variant="secondary" size="icon" onClick={() => setQty((q) => q + 1)} disabled={qty + 1 + freeUnits(qty + 1, p.buy_x, p.get_y) > p.stock}><Plus /></Button>
+            <Button variant="secondary" size="icon" onClick={() => changeQty(qty+1)} disabled={qty >= 100 || qty + 1 + freeUnits(qty + 1, p.buy_x, p.get_y) > p.stock}><Plus /></Button>
           </div>
         </Field>
         {free > 0 && <p className="rounded-xl bg-success/10 p-2 text-sm text-success">{t("extra.freeGot", { n: free })}</p>}
-        {settings?.stars_enabled && settings.crypto_enabled && (
+        {p.goods_kind !== "digital" && settings?.stars_enabled && settings.crypto_enabled && (
           <Field label={t("extra.payMethod")}>
             <div className="grid grid-cols-2 gap-2">
               <Button variant={payMethod === "crypto" ? "default" : "secondary"} onClick={() => setMethod("crypto")}>{t("extra.payCrypto")}</Button>
@@ -133,7 +131,7 @@ function Checkout() {
         <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0 text-success" />{t("checkout.secured")}</p>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-border bg-background/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
-        <Button size="lg" className="w-full shadow-glow" onClick={pay} disabled={busy}>
+        <Button size="lg" className="w-full shadow-glow" onClick={pay} disabled={busy || !settings || (payMethod === "stars" ? !settings.stars_enabled : !settings.crypto_enabled) || total<=0}>
           {busy ? <><Loader2 className="animate-spin" /> {t("checkout.processing")}</> : t("checkout.payNow", { amount: payMethod === "stars" ? `${stars} ⭐` : money(total, p.currency) })}
         </Button>
       </div>

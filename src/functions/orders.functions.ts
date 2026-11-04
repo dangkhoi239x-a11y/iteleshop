@@ -53,7 +53,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const free = freeUnits(data.quantity, p.buy_x, p.get_y);
     if (p.stock < data.quantity + free) throw new Error("Not enough stock");
     const settings = checked(await db.from("platform_settings").select("*").single());
-    if (data.payMethod === "crypto" && p.auto_send_telegram) throw new Error("Digital goods require Telegram Stars");
+    if (data.payMethod === "crypto" && p.goods_kind === "digital") throw new Error("Digital goods require Telegram Stars");
     if (data.payMethod === "stars" && !settings?.stars_enabled) throw new Error("Telegram Stars payments are turned off");
     if (data.payMethod === "crypto" && settings && !settings.crypto_enabled) throw new Error("Crypto payments are turned off");
 
@@ -128,8 +128,9 @@ export const payOrder = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ orderId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await admin();
-    const { data: o } = await db.from("orders").select("buyer_id, status, invoice_url, pay_method, stars_amount, product_name, quantity").eq("id", data.orderId).single();
+    const { data: o } = await db.from("orders").select("buyer_id, status, invoice_url, pay_method, stars_amount, product_name, quantity, products(goods_kind)").eq("id", data.orderId).single();
     if (!o || o.buyer_id !== context.userId) throw new Error("Order not found");
+    if(o.pay_method === "crypto" && o.products?.goods_kind === "digital") throw new Error("Digital goods require Telegram Stars");
     if (o.status !== "awaiting_payment") throw new Error("This order is not awaiting payment");
     if (o.pay_method === 'stars' && !o.invoice_url) {
       const {data:settings}=await db.from('platform_settings').select('stars_enabled').maybeSingle();

@@ -53,6 +53,7 @@ export const adminResolveDispute = createServerFn({ method: "POST" })
     const { data: d } = await db.from("disputes").select("order_id, status").eq("id", data.id).single();
     if (!d || d.status !== "open") throw new Error("Dispute is not open");
     const order = checked(await db.from("orders").select("pay_method").eq("id", d.order_id).single());
+    if (!order) throw new Error("Order not found");
     let starsRefunded = false;
     if (data.outcome === "refund" && order.pay_method === "stars") {
       const prepared = checked(await db.rpc("prepare_stars_refund", { _actor: context.userId, _dispute: data.id }));

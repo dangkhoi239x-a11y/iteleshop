@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Field, errMsg } from "@/components/app/ui-bits";
-import { supabase } from "@/integrations/supabase/client";
+import { platformSettingsQuery } from "@/lib/queries";
 import { adminRegisterWebhook, adminSaveSettings } from "@/functions/admin.functions";
 import { useFinanceText } from './RevenueReport';
 
@@ -17,12 +17,13 @@ export function PaymentSettings() {
   const qc = useQueryClient();
   const save = useServerFn(adminSaveSettings);
   const reg = useServerFn(adminRegisterWebhook);
-  const { data } = useQuery({ queryKey: ["platformSettings"], queryFn: async () => (await supabase.from("platform_settings").select("*").maybeSingle()).data });
+  const { data, error } = useQuery(platformSettingsQuery());
   const [f, setF] = useState({ stars_enabled: false, crypto_enabled: true, stars_per_usdt: "77", stars_per_ton: "250" });
   useEffect(() => { if (data) setF({ stars_enabled: data.stars_enabled, crypto_enabled: data.crypto_enabled, stars_per_usdt: String(Number(data.stars_per_usdt)), stars_per_ton: String(Number(data.stars_per_ton)) }); }, [data]);
   const submit = async () => {
     try { await save({ data: { ...f, stars_per_usdt: Number(f.stars_per_usdt), stars_per_ton: Number(f.stars_per_ton) } }); toast.success(t("common.saved")); await qc.invalidateQueries({ queryKey: ["platformSettings"] }); } catch (e) { toast.error(errMsg(e)); }
   };
+  if(error) return <p role="alert" className="text-destructive">{errMsg(error)}</p>;
   return (
     <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
       <p className="text-xs text-muted-foreground">{finance.quote}</p>

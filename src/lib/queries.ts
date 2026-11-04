@@ -1,3 +1,4 @@
+import { checked, readAll } from "./data-result";
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,11 +14,11 @@ const maybe = <R extends Res>(r: R) => {
 
 const PRODUCT_COLS = "*, shops(id, name, logo_url)";
 
-export const productsQuery = (search = "", category = "") =>
+export const productsQuery = (search = "", category = "", pages = 1) =>
   queryOptions({
-    queryKey: ["products", search, category],
+    queryKey: ["products", search, category, pages],
     queryFn: async () => {
-      let q = supabase.from("products").select(PRODUCT_COLS).eq("status", "active").order("sold_count", { ascending: false }).order("created_at", { ascending: false }).limit(60);
+      let q = supabase.from("products").select(PRODUCT_COLS).eq("status", "active").order("sold_count", { ascending: false }).order("created_at", { ascending: false }).order("id").range(0, pages * 60 - 1);
       if (search) q = q.ilike("name", `%${search.replace(/[%_,()]/g, "")}%`);
       if (category) q = q.eq("category", category);
       return must(await q);
@@ -37,8 +38,8 @@ export const productQuery = (id: string) =>
     queryFn: async () => maybe(await supabase.from("products").select("*, shops(id, name, logo_url, owner_id, rating, total_sales)").eq("id", id).maybeSingle()),
   });
 
-export const shopsQuery = () =>
-  queryOptions({ queryKey: ["shops"], queryFn: async () => must(await supabase.from("shops").select("*").eq("status", "active").order("total_sales", { ascending: false }).limit(100)) });
+export const shopsQuery = (search = "", pages = 1) =>
+  queryOptions({ queryKey: ["shops", search, pages], queryFn: async () => { let q = supabase.from("shops").select("*").eq("status", "active").order("total_sales", { ascending: false }).order("id").range(0,pages*100-1); if(search) q=q.ilike("name", `%${search.replace(/[%_,()]/g, "")}%`); return must(await q); } });
 
 export const shopQuery = (id: string) =>
   queryOptions({
@@ -103,13 +104,14 @@ export const myRewardsQuery = (userId: string) =>
   queryOptions({
     queryKey: ["myRewards", userId],
     queryFn: async () => {
-      const [pts, ck, done, ent] = await Promise.all([
+      const [pts, ck, done, ent, balance] = await Promise.all([
         supabase.from("reward_points").select("amount, source, note, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(500),
         supabase.from("checkins").select("day, streak").eq("user_id", userId).order("day", { ascending: false }).limit(1),
         supabase.from("task_completions").select("task_id").eq("user_id", userId),
         supabase.from("draw_entries").select("draw_id").eq("user_id", userId),
+        supabase.rpc("my_reward_balance"),
       ]);
-      return { points: must(pts), lastCheckin: must(ck)[0] ?? null, done: must(done).map((d) => d.task_id), entries: must(ent).map((e) => e.draw_id) };
+      return { balance: Number(checked(balance)), points: must(pts), lastCheckin: must(ck)[0] ?? null, done: must(done).map((d) => d.task_id), entries: must(ent).map((e) => e.draw_id) };
     },
   });
 
@@ -124,3 +126,5 @@ export const managedRewardsQuery = (shopId: string | null) =>
       return { tasks: must(await tq), draws: must(await dq) };
     },
   });
+
+export const platformSettingsQuery = () => queryOptions({ queryKey: ["platformSettings"], queryFn: async () => checked(await supabase.from("platform_settings").select("*").single()) });
