@@ -106,6 +106,27 @@
       "when": 1793626729953,
       "tag": "0014_product_code_received_at",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1793763124864,
+      "tag": "0015_atomic_order_fulfillment_and_receipt",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793763199746,
+      "tag": "0016_explicit_goods_kind_and_inventory_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793763410500,
+      "tag": "0017_complete_digital_fulfillment_and_growth_counts",
+      "breakpoints": true
     }
   ]
 }

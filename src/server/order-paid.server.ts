@@ -1,3 +1,4 @@
+import { checked } from "@/lib/data-result";
 import { escapeHtml, sendTelegramMessage } from "./telegram.server";
 
 /** Marks an order paid (idempotent) and runs notifications + auto-delivery. Returns true if it changed. */
@@ -20,11 +21,7 @@ export async function onOrderPaid(orderId: string, paymentId: string, payCurrenc
   for (const channel of channels ?? []) await sendTelegramMessage(tok, channel.chat_id, notice);
   await sendTelegramMessage(bot?.bot_token, bot?.notification_chat_id, `🛒 <b>New paid order #${o.order_number}</b>\n${escapeHtml(o.product_name)} × ${o.quantity}\n💰 ${amt}\n👤 ${buyer?.username ? "@" + escapeHtml(buyer.username) : "buyer"}${o.delivery_address ? `\n📍 ${escapeHtml(o.delivery_address)}` : ""}`);
   await sendTelegramMessage(tok, buyer?.telegram_id, `✅ Payment received for order #${o.order_number} (${amt}). Funds are held in escrow until you confirm receipt.`);
-  const { data: prod } = await db.from("products").select("auto_send_telegram, buyer_guide").eq("id", o.product_id).maybeSingle();
-  if (prod?.buyer_guide) await db.from("orders").update({ buyer_guide: prod.buyer_guide }).eq("id", o.id);
-  const guide = prod?.buyer_guide ? `\n\n📘 ${escapeHtml(prod.buyer_guide)}` : "";
-  if (o.delivered_content && prod?.auto_send_telegram !== false) await sendTelegramMessage(tok, buyer?.telegram_id, `🎁 Your item (#${o.order_number}):\n<code>${escapeHtml(o.delivered_content)}</code>${guide}`);
-  else if (guide) await sendTelegramMessage(tok, buyer?.telegram_id, `📦 Order #${o.order_number} is ready in the app.${guide}`);
+  await sendOrderDelivery(o.id);
   return true;
 }
 
@@ -40,4 +37,14 @@ export async function tgApi<T = unknown>(method: string, body: object): Promise<
 export async function webhookSecret() {
   const { hmacHex } = await import("./crypto.server");
   return (await hmacHex(process.env["TELEGRAM_BOT_TOKEN"] ?? "", "teleshop-webhook")).slice(0, 64);
+}
+
+export async function sendOrderDelivery(orderId:string) {
+ const {supabaseAdmin:db}=await import("@/integrations/supabase/client.server");
+ const o=checked(await db.from("orders").select("*").eq("id",orderId).single());
+ if(!o)throw new Error("Order not found");
+ const buyer=checked(await db.from("profiles").select("telegram_id").eq("id",o.buyer_id).single());
+ const prod=checked(await db.from("products").select("auto_send_telegram").eq("id",o.product_id).single());
+ if(o.fulfillment_state==="shortage") { await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"],buyer?.telegram_id,`⚠️ Đơn #${o.order_number} đã thanh toán, đang chờ shop bổ sung mã. Tiền chưa giải ngân.`,{event:"fulfillment_shortage"}); return; }
+ if(o.delivered_content&&prod?.auto_send_telegram!==false) await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"],buyer?.telegram_id,`🎁 Your item (#${o.order_number}):\n<code>${escapeHtml(o.delivered_content)}</code>${o.buyer_guide?`\n\n📘 ${escapeHtml(o.buyer_guide)}`:""}`,{event:"order_delivery"});
 }

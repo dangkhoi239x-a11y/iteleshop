@@ -1,41 +1,39 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
+import {checked,readAll} from '@/lib/data-result';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { campaignSchema } from '@/lib/growth';
 import { quizSchema } from '@/lib/product-referral';
 
 export const getGrowth = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
- .inputValidator((i: unknown) => z.object({ shopId: z.string().uuid().optional(), manage: z.boolean().default(false) }).parse(i))
+ .inputValidator((i: unknown) => z.object({ shopId: z.string().uuid().optional(), manage: z.boolean().default(false), campaignId:z.string().uuid().optional() }).parse(i))
  .handler(async ({ data, context }) => {
-  let q = context.supabase.from('growth_campaigns').select('*, shops(name), growth_prizes(*)').order('created_at', { ascending: false });
-  if (data.shopId) q = q.eq('shop_id', data.shopId);
-  if (!data.manage) q = q.eq('status', 'active');
-  else {
-   const {data:role}=await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'admin'});
-   if(!role){const {data:shop}=await context.supabase.from('shops').select('id').eq('owner_id',context.userId).maybeSingle();if(!shop)throw new Error('Forbidden');q=q.eq('shop_id',shop.id);}
-  }
-  const r = await q;
-  if (r.error) throw new Error(r.error.message);
-  const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
-  const campaigns = await Promise.all((r.data ?? []).map(async c => {
-   const { data: role } = await context.supabase.rpc('has_role', { _user_id: context.userId, _role: 'admin' });
-   const { data: shop } = await context.supabase.from('shops').select('owner_id').eq('id', c.shop_id).maybeSingle();
-   const manager = !!role || shop?.owner_id === context.userId;
-   const { data: own } = await context.supabase.from('growth_members').select('*').eq('campaign_id', c.id).eq('user_id', context.userId).maybeSingle();
-   const prizes = await Promise.all(c.growth_prizes.sort((a,b) => a.position-b.position).map(async p => {
-    const count = await db.from('growth_prize_secrets').select('id', { count:'exact', head:true }).eq('prize_id',p.id).is('awarded_to',null);
-    if(count.error) throw new Error(count.error.message);
-    return { ...p, remaining: count.count ?? 0 };
-   }));
-   const members = manager ? await db.from('growth_members').select('referrer_id, used_entries').eq('campaign_id',c.id) : null;
-   const events = manager ? await context.supabase.from('growth_events').select('id,event,created_at').eq('campaign_id',c.id).order('created_at',{ascending:false}).limit(30) : null;
-   return {...c, prizes, own, stats: manager ? { users: members?.data?.length ?? 0, referrals: members?.data?.filter(m=>m.referrer_id).length ?? 0, spins: members?.data?.reduce((s,m)=>s+m.used_entries,0) ?? 0 } : null, events: events?.data ?? []};
+  const role=checked(await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'admin'}));
+  const ownShop=checked(await context.supabase.from('shops').select('id').eq('owner_id',context.userId).maybeSingle());
+  let q=context.supabase.from('growth_campaigns').select('*,shops(name),growth_prizes(*)').order('created_at',{ascending:false}).order('id');
+  if(data.shopId) q=q.eq('shop_id',data.shopId);
+  if(data.campaignId) q=q.eq('id',data.campaignId);
+  if(!data.manage)q=q.eq('status','active');
+  else if(!role){if(!ownShop)throw new Error('Forbidden');q=q.eq('shop_id',ownShop.id);}
+  const rows=checked(await q)??[];
+  const {supabaseAdmin:db}=await import('@/integrations/supabase/client.server');
+  const ids=rows.map(c=>c.id);
+  const own=ids.length?checked(await context.supabase.from('growth_members').select('*').eq('user_id',context.userId).in('campaign_id',ids))??[]:[];
+  const inventory=checked(await db.rpc("growth_inventory_counts",{_campaigns:ids}))??[];
+  const managerIds=rows.filter(c=>role||ownShop?.id===c.shop_id).map(c=>c.id);
+  const summaries=checked(await db.rpc("growth_member_counts",{_campaigns:managerIds}))??[];
+  const campaigns=await Promise.all(rows.map(async c=>{
+   const manager=!!role||ownShop?.id===c.shop_id;
+   const counts=c.growth_prizes.map(p=>({...p,remaining:Number(inventory.find(i=>i.prize_id===p.id)?.remaining??0)}));
+   const summary=summaries.find(m=>m.campaign_id===c.id);
+   const events=manager?checked(await context.supabase.from('growth_events').select('id,event,created_at').eq('campaign_id',c.id).order('created_at',{ascending:false}).limit(30))??[]:[];
+   return {...c,prizes:counts.sort((a,b)=>a.position-b.position),own:own.find(m=>m.campaign_id===c.id)??null,stats:manager?{users:Number(summary?.users??0),referrals:Number(summary?.referrals??0),spins:Number(summary?.spins??0)}:null,events};
   }));
-  const history = await context.supabase.from('growth_spins').select('*, growth_prizes(label)').order('created_at',{ascending:false}).limit(50);
-  const quizzes=await context.supabase.from('shop_quizzes').select('*');
-  const points=await context.supabase.from('shop_points').select('*').eq('user_id',context.userId);
-  const rewards=await context.supabase.from('shop_quiz_rewards').select('*, shop_quizzes(title), shops(name)').eq('user_id',context.userId).order('created_at',{ascending:false}).limit(50);
-  return { campaigns, history: history.data ?? [],quizzes:quizzes.data??[],points:points.data??[],rewards:rewards.data??[] };
+  let historyQuery=context.supabase.from('growth_spins').select('*,growth_prizes(label)').eq('user_id',context.userId).order('created_at',{ascending:false}).limit(50);
+  let quizQuery=context.supabase.from('shop_quizzes').select('*');
+  if(data.campaignId){historyQuery=historyQuery.eq('campaign_id',data.campaignId);quizQuery=quizQuery.eq('campaign_id',data.campaignId);}
+  const [history,quizzes,points,rewards]=await Promise.all([historyQuery,quizQuery,context.supabase.from('shop_points').select('*').eq('user_id',context.userId),context.supabase.from('shop_quiz_rewards').select('*,shop_quizzes(title),shops(name)').eq('user_id',context.userId).order('created_at',{ascending:false}).limit(50)]);
+  return {campaigns,history:checked(history)??[],quizzes:checked(quizzes)??[],points:checked(points)??[],rewards:checked(rewards)??[]};
  });
 export const createGrowth = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>campaignSchema.parse(i)).handler(async({data,context})=>{
  const {data:shop} = await context.supabase.from('shops').select('owner_id').eq('id',data.shopId).maybeSingle();

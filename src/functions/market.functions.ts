@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { checked } from "@/lib/data-result";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const admin = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -19,7 +20,7 @@ export const updateLanguage = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ language: z.enum(["vi", "en", "ru", "zh"]) }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await admin();
-    await db.from("profiles").update({ language: data.language }).eq("id", context.userId);
+    checked(await db.from("profiles").update({ language: data.language }).eq("id", context.userId));
     return { ok: true };
   });
 
@@ -71,7 +72,7 @@ export const updateShopBot = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await admin();
     const id = await myShopId(context.userId);
-    await db.from("shop_bots").upsert({ shop_id: id, bot_token: data.bot_token || null, notification_chat_id: data.notification_chat_id || null, updated_at: new Date().toISOString() });
+    checked(await db.from("shop_bots").upsert({ shop_id: id, bot_token: data.bot_token || null, notification_chat_id: data.notification_chat_id || null, updated_at: new Date().toISOString() }));
     return { ok: true };
   });
 
@@ -105,6 +106,7 @@ const productInput = z.object({
   escrow_release_days: z.number().int().min(1).max(30).default(3),
   delivery_content: z.string().max(5000).optional().nullable(),
   auto_send_telegram: z.boolean().default(true),
+  goods_kind:z.enum(["digital","physical"]).default("digital"),
   buyer_guide: z.string().max(4000).optional().nullable(),
   highlights: z.string().max(2000).optional().nullable(),
   bulk_discounts: z.string().max(500).optional().nullable(),
@@ -127,7 +129,7 @@ export const saveProduct = createServerFn({ method: "POST" })
       const { error } = await db.from("product_codes").insert(codes.map((content) => ({ product_id: pid, content })));
       if (error) throw new Error(error.message);
       const { count } = await db.from("product_codes").select("id", { count: "exact", head: true }).eq("product_id", pid).eq("status", "available");
-      await db.from("products").update({ stock: count ?? 0 }).eq("id", pid);
+      checked(await db.from("products").update({ stock: count ?? 0 }).eq("id", pid));
       return codes.length;
     };
     const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null, buyer_guide: rest.buyer_guide || null, highlights: rest.highlights || null, bulk_discounts: rest.bulk_discounts || null, buy_x: rest.buy_x && rest.get_y ? rest.buy_x : null, get_y: rest.buy_x && rest.get_y ? rest.get_y : null };
@@ -155,9 +157,9 @@ export const removeProductCode = createServerFn({ method: "POST" })
     const { data: c } = await db.from("product_codes").select("id, product_id, status, products!inner(shop_id)").eq("id", data.id).single();
     if (!c || c.products.shop_id !== shopId) throw new Error("Code not found");
     if (c.status !== "available") throw new Error("Only unsold codes can be removed");
-    await db.from("product_codes").delete().eq("id", c.id);
+    checked(await db.from("product_codes").delete().eq("id", c.id));
     const { count } = await db.from("product_codes").select("id", { count: "exact", head: true }).eq("product_id", c.product_id).eq("status", "available");
-    await db.from("products").update({ stock: count ?? 0 }).eq("id", c.product_id);
+    checked(await db.from("products").update({ stock: count ?? 0 }).eq("id", c.product_id));
     return { ok: true };
   });
 
@@ -186,7 +188,7 @@ export const setFlashSale = createServerFn({ method: "POST" })
     if (!p) throw new Error("Product not found");
     if (data.flash_sale_price != null && data.flash_sale_price >= Number(p.price)) throw new Error("Flash sale price must be lower than the regular price");
     if (data.flash_sale_end && new Date(data.flash_sale_end) <= new Date()) throw new Error("End time must be in the future");
-    await db.from("products").update({ flash_sale_price: data.flash_sale_price, flash_sale_end: data.flash_sale_end }).eq("id", data.id);
+    checked(await db.from("products").update({ flash_sale_price: data.flash_sale_price, flash_sale_end: data.flash_sale_end }).eq("id", data.id));
     return { ok: true };
   });
 
@@ -220,8 +222,8 @@ export const toggleVoucher = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await admin();
     const shopId = await myShopId(context.userId);
-    if (data.remove) await db.from("vouchers").delete().eq("id", data.id).eq("shop_id", shopId);
-    else await db.from("vouchers").update({ is_active: !!data.is_active }).eq("id", data.id).eq("shop_id", shopId);
+    if (data.remove) checked(await db.from("vouchers").delete().eq("id", data.id).eq("shop_id", shopId));
+    else checked(await db.from("vouchers").update({ is_active: !!data.is_active }).eq("id", data.id).eq("shop_id", shopId));
     return { ok: true };
   });
 
@@ -230,7 +232,7 @@ export const checkVoucher = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { voucherDiscount } = await import("@/lib/pricing");
     const db = await admin();
-    const { data: v } = await db.from("vouchers").select("*").eq("shop_id", data.shopId).eq("code", data.code.toUpperCase()).maybeSingle();
+    const v = checked(await db.from("vouchers").select("*").eq("shop_id", data.shopId).eq("code", data.code.toUpperCase()).maybeSingle());
     if (!v) return { ok: false as const, reason: "not_found" };
     return voucherDiscount(v, data.subtotal);
   });
@@ -244,7 +246,7 @@ export const joinAffiliate = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await admin();
     const tier = data.kol ? ((data.audience_size ?? 0) >= 50000 ? "kol_gold" : "kol") : "standard";
-    await db.from("affiliates").upsert({ user_id: context.userId, tier, channel_url: data.channel_url ?? null, audience_size: data.audience_size ?? null, niche: data.niche ?? null });
+    checked(await db.from("affiliates").upsert({ user_id: context.userId, tier, channel_url: data.channel_url ?? null, audience_size: data.audience_size ?? null, niche: data.niche ?? null }));
     return { ok: true, tier };
   });
 
@@ -276,9 +278,9 @@ export const broadcastVoucher = createServerFn({ method: "POST" })
     const { data: buyers } = ids.length ? await db.from("profiles").select("telegram_id").in("id", ids) : { data: [] };
     const tok = process.env["TELEGRAM_BOT_TOKEN"];
     let sent = 0;
-    for (const b of buyers ?? []) { if (b.telegram_id) { await sendTelegramMessage(tok, b.telegram_id, text); sent++; } }
+    for (const b of buyers ?? []) { if (b.telegram_id && await sendTelegramMessage(tok, b.telegram_id, text)) sent++; }
     const { data: bot } = await db.from("shop_bots").select("*").eq("shop_id", shopId).maybeSingle();
     await sendTelegramMessage(bot?.bot_token, bot?.notification_chat_id, text);
-    await db.from("vouchers").update({ last_broadcast_at: new Date().toISOString() }).eq("id", v.id);
+    checked(await db.from("vouchers").update({ last_broadcast_at: new Date().toISOString() }).eq("id", v.id));
     return { sent };
   });

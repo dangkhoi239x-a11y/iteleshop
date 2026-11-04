@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/products")({
   component: () => <ShopGate>{(shop) => <Products shop={shop} />}</ShopGate>,
 });
 
-const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "", auto_send_telegram: true, buyer_guide: "", highlights: "", bulk_discounts: "", buy_x: "", get_y: "" };
+const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "", goods_kind:"digital" as "digital"|"physical", auto_send_telegram: true, buyer_guide: "", highlights: "", bulk_discounts: "", buy_x: "", get_y: "" };
 
 function Products({ shop }: { shop: ShopRow }) {
   const { t } = useTranslation();
@@ -51,7 +51,7 @@ function Products({ shop }: { shop: ShopRow }) {
     setEditing(p?.id ?? null);
     setCodes([]);
     if (p) void loadCodes(p.id);
-    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "", auto_send_telegram: p.auto_send_telegram, buyer_guide: p.buyer_guide ?? "", highlights: p.highlights ?? "", bulk_discounts: p.bulk_discounts ?? "", buy_x: p.buy_x ? String(p.buy_x) : "", get_y: p.get_y ? String(p.get_y) : "" } : blank);
+    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "", goods_kind:p.goods_kind as "digital"|"physical", auto_send_telegram: p.auto_send_telegram, buyer_guide: p.buyer_guide ?? "", highlights: p.highlights ?? "", bulk_discounts: p.bulk_discounts ?? "", buy_x: p.buy_x ? String(p.buy_x) : "", get_y: p.get_y ? String(p.get_y) : "" } : blank);
   };
 
   const delCode = async (id: string) => {
@@ -67,7 +67,7 @@ function Products({ shop }: { shop: ShopRow }) {
   const submit = async () => {
     setBusy(true);
     try {
-      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content, auto_send_telegram: f.auto_send_telegram, buyer_guide: f.buyer_guide || null, highlights: f.highlights || null, bulk_discounts: f.bulk_discounts || null, buy_x: Number(f.buy_x) || null, get_y: Number(f.get_y) || null } });
+      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content, goods_kind:f.goods_kind, auto_send_telegram: f.auto_send_telegram, buyer_guide: f.buyer_guide || null, highlights: f.highlights || null, bulk_discounts: f.bulk_discounts || null, buy_x: Number(f.buy_x) || null, get_y: Number(f.get_y) || null } });
       toast.success(r.added ? t("products.savedWithCodes", { n: r.added }) : t("common.saved"));
       setEditing(undefined);
       await qc.invalidateQueries({ queryKey: ["myProducts"] });
@@ -101,6 +101,7 @@ function Products({ shop }: { shop: ShopRow }) {
         <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto rounded-t-3xl">
           <SheetHeader><SheetTitle>{editing ? t("products.edit") : t("products.add")}</SheetTitle></SheetHeader>
           <div className="space-y-3 p-4">
+            <Field label="Loại hàng"><Select value={f.goods_kind} onValueChange={v=>setF({...f,goods_kind:v as "digital"|"physical"})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="digital">Hàng số · Telegram Stars</SelectItem><SelectItem value="physical">Hàng vật lý</SelectItem></SelectContent></Select></Field>
             <Field label={t("products.name")}><Input value={f.name} onChange={set("name")} maxLength={120} /></Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label={t("products.price")}><Input type="number" inputMode="decimal" value={f.price} onChange={set("price")} /></Field>

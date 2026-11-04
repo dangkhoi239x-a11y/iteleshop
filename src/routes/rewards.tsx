@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Countdown, EmptyState, PageHeader, Section, errMsg } from "@/components/app/ui-bits";
 import { useAuth } from "@/lib/auth";
 import { myRewardsQuery, rewardsQuery } from "@/lib/queries";
-import { pointsBalance } from "@/lib/rewards";
 import { claimTask, dailyCheckin, enterDraw } from "@/functions/rewards.functions";
 import { shortDate } from "@/lib/format";
 import { useGrowthText } from '@/lib/growth-text';
@@ -40,7 +39,7 @@ function Rewards() {
     finally { setBusy(null); }
   };
 
-  const balance = pointsBalance(mine.data?.points ?? []);
+  const balance = mine.data?.balance ?? "—";
   const last = mine.data?.lastCheckin;
   const doneToday = last?.day === todayVN();
   const now = Date.now();
@@ -79,7 +78,7 @@ function Rewards() {
                       <p className="text-[11px] text-muted-foreground">{task.shops?.name ?? t("rewards.platform")} · {t(`rewards.k_${task.kind}`)} · +{task.points} {t("rewards.ptsUnit")}</p>
                     </div>
                     {(task.link_url || (task.kind === "join_channel" && task.target?.startsWith("@"))) && !done && (
-                      <a href={task.link_url ?? `https://t.me/${task.target!.slice(1)}`} target="_blank" rel="noreferrer" className="text-primary" aria-label={t("rewards.go")}><ExternalLink className="h-4 w-4" /></a>
+                      <a href={task.link_url ?? `https://t.me/${task.target?.slice(1)}`} target="_blank" rel="noreferrer" className="text-primary" aria-label={t("rewards.go")}><ExternalLink className="h-4 w-4" /></a>
                     )}
                     <Button size="sm" variant={done ? "secondary" : "default"} disabled={!session || done || busy === task.id} onClick={() => run(task.id, () => claim({ data: { taskId: task.id } }), `+${task.points}`)}>
                       {done ? t("rewards.claimed") : t("rewards.claim")}

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { checked, requireTransition, readAll } from "@/lib/data-result";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const adminMw = [requireSupabaseAuth] as const;
@@ -23,15 +24,18 @@ export const adminOverview = createServerFn({ method: "POST" })
     ]);
     const volume: Record<string, number> = {};
     const fees: Record<string, number> = {};
-    for (const o of paid.data ?? []) {
+    checked(users); checked(shops); checked(orders); checked(paid);
+    const paidRows = await readAll((offset,end)=>db.from("orders").select("total_amount,commission_amount,currency,pay_method,settled_amount,settled_fee,settled_currency").in("escrow_status",["holding","released","frozen"]).order("id").range(offset,end));
+    for (const o of paidRows) {
       const currency = o.pay_method === 'stars' ? o.settled_currency : o.currency;
       if (!currency) continue;
       volume[currency] = (volume[currency] ?? 0) + Number(o.pay_method === 'stars' ? o.settled_amount : o.total_amount);
       fees[currency] = (fees[currency] ?? 0) + Number(o.pay_method === 'stars' ? o.settled_fee : o.commission_amount);
     }
-    const { data: withdrawals } = await db.from("wallet_transactions").select("*").eq("type", "withdrawal").eq("status", "pending").order("created_at");
-    const { data: disputes } = await db.from("disputes").select("*, orders(order_number, product_name, total_amount, currency)").eq("status", "open").order("created_at");
-    return { users: users.count ?? 0, orders: orders.count ?? 0, shops: shops.data ?? [], volume, fees, withdrawals: withdrawals ?? [], disputes: disputes ?? [] };
+    const withdrawals = checked(await db.from("wallet_transactions").select("*").eq("type", "withdrawal").eq("status", "pending").order("created_at"));
+    const disputes = checked(await db.from("disputes").select("*, orders(order_number, product_name, total_amount, currency)").eq("status", "open").order("created_at"));
+    const issues = checked(await db.from("orders").select("id,order_number,product_name,fulfillment_state,stars_refund_state").or("fulfillment_state.eq.shortage,stars_refund_state.eq.pending").order("created_at")) ?? [];
+    return { issues, users: users.count ?? 0, orders: orders.count ?? 0, shops: shops.data ?? [], volume, fees, withdrawals: withdrawals ?? [], disputes: disputes ?? [] };
   });
 
 export const adminWithdrawal = createServerFn({ method: "POST" })
@@ -51,16 +55,18 @@ export const adminResolveDispute = createServerFn({ method: "POST" })
     const db = await assertAdmin(context);
     const { data: d } = await db.from("disputes").select("order_id, status").eq("id", data.id).single();
     if (!d || d.status !== "open") throw new Error("Dispute is not open");
-    if (data.outcome === "refund") {
-      const {error}=await db.rpc("refund_order_escrow", { _order_id: d.order_id });
-      if(error)throw new Error(error.message);
+    const order = checked(await db.from("orders").select("pay_method").eq("id", d.order_id).single());
+    if (!order) throw new Error("Order not found");
+    let starsRefunded = false;
+    if (data.outcome === "refund" && order.pay_method === "stars") {
+      const prepared = checked(await db.rpc("prepare_stars_refund", { _actor: context.userId, _dispute: data.id }));
+      const payload = z.object({ telegramId: z.string(), paymentId: z.string() }).parse(prepared);
+      const { tgApi } = await import("@/server/order-paid.server");
+      try { await tgApi("refundStarPayment", { user_id: Number(payload.telegramId), telegram_payment_charge_id: payload.paymentId }); }
+      catch (error) { if (!(error instanceof Error) || !error.message.includes("CHARGE_ALREADY_REFUNDED")) throw error; }
+      starsRefunded = true;
     }
-    else {
-      await db.from("orders").update({ escrow_status: "holding" }).eq("id", d.order_id).eq("escrow_status", "frozen");
-      const {error}=await db.rpc("release_order_escrow", { _order_id: d.order_id });
-      if(error)throw new Error(error.message);
-    }
-    await db.from("disputes").update({ status: data.outcome === "refund" ? "resolved_refund" : "resolved_release", admin_note: data.note ?? null, resolved_at: new Date().toISOString() }).eq("id", data.id);
+    requireTransition(await db.rpc("resolve_order_dispute", { _actor: context.userId, _dispute: data.id, _outcome: data.outcome, _note: data.note ?? "", _stars_refunded: starsRefunded }));
     return { ok: true };
   });
 
@@ -69,7 +75,7 @@ export const adminShopStatus = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["active", "suspended"]) }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
-    await db.from("shops").update({ status: data.status }).eq("id", data.id);
+    checked(await db.from("shops").update({ status: data.status }).eq("id", data.id));
     return { ok: true };
   });
 
@@ -81,9 +87,9 @@ export const adminSaveTier = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
     const { id, remove, ...row } = data;
-    if (id && remove) await db.from("commission_tiers").delete().eq("id", id);
-    else if (id) await db.from("commission_tiers").update(row).eq("id", id);
-    else await db.from("commission_tiers").insert(row);
+    if (id && remove) checked(await db.from("commission_tiers").delete().eq("id", id));
+    else if (id) checked(await db.from("commission_tiers").update(row).eq("id", id));
+    else checked(await db.from("commission_tiers").insert(row));
     return { ok: true };
   });
 
@@ -91,26 +97,26 @@ const term = (s?: string) => (s ?? "").replace(/[%_,()]/g, "").trim();
 
 export const adminLists = createServerFn({ method: "POST" })
   .middleware([...adminMw])
-  .inputValidator((i: unknown) => z.object({ kind: z.enum(["users", "orders", "products"]), q: z.string().max(100).optional() }).parse(i))
+  .inputValidator((i: unknown) => z.object({ kind: z.enum(["users", "orders", "products"]), q: z.string().max(100).optional(), pages:z.number().int().min(1).max(1000).default(1) }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
     const q = term(data.q);
     if (data.kind === "users") {
-      let r = db.from("profiles").select("id, username, first_name, telegram_id, created_at").order("created_at", { ascending: false }).limit(100);
+      let r = db.from("profiles").select("id, username, first_name, telegram_id, created_at").order("created_at", { ascending: false }).order("id").range(0,data.pages*100-1);
       if (q) r = r.or(`username.ilike.%${q}%,first_name.ilike.%${q}%,telegram_id.ilike.%${q}%`);
-      const { data: users } = await r;
-      const { data: roles } = await db.from("user_roles").select("user_id").eq("role", "admin");
+      const users = checked(await r);
+      const roles = checked(await db.from("user_roles").select("user_id").eq("role", "admin"));
       const admins = new Set((roles ?? []).map((x) => x.user_id));
       return { users: (users ?? []).map((u) => ({ ...u, isAdmin: admins.has(u.id) })), orders: [], products: [] };
     }
     if (data.kind === "orders") {
-      let r = db.from("orders").select("id, order_number, product_name, total_amount, currency, status, created_at, shops(name)").order("created_at", { ascending: false }).limit(100);
+      let r = db.from("orders").select("id, order_number, product_name, total_amount, currency, status, created_at, shops(name)").order("created_at", { ascending: false }).order("id").range(0,data.pages*100-1);
       if (q) r = /^\d+$/.test(q) ? r.eq("order_number", Number(q)) : r.ilike("product_name", `%${q}%`);
-      return { users: [], orders: (await r).data ?? [], products: [] };
+      return { users: [], orders: checked(await r) ?? [], products: [] };
     }
-    let r = db.from("products").select("id, name, price, currency, stock, status, sold_count, shops(name)").neq("status", "archived").order("created_at", { ascending: false }).limit(100);
+    let r = db.from("products").select("id, name, price, currency, stock, status, sold_count, shops(name)").neq("status", "archived").order("created_at", { ascending: false }).order("id").range(0,data.pages*100-1);
     if (q) r = r.ilike("name", `%${q}%`);
-    return { users: [], orders: [], products: (await r).data ?? [] };
+    return { users: [], orders: [], products: checked(await r) ?? [] };
   });
 
 export const adminProductStatus = createServerFn({ method: "POST" })
@@ -118,7 +124,7 @@ export const adminProductStatus = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["active", "suspended"]) }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
-    await db.from("products").update({ status: data.status }).eq("id", data.id);
+    checked(await db.from("products").update({ status: data.status }).eq("id", data.id));
     return { ok: true };
   });
 
@@ -128,8 +134,8 @@ export const adminSetAdmin = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
     if (data.userId === context.userId) throw new Error("You cannot change your own admin role");
-    if (data.admin) await db.from("user_roles").upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role", ignoreDuplicates: true });
-    else await db.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
+    if (data.admin) checked(await db.from("user_roles").upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role", ignoreDuplicates: true }));
+    else checked(await db.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin"));
     return { ok: true };
   });
 
@@ -139,7 +145,7 @@ export const adminSaveSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
     if (!data.stars_enabled && !data.crypto_enabled) throw new Error("Keep at least one payment method on");
-    await db.from("platform_settings").upsert({ id: true, ...data, updated_at: new Date().toISOString() });
+    checked(await db.from("platform_settings").upsert({ id: true, ...data, updated_at: new Date().toISOString() }));
     return { ok: true };
   });
 
@@ -154,3 +160,11 @@ export const adminRegisterWebhook = createServerFn({ method: "POST" })
     await tgApi("setWebhook", { url, secret_token: await webhookSecret(), allowed_updates: ["message", "pre_checkout_query", "callback_query"] });
     return { url };
   });
+
+export const retryOrderFulfillment = createServerFn({method:"POST"}).middleware([...adminMw]).inputValidator((i:unknown)=>z.object({id:z.string().uuid()}).parse(i)).handler(async({data,context})=>{
+ const db=await assertAdmin(context);
+ requireTransition(await db.rpc("fulfill_paid_order",{_order_id:data.id}));
+ const {sendOrderDelivery}=await import("@/server/order-paid.server");
+ await sendOrderDelivery(data.id);
+ return {ok:true};
+});

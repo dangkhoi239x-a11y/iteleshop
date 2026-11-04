@@ -18,7 +18,7 @@ export function GrowthCampaigns({campaignId}:{campaignId?:string}){
  const t=useGrowthText();const {userId,profile}=useAuth();const qc=useQueryClient();
  const get=useServerFn(getGrowth),join=useServerFn(joinGrowth),spin=useServerFn(spinGrowth);
  const quiz=useServerFn(playQuiz),resend=useServerFn(resendGrowthPrize);
- const query=useQuery({queryKey:['growth',userId],queryFn:()=>get({data:{manage:false}}),enabled:!!userId});
+ const query=useQuery({queryKey:['growth',userId,campaignId],queryFn:()=>get({data:{manage:false,campaignId}}),enabled:!!userId});
  const [busy,setBusy]=useState(false),[rotation,setRotation]=useState(0),[result,setResult]=useState<{label:string;content:string}|null>(null);
  const [request,setRequest]=useState<string|null>(null);
  const c=query.data?.campaigns.find(x=>x.id===campaignId);

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { checked, requireTransition } from "@/lib/data-result";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const admin = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -25,7 +26,7 @@ async function attachInvoice(orderId: string) {
     description: `TeleShop #${o.order_number} – ${o.product_name} x${o.quantity}`,
     origin: requestOrigin(),
   });
-  await db.from("orders").update({ invoice_id: inv.invoiceId, invoice_url: inv.invoiceUrl, payment_status: "waiting" }).eq("id", o.id);
+  checked(await db.from("orders").update({ invoice_id: inv.invoiceId, invoice_url: inv.invoiceUrl, payment_status: "waiting" }).eq("id", o.id).select("id").single());
   return inv.invoiceUrl;
 }
 
@@ -44,21 +45,19 @@ export const createOrder = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { effectivePrice, voucherDiscount, commissionPercent, round6, parseBulkTiers, bulkPercent, freeUnits, starsFor } = await import("@/lib/pricing");
+    const { voucherDiscount, commissionPercent, round6, orderQuote, freeUnits, starsFor } = await import("@/lib/pricing");
     const db = await admin();
     const { data: p } = await db.from("products").select("*, shops!inner(id, owner_id, status, affiliate_percent)").eq("id", data.productId).single();
     if (!p || p.status !== "active" || p.shops.status !== "active") throw new Error("Product is not available");
     if (p.shops.owner_id === context.userId) throw new Error("You cannot buy from your own shop");
     const free = freeUnits(data.quantity, p.buy_x, p.get_y);
     if (p.stock < data.quantity + free) throw new Error("Not enough stock");
-    const { data: settings } = await db.from("platform_settings").select("*").maybeSingle();
+    const settings = checked(await db.from("platform_settings").select("*").single());
+    if (data.payMethod === "crypto" && p.goods_kind === "digital") throw new Error("Digital goods require Telegram Stars");
     if (data.payMethod === "stars" && !settings?.stars_enabled) throw new Error("Telegram Stars payments are turned off");
     if (data.payMethod === "crypto" && settings && !settings.crypto_enabled) throw new Error("Crypto payments are turned off");
 
-    const unit = effectivePrice(p);
-    const gross = round6(unit * data.quantity);
-    const bulkOff = round6((gross * bulkPercent(parseBulkTiers(p.bulk_discounts), data.quantity)) / 100);
-    const subtotal = round6(gross - bulkOff);
+    const { unit, gross, bulkOff, subtotal } = orderQuote(p, data.quantity);
     let discount = 0;
     let voucherCode: string | null = null;
     if (data.voucherCode) {
@@ -111,7 +110,7 @@ export const createOrder = createServerFn({ method: "POST" })
         if (!settings) throw new Error("Payment settings missing");
         const stars = starsFor(total, p.currency, settings);
         const link = await tgApi<string>("createInvoiceLink", { title: p.name.slice(0, 32), description: `TeleShop order × ${data.quantity + free}`.slice(0, 255), payload: order.id, currency: "XTR", prices: [{ label: p.name.slice(0, 32), amount: stars }] });
-        await db.from("orders").update({ invoice_url: link, payment_status: "waiting" }).eq("id", order.id);
+        checked(await db.from("orders").update({ invoice_url: link, payment_status: "waiting" }).eq("id", order.id).select("id").single());
         return { orderId: order.id, invoiceUrl: link, stars: true };
       } catch (e) {
         return { orderId: order.id, invoiceUrl: null, paymentError: (e as Error).message };
@@ -129,8 +128,9 @@ export const payOrder = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ orderId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await admin();
-    const { data: o } = await db.from("orders").select("buyer_id, status, invoice_url, pay_method, stars_amount, product_name, quantity").eq("id", data.orderId).single();
+    const { data: o } = await db.from("orders").select("buyer_id, status, invoice_url, pay_method, stars_amount, product_name, quantity, products(goods_kind)").eq("id", data.orderId).single();
     if (!o || o.buyer_id !== context.userId) throw new Error("Order not found");
+    if(o.pay_method === "crypto" && o.products?.goods_kind === "digital") throw new Error("Digital goods require Telegram Stars");
     if (o.status !== "awaiting_payment") throw new Error("This order is not awaiting payment");
     if (o.pay_method === 'stars' && !o.invoice_url) {
       const {data:settings}=await db.from('platform_settings').select('stars_enabled').maybeSingle();
@@ -158,16 +158,13 @@ export const updateOrder = createServerFn({ method: "POST" })
     const isBuyer = o.buyer_id === context.userId;
     const now = new Date().toISOString();
     if (data.action === "ship" && isSeller && o.status === "paid") {
-      await db.from("orders").update({ status: "shipped", tracking_info: data.tracking ?? null, updated_at: now }).eq("id", o.id);
+      checked(await db.from("orders").update({ status: "shipped", tracking_info: data.tracking ?? null, updated_at: now }).eq("id", o.id).eq("status", "paid").select("id").single());
     } else if (data.action === "deliver" && isSeller && o.status === "shipped") {
-      await db.from("orders").update({ status: "delivered", updated_at: now }).eq("id", o.id);
-    } else if (data.action === "confirm" && isBuyer && ["paid", "shipped", "delivered"].includes(o.status)) {
-      const {error}=await db.rpc("release_order_escrow", { _order_id: o.id });
-      if(error)throw new Error(error.message);
-      const rc = await db.from("product_codes").update({ received_at: now }).eq("order_id", o.id).eq("status", "sold").is("received_at", null);
-      if (rc.error) throw new Error(rc.error.message);
+      checked(await db.from("orders").update({ status: "delivered", updated_at: now }).eq("id", o.id).eq("status", "shipped").select("id").single());
+    } else if (data.action === "confirm" && isBuyer) {
+      requireTransition(await db.rpc("confirm_order_receipt", { _actor: context.userId, _order_id: o.id }));
     } else if (data.action === "cancel" && isBuyer && o.status === "awaiting_payment") {
-      await db.from("orders").update({ status: "cancelled", updated_at: now }).eq("id", o.id);
+      checked(await db.from("orders").update({ status: "cancelled", updated_at: now }).eq("id", o.id).eq("status", "awaiting_payment").select("id").single());
     } else {
       throw new Error("This action is not allowed for this order");
     }
@@ -185,13 +182,14 @@ export const resendDelivery = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ orderId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await admin();
-    const { data: o } = await db.from("orders").select("buyer_id, order_number, delivered_content").eq("id", data.orderId).single();
+    const { data: o } = await db.from("orders").select("buyer_id, order_number, delivered_content, buyer_guide").eq("id", data.orderId).single();
     if (!o || o.buyer_id !== context.userId) throw new Error("Order not found");
     if (!o.delivered_content) throw new Error("This order has no digital item yet");
     const { data: buyer } = await db.from("profiles").select("telegram_id").eq("id", context.userId).single();
     if (!buyer?.telegram_id) throw new Error("No linked Telegram account — copy the code from this page instead");
     const { sendTelegramMessage, escapeHtml } = await import("@/server/telegram.server");
-    await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], buyer.telegram_id, `🎁 Your item (#${o.order_number}):\n<code>${escapeHtml(o.delivered_content)}</code>`);
+    const sent=await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], buyer.telegram_id, `🎁 Your item (#${o.order_number}):\n<code>${escapeHtml(o.delivered_content)}</code>${o.buyer_guide?`\n\n📘 ${escapeHtml(o.buyer_guide)}`:""}`);
+    if(!sent)throw new Error("Telegram delivery failed; please retry");
     return { ok: true };
   });
 
@@ -200,12 +198,7 @@ export const openDispute = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ orderId: z.string().uuid(), reason: z.string().min(2).max(60), note: z.string().min(10).max(2000) }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await admin();
-    const { data: o } = await db.from("orders").select("*").eq("id", data.orderId).single();
-    if (!o || o.buyer_id !== context.userId) throw new Error("Order not found");
-    if (o.escrow_status !== "holding") throw new Error("Disputes can only be opened while funds are in escrow");
-    const { error } = await db.from("disputes").insert({ order_id: o.id, opened_by: context.userId, reason: data.reason, buyer_note: data.note });
-    if (error) throw new Error(error.code === "23505" ? "A dispute already exists for this order" : error.message);
-    await db.from("orders").update({ status: "disputed", escrow_status: "frozen", updated_at: new Date().toISOString() }).eq("id", o.id);
+    checked(await db.rpc("open_order_dispute", { _actor: context.userId, _order_id: data.orderId, _reason: data.reason, _note: data.note }));
     return { ok: true };
   });
 
@@ -216,7 +209,7 @@ export const respondDispute = createServerFn({ method: "POST" })
     const db = await admin();
     const { data: d } = await db.from("disputes").select("*, orders!inner(shop_id, shops!inner(owner_id))").eq("id", data.disputeId).single();
     if (!d || d.orders.shops.owner_id !== context.userId) throw new Error("Not allowed");
-    await db.from("disputes").update({ seller_note: data.note }).eq("id", d.id);
+    checked(await db.from("disputes").update({ seller_note: data.note }).eq("id", d.id).eq("status", "open").select("id").single());
     return { ok: true };
   });
 
@@ -225,8 +218,8 @@ export async function releaseDueEscrows() {
   const db = await admin();
   const now = new Date();
   const week = new Date(now.getTime() - 7 * 86400000).toISOString();
-  const { data: a } = await db.from("orders").select("id").eq("escrow_status", "holding").eq("warranty_type", "none").lte("escrow_release_at", now.toISOString()).limit(200);
-  const { data: b } = await db.from("orders").select("id").eq("escrow_status", "holding").eq("status", "delivered").lte("updated_at", week).limit(200);
+  const { data: a } = await db.from("orders").select("id").eq("escrow_status", "holding").eq("fulfillment_state", "ready").eq("warranty_type", "none").lte("escrow_release_at", now.toISOString()).limit(200);
+  const { data: b } = await db.from("orders").select("id").eq("escrow_status", "holding").eq("fulfillment_state", "ready").eq("status", "delivered").lte("updated_at", week).limit(200);
   for (const o of [...(a ?? []), ...(b ?? [])]) await db.rpc("release_order_escrow", { _order_id: o.id });
 }
 

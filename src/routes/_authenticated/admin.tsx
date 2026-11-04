@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState, PageHeader, Section, StatCard, StatusPill, errMsg } from "@/components/app/ui-bits";
-import { adminOverview, adminResolveDispute, adminSaveTier, adminShopStatus, adminWithdrawal } from "@/functions/admin.functions";
+import { retryOrderFulfillment, adminOverview, adminResolveDispute, adminSaveTier, adminShopStatus, adminWithdrawal } from "@/functions/admin.functions";
 import { tiersQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
@@ -36,11 +36,12 @@ function Admin() {
   const { isAdmin } = useAuth();
   const qc = useQueryClient();
   const overview = useServerFn(adminOverview);
+  const retry=useServerFn(retryOrderFulfillment);
   const wd = useServerFn(adminWithdrawal);
   const resolve = useServerFn(adminResolveDispute);
   const shopStatus = useServerFn(adminShopStatus);
   const saveTier = useServerFn(adminSaveTier);
-  const { data } = useQuery({ queryKey: ["admin"], queryFn: () => overview(), enabled: isAdmin });
+  const { data,error } = useQuery({ queryKey: ["admin"], queryFn: () => overview(), enabled: isAdmin });
   const { data: tiers = [] } = useQuery(tiersQuery());
   const [hash, setHash] = useState<Record<string, string>>({});
   const [tier, setTier] = useState({ min: "", max: "", pct: "" });
@@ -59,6 +60,7 @@ function Admin() {
   return (
     <div>
       <PageHeader title={t("admin.title")} />
+      {error&&<p role="alert" className="p-4 text-destructive">{errMsg(error)}</p>}
       <Tabs defaultValue="overview" className="p-4">
         <TabsList className="flex h-auto w-full flex-wrap">
           <TabsTrigger value="overview">{t("extra.tabOverview")}</TabsTrigger>
@@ -86,6 +88,8 @@ function Admin() {
           <StatCard label={`${t("admin.volume")}`} value={<span className="text-sm">{Object.entries(data?.volume ?? {}).map(([c, v]) => money(v, c)).join(" · ") || "0"}</span>} icon={Coins} tone="accent" />
           <StatCard label={`${t("admin.fees")}`} value={<span className="text-sm">{Object.entries(data?.fees ?? {}).map(([c, v]) => money(v, c)).join(" · ") || "0"}</span>} icon={Coins} tone="warning" />
         </div>
+
+        <Section title="Đơn cần xử lý">{data?.issues.map(o=><div key={o.id} className="border-b border-border py-3 space-y-2"><Link to="/orders/$orderId" params={{orderId:o.id}} className="text-sm font-semibold">#{o.order_number} · {o.product_name}</Link><p className="text-xs text-warning">{o.stars_refund_state==="pending"?"Hoàn Stars đang chờ xác nhận; thử lại trong tranh chấp":"Đang chờ bổ sung mã"}</p>{o.fulfillment_state==="shortage"&&<Button variant="outline" size="sm" onClick={()=>run(()=>retry({data:{id:o.id}}))}>Thử giao mã lại</Button>}</div>)}</Section>
 
         <Section title={t("admin.withdrawals")}>
           {data?.withdrawals.length === 0 && <p className="text-sm text-muted-foreground">{t("admin.empty")}</p>}

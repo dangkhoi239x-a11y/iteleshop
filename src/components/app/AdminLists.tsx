@@ -14,15 +14,17 @@ export function AdminLists({ kind }: { kind: "users" | "orders" | "products" }) 
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const [pages,setPages]=useState(1);
   const list = useServerFn(adminLists);
   const setStatus = useServerFn(adminProductStatus);
   const setAdmin = useServerFn(adminSetAdmin);
-  const { data, isLoading } = useQuery({ queryKey: ["adminList", kind, q], queryFn: () => list({ data: { kind, q } }) });
+  const { data, isLoading, error } = useQuery({ queryKey: ["adminList", kind, q, pages], queryFn: () => list({ data: { kind, q, pages } }) });
   const run = async (fn: () => Promise<unknown>) => { try { await fn(); toast.success(t("common.saved")); await qc.invalidateQueries({ queryKey: ["adminList"] }); } catch (e) { toast.error(errMsg(e)); } };
   const row = "flex items-center gap-2 rounded-xl border border-border bg-card p-3 text-sm";
   return (
     <div className="space-y-2">
-      <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("extra.search")} />
+      <Input value={q} onChange={(e) => {setQ(e.target.value);setPages(1)}} placeholder={t("extra.search")} />
+      {error&&<p role="alert" className="text-destructive">{errMsg(error)}</p>}
       {isLoading && <p className="text-sm text-muted-foreground">{t("common.loading")}</p>}
       {data?.users.map((u) => (
         <div key={u.id} className={row}>
@@ -43,6 +45,7 @@ export function AdminLists({ kind }: { kind: "users" | "orders" | "products" }) 
           <Button size="sm" variant="outline" onClick={() => run(() => setStatus({ data: { id: p.id, status: p.status === "suspended" ? "active" : "suspended" } }))}>{p.status === "suspended" ? t("extra.show") : t("extra.hide")}</Button>
         </div>
       ))}
+      {data&&(data.users.length+data.orders.length+data.products.length)===pages*100&&<Button variant="outline" className="w-full" onClick={()=>setPages(n=>n+1)}>Tải thêm</Button>}
     </div>
   );
 }
