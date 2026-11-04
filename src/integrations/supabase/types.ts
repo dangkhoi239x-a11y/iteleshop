@@ -1824,6 +1824,22 @@ export type Database = {
         Returns: boolean
       }
       fulfill_paid_order: { Args: { _order_id: string }; Returns: boolean }
+      growth_inventory_counts: {
+        Args: { _campaigns: string[] }
+        Returns: {
+          prize_id: string
+          remaining: number
+        }[]
+      }
+      growth_member_counts: {
+        Args: { _campaigns: string[] }
+        Returns: {
+          campaign_id: string
+          referrals: number
+          spins: number
+          users: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
