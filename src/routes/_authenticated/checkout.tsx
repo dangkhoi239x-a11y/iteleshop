@@ -128,11 +128,11 @@ function Checkout() {
           {discount > 0 && <Row k={t("checkout.discount")} v={`−${money(discount, p.currency)}`} className="text-success" />}
           <div className="border-t border-border pt-2"><Row k={t("checkout.total")} v={payMethod === "stars" ? `${stars} ⭐ (≈ ${money(total, p.currency)})` : money(total, p.currency)} className="font-display text-base font-bold" /></div>
         </div>
-        <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0 text-success" />{t("checkout.secured")}</p>
+        <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0 text-success" />{payMethod==="stars"?"Telegram Stars · Tiền được giữ cho đến khi nhận hàng":t("checkout.secured")}</p>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-border bg-background/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
         <Button size="lg" className="w-full shadow-glow" onClick={pay} disabled={busy || !settings || (payMethod === "stars" ? !settings.stars_enabled : !settings.crypto_enabled) || total<=0}>
-          {busy ? <><Loader2 className="animate-spin" /> {t("checkout.processing")}</> : t("checkout.payNow", { amount: payMethod === "stars" ? `${stars} ⭐` : money(total, p.currency) })}
+          {busy ? <><Loader2 className="animate-spin" /> {t("checkout.processing")}</> : (payMethod === "stars" ? `Thanh toán ${stars} ⭐ bằng Telegram Stars` : t("checkout.payNow", {amount:money(total,p.currency)}))}
         </Button>
       </div>
     </div>

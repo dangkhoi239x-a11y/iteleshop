@@ -45,7 +45,7 @@ export const createOrder = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { effectivePrice, voucherDiscount, commissionPercent, round6, orderQuote, freeUnits, starsFor } = await import("@/lib/pricing");
+    const { voucherDiscount, commissionPercent, round6, orderQuote, freeUnits, starsFor } = await import("@/lib/pricing");
     const db = await admin();
     const { data: p } = await db.from("products").select("*, shops!inner(id, owner_id, status, affiliate_percent)").eq("id", data.productId).single();
     if (!p || p.status !== "active" || p.shops.status !== "active") throw new Error("Product is not available");
@@ -182,13 +182,14 @@ export const resendDelivery = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ orderId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await admin();
-    const { data: o } = await db.from("orders").select("buyer_id, order_number, delivered_content").eq("id", data.orderId).single();
+    const { data: o } = await db.from("orders").select("buyer_id, order_number, delivered_content, buyer_guide").eq("id", data.orderId).single();
     if (!o || o.buyer_id !== context.userId) throw new Error("Order not found");
     if (!o.delivered_content) throw new Error("This order has no digital item yet");
     const { data: buyer } = await db.from("profiles").select("telegram_id").eq("id", context.userId).single();
     if (!buyer?.telegram_id) throw new Error("No linked Telegram account — copy the code from this page instead");
     const { sendTelegramMessage, escapeHtml } = await import("@/server/telegram.server");
-    await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], buyer.telegram_id, `🎁 Your item (#${o.order_number}):\n<code>${escapeHtml(o.delivered_content)}</code>`);
+    const sent=await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], buyer.telegram_id, `🎁 Your item (#${o.order_number}):\n<code>${escapeHtml(o.delivered_content)}</code>${o.buyer_guide?`\n\n📘 ${escapeHtml(o.buyer_guide)}`:""}`);
+    if(!sent)throw new Error("Telegram delivery failed; please retry");
     return { ok: true };
   });
 

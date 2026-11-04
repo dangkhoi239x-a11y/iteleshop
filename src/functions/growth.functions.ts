@@ -19,12 +19,15 @@ export const getGrowth = createServerFn({ method: 'POST' }).middleware([requireS
   const {supabaseAdmin:db}=await import('@/integrations/supabase/client.server');
   const ids=rows.map(c=>c.id);
   const own=ids.length?checked(await context.supabase.from('growth_members').select('*').eq('user_id',context.userId).in('campaign_id',ids))??[]:[];
+  const inventory=checked(await db.rpc("growth_inventory_counts",{_campaigns:ids}))??[];
+  const managerIds=rows.filter(c=>role||ownShop?.id===c.shop_id).map(c=>c.id);
+  const summaries=checked(await db.rpc("growth_member_counts",{_campaigns:managerIds}))??[];
   const campaigns=await Promise.all(rows.map(async c=>{
    const manager=!!role||ownShop?.id===c.shop_id;
-   const counts=await Promise.all(c.growth_prizes.map(async p=>{const count=await db.from('growth_prize_secrets').select('id',{count:'exact',head:true}).eq('prize_id',p.id).is('awarded_to',null);checked(count);return {...p,remaining:count.count??0};}));
-   const members=manager?await readAll((a,b)=>db.from('growth_members').select('referrer_id,used_entries').eq('campaign_id',c.id).order('user_id').range(a,b)):[];
+   const counts=c.growth_prizes.map(p=>({...p,remaining:Number(inventory.find(i=>i.prize_id===p.id)?.remaining??0)}));
+   const summary=summaries.find(m=>m.campaign_id===c.id);
    const events=manager?checked(await context.supabase.from('growth_events').select('id,event,created_at').eq('campaign_id',c.id).order('created_at',{ascending:false}).limit(30))??[]:[];
-   return {...c,prizes:counts.sort((a,b)=>a.position-b.position),own:own.find(m=>m.campaign_id===c.id)??null,stats:manager?{users:members.length,referrals:members.filter(m=>m.referrer_id).length,spins:members.reduce((n,m)=>n+m.used_entries,0)}:null,events};
+   return {...c,prizes:counts.sort((a,b)=>a.position-b.position),own:own.find(m=>m.campaign_id===c.id)??null,stats:manager?{users:Number(summary?.users??0),referrals:Number(summary?.referrals??0),spins:Number(summary?.spins??0)}:null,events};
   }));
   let historyQuery=context.supabase.from('growth_spins').select('*,growth_prizes(label)').eq('user_id',context.userId).order('created_at',{ascending:false}).limit(50);
   let quizQuery=context.supabase.from('shop_quizzes').select('*');

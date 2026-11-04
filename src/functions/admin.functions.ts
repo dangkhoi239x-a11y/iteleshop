@@ -32,8 +32,8 @@ export const adminOverview = createServerFn({ method: "POST" })
       volume[currency] = (volume[currency] ?? 0) + Number(o.pay_method === 'stars' ? o.settled_amount : o.total_amount);
       fees[currency] = (fees[currency] ?? 0) + Number(o.pay_method === 'stars' ? o.settled_fee : o.commission_amount);
     }
-    const { data: withdrawals } = await db.from("wallet_transactions").select("*").eq("type", "withdrawal").eq("status", "pending").order("created_at");
-    const { data: disputes } = await db.from("disputes").select("*, orders(order_number, product_name, total_amount, currency)").eq("status", "open").order("created_at");
+    const withdrawals = checked(await db.from("wallet_transactions").select("*").eq("type", "withdrawal").eq("status", "pending").order("created_at"));
+    const disputes = checked(await db.from("disputes").select("*, orders(order_number, product_name, total_amount, currency)").eq("status", "open").order("created_at"));
     const issues = checked(await db.from("orders").select("id,order_number,product_name,fulfillment_state,stars_refund_state").or("fulfillment_state.eq.shortage,stars_refund_state.eq.pending").order("created_at")) ?? [];
     return { issues, users: users.count ?? 0, orders: orders.count ?? 0, shops: shops.data ?? [], volume, fees, withdrawals: withdrawals ?? [], disputes: disputes ?? [] };
   });
