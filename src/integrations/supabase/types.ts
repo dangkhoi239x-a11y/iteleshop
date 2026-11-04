@@ -663,6 +663,7 @@ export type Database = {
           affiliate_user_id: string | null
           buyer_guide: string | null
           buyer_id: string
+          buyer_received_at: string | null
           commission_amount: number
           commission_percent: number
           completed_at: string | null
@@ -675,6 +676,8 @@ export type Database = {
           escrow_release_days: number
           escrow_status: string
           free_quantity: number
+          fulfillment_error: string | null
+          fulfillment_state: string
           id: string
           invoice_id: string | null
           invoice_url: string | null
@@ -698,6 +701,7 @@ export type Database = {
           settled_net: number | null
           shop_id: string
           stars_amount: number | null
+          stars_refund_state: string | null
           stars_settlement_id: string | null
           status: string
           subtotal: number
@@ -713,6 +717,7 @@ export type Database = {
           affiliate_user_id?: string | null
           buyer_guide?: string | null
           buyer_id: string
+          buyer_received_at?: string | null
           commission_amount?: number
           commission_percent?: number
           completed_at?: string | null
@@ -725,6 +730,8 @@ export type Database = {
           escrow_release_days?: number
           escrow_status?: string
           free_quantity?: number
+          fulfillment_error?: string | null
+          fulfillment_state?: string
           id?: string
           invoice_id?: string | null
           invoice_url?: string | null
@@ -748,6 +755,7 @@ export type Database = {
           settled_net?: number | null
           shop_id: string
           stars_amount?: number | null
+          stars_refund_state?: string | null
           stars_settlement_id?: string | null
           status?: string
           subtotal: number
@@ -763,6 +771,7 @@ export type Database = {
           affiliate_user_id?: string | null
           buyer_guide?: string | null
           buyer_id?: string
+          buyer_received_at?: string | null
           commission_amount?: number
           commission_percent?: number
           completed_at?: string | null
@@ -775,6 +784,8 @@ export type Database = {
           escrow_release_days?: number
           escrow_status?: string
           free_quantity?: number
+          fulfillment_error?: string | null
+          fulfillment_state?: string
           id?: string
           invoice_id?: string | null
           invoice_url?: string | null
@@ -798,6 +809,7 @@ export type Database = {
           settled_net?: number | null
           shop_id?: string
           stars_amount?: number | null
+          stars_refund_state?: string | null
           stars_settlement_id?: string | null
           status?: string
           subtotal?: number
@@ -1765,6 +1777,10 @@ export type Database = {
         }
         Returns: number
       }
+      confirm_order_receipt: {
+        Args: { _actor: string; _order_id: string }
+        Returns: boolean
+      }
       create_growth_campaign: {
         Args: {
           _actor: string
@@ -1804,6 +1820,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      fulfill_paid_order: { Args: { _order_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1824,12 +1841,26 @@ export type Database = {
         Args: { _order_id: string; _pay_currency: string; _payment_id: string }
         Returns: boolean
       }
+      my_reward_balance: { Args: never; Returns: number }
+      open_order_dispute: {
+        Args: {
+          _actor: string
+          _note: string
+          _order_id: string
+          _reason: string
+        }
+        Returns: string
+      }
       play_shop_quiz: {
         Args: { _answer: number; _quiz: string; _user: string }
         Returns: number
       }
       play_shop_quiz_reward: {
         Args: { _answer: number; _quiz: string; _user: string }
+        Returns: Json
+      }
+      prepare_stars_refund: {
+        Args: { _actor: string; _dispute: string }
         Returns: Json
       }
       refund_order_escrow: { Args: { _order_id: string }; Returns: boolean }
@@ -1854,6 +1885,16 @@ export type Database = {
       }
       resolve_code_issue: {
         Args: { _action: string; _actor: string; _issue: string; _note: string }
+        Returns: boolean
+      }
+      resolve_order_dispute: {
+        Args: {
+          _actor: string
+          _dispute: string
+          _note: string
+          _outcome: string
+          _stars_refunded?: boolean
+        }
         Returns: boolean
       }
       run_draw: { Args: { _actor: string; _draw: string }; Returns: number }
