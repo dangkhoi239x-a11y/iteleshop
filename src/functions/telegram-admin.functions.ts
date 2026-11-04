@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
+import {readWindow} from '@/lib/data-result';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 export const telegramAdmin = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((v:unknown)=>z.object({action:z.enum(['read','save','test']),id:z.string().uuid().optional(),name:z.string().trim().min(2).max(100).optional(),chatId:z.string().regex(/^-?\d+$/).optional(),enabled:z.boolean().optional(),pages:z.number().int().min(1).max(1000).default(1)}).parse(v)).handler(async({data,context})=>{
  const {data:allowed}=await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'admin'});
@@ -15,7 +16,8 @@ export const telegramAdmin = createServerFn({method:'POST'}).middleware([require
   const {sendTelegramMessage}=await import('@/server/telegram.server');
   const sent=await sendTelegramMessage(process.env['TELEGRAM_BOT_TOKEN'],channel.chat_id,'✅ TeleShop: kết nối thông báo thành công.');if(!sent)throw new Error('Telegram chưa gửi được; kiểm tra quyền bot trong kênh');
  }
- const [channels,logs]=await Promise.all([db.from('telegram_channels').select('*').order('created_at'),db.from('telegram_delivery_logs').select('*').order('created_at',{ascending:false}).order('id').range(0,data.pages*100-1)]);
- if(channels.error||logs.error)throw new Error('Unable to load Telegram history');
- return {channels:channels.data??[],logs:logs.data??[]};
+ const channels=await db.from('telegram_channels').select('*').order('created_at');
+ if(channels.error)throw new Error('Unable to load Telegram channels');
+ const logs=await readWindow((a,b)=>db.from('telegram_delivery_logs').select('*').order('created_at',{ascending:false}).order('id').range(a,b),data.pages*100);
+ return {channels:channels.data??[],logs};
 });

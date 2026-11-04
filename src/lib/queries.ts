@@ -1,4 +1,4 @@
-import { checked, readAll } from "./data-result";
+import { checked, readAll, readWindow } from "./data-result";
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,15 +21,15 @@ export const productsQuery = (search = "", category = "", pages = 1) =>
       let q = supabase.from("products").select(PRODUCT_COLS).eq("status", "active").order("sold_count", { ascending: false }).order("created_at", { ascending: false }).order("id").range(0, pages * 60 - 1);
       if (search) q = q.ilike("name", `%${search.replace(/[%_,()]/g, "")}%`);
       if (category) q = q.eq("category", category);
-      return readAll((a,b)=>q.range(a,Math.min(b,pages*60-1)),60);
+      return readWindow((a,b)=>q.range(a,b),pages*60,60);
     },
   });
 
-export const flashQuery = () =>
+export const flashQuery = (pages=1) =>
   queryOptions({
-    queryKey: ["flash"],
+    queryKey: ["flash",pages],
     queryFn: async () =>
-      must(await supabase.from("products").select(PRODUCT_COLS).eq("status", "active").not("flash_sale_price", "is", null).gt("flash_sale_end", new Date().toISOString()).order("flash_sale_end").limit(20)),
+      readWindow((a,b)=>supabase.from("products").select(PRODUCT_COLS).eq("status", "active").not("flash_sale_price", "is", null).gt("flash_sale_end", new Date().toISOString()).order("flash_sale_end").order("id").range(a,b),pages*20),
   });
 
 export const productQuery = (id: string) =>
@@ -39,7 +39,7 @@ export const productQuery = (id: string) =>
   });
 
 export const shopsQuery = (search = "", pages = 1) =>
-  queryOptions({ queryKey: ["shops", search, pages], queryFn: async () => { let q = supabase.from("shops").select("*").eq("status", "active").order("total_sales", { ascending: false }).order("id").range(0,pages*100-1); if(search) q=q.ilike("name", `%${search.replace(/[%_,()]/g, "")}%`); return readAll((a,b)=>q.range(a,Math.min(b,pages*100-1)),100); } });
+  queryOptions({ queryKey: ["shops", search, pages], queryFn: async () => { let q = supabase.from("shops").select("*").eq("status", "active").order("total_sales", { ascending: false }).order("id"); if(search) q=q.ilike("name", `%${search.replace(/[%_,()]/g, "")}%`); return readWindow((a,b)=>q.range(a,b),pages*100); } });
 
 export const shopQuery = (id: string) =>
   queryOptions({
@@ -100,18 +100,18 @@ export const rewardsQuery = (shopId?: string) =>
     },
   });
 
-export const myRewardsQuery = (userId: string) =>
+export const myRewardsQuery = (userId: string,pages=1) =>
   queryOptions({
-    queryKey: ["myRewards", userId],
+    queryKey: ["myRewards", userId,pages],
     queryFn: async () => {
       const [pts, ck, done, ent, balance] = await Promise.all([
-        supabase.from("reward_points").select("amount, source, note, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(500),
+        readWindow((a,b)=>supabase.from("reward_points").select("amount, source, note, created_at").eq("user_id", userId).order("created_at", { ascending: false }).order("id").range(a,b),pages*20),
         supabase.from("checkins").select("day, streak").eq("user_id", userId).order("day", { ascending: false }).limit(1),
         supabase.from("task_completions").select("task_id").eq("user_id", userId),
         supabase.from("draw_entries").select("draw_id").eq("user_id", userId),
         supabase.rpc("my_reward_balance"),
       ]);
-      return { balance: Number(checked(balance)), points: must(pts), lastCheckin: must(ck)[0] ?? null, done: must(done).map((d) => d.task_id), entries: must(ent).map((e) => e.draw_id) };
+      return { balance: Number(checked(balance)), points: pts, lastCheckin: must(ck)[0] ?? null, done: must(done).map((d) => d.task_id), entries: must(ent).map((e) => e.draw_id) };
     },
   });
 

@@ -18,7 +18,8 @@ export function GrowthCampaigns({campaignId}:{campaignId?:string}){
  const t=useGrowthText();const {userId,profile}=useAuth();const qc=useQueryClient();
  const get=useServerFn(getGrowth),join=useServerFn(joinGrowth),spin=useServerFn(spinGrowth);
  const quiz=useServerFn(playQuiz),resend=useServerFn(resendGrowthPrize);
- const query=useQuery({queryKey:['growth',userId,campaignId],queryFn:()=>get({data:{manage:false,campaignId}}),enabled:!!userId});
+ const [pages,setPages]=useState(1);
+ const query=useQuery({queryKey:['growth',userId,campaignId,pages],queryFn:()=>get({data:{manage:false,campaignId,pages}}),enabled:!!userId});
  const [busy,setBusy]=useState(false),[rotation,setRotation]=useState(0),[result,setResult]=useState<{label:string;content:string}|null>(null);
  const [request,setRequest]=useState<string|null>(null);
  const c=query.data?.campaigns.find(x=>x.id===campaignId);
@@ -55,5 +56,6 @@ export function GrowthCampaigns({campaignId}:{campaignId?:string}){
   </>}
   {!!query.data?.rewards.length&&<section className="space-y-2"><h2 className="font-semibold">Lịch sử minigame</h2>{query.data.rewards.filter(r=>!c||r.shop_id===c.shop_id).map(r=><div key={r.id} className="border-b border-border py-3 space-y-1"><p className="text-sm font-semibold">{r.shop_quizzes?.title} · {r.shops?.name} · {shortDate(r.created_at)}</p><p className="text-xs text-accent">+{r.points} điểm{r.entries?` · +${r.entries} lượt quay`:''}</p>{r.delivered_content&&<p className="text-sm font-mono break-all whitespace-pre-wrap">{r.delivered_content}</p>}{['pending','failed'].includes(r.telegram_state)&&<Button size="sm" variant="outline" disabled={busy} onClick={()=>action(()=>resend({data:{id:r.id,quiz:true}}))}>Gửi Telegram</Button>}</div>)}</section>}
   {!!history.length&&<section className="space-y-2"><h2 className="font-semibold">{t.history}</h2>{history.map(h=><div key={h.id} className="border-b border-border py-3 space-y-2"><p className="text-sm font-semibold">{h.growth_prizes?.label} · {shortDate(h.created_at)}</p><p className="text-sm font-mono break-all whitespace-pre-wrap">{h.delivered_content}</p><p className="text-xs text-muted-foreground">Telegram: {h.telegram_state}</p>{['pending','failed'].includes(h.telegram_state)&&<Button size="sm" variant="outline" disabled={busy} onClick={()=>action(()=>resend({data:{id:h.id}}))}>Gửi quà Telegram</Button>}</div>)}</section>}
+ {(query.data?.history.length===pages*50||query.data?.rewards.length===pages*50)&&<Button variant="outline" className="w-full" onClick={()=>setPages(n=>n+1)}>Tải thêm lịch sử</Button>}
  </div></div>;
 }

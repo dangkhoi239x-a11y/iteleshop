@@ -16,7 +16,7 @@
 - Wallet balance = sum of `wallet_transactions` (signed) excluding rejected; never store balances.
 - Telegram login: initData verified with bot token, account email `tg_<id>@telegram.teleshop.app`, password = HMAC(SESSION_SECRET). Demo accounts (`demo_*`) exist for testing outside Telegram.
 - Payments via NOWPayments invoices; IPN webhook `/api/public/nowpayments/ipn` verified by HMAC-SHA512.
-- Digital delivery content lives in `product_secrets` (owner-only) and is copied to `orders.delivered_content` on payment.
+- Digital inventory lives in private per-unit `product_codes`; paid fulfillment locks the product and requires the full quantity before delivery. Why: partial fulfillment must never release escrow or resell disclosed codes.
 - Pages render client-side (`defaultSsr: false` in src/start.ts) — Mini App, per-user data.
 - Pricing rules are pure functions in `src/lib/pricing.ts`, covered by `src/test/pricing.test.ts`.
 - Code issue mutations use service-role-only SQL functions with participant checks, order/code locks and append-only events; replacement claims inventory atomically without moving money.
@@ -35,3 +35,7 @@
 
 - Storefront badges and prices use shared ProductMerchandising components and existing pricing helpers; quantity selections are passed to checkout through validated search parameters. Why: offers stay factual and purchase previews match checkout.
 - Product purchase docking repositions the same purchase control using its stable scroll anchor rather than rendering a second CTA. Why: preserves one purchase action and the selected-quantity total without layout shifts.
+- Buyer receipt and dispute transitions use locked service-role SQL RPCs; incomplete fulfillment cannot release escrow. Why: receipt evidence and seller credits must commit together and retries must not double-credit.
+- Stars refunds reserve a persistent pending state before calling Telegram and complete local accounting only after provider confirmation. Why: external refunds cannot share a database transaction and must remain recoverable.
+- Product goods kind controls checkout: digital items require Stars; reward balances aggregate the complete ledger independently of paginated history. Why: payment eligibility and financial totals cannot depend on UI toggles or row limits.
+- Shared checked data results and bounded page reads serve application queries; transaction tests execute migrations in test-only PGlite. Why: failed persistence and silent row truncation need behavioral regression coverage without moving real money.

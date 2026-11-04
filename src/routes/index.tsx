@@ -31,7 +31,8 @@ function Home() {
   const [q, setQ] = useState("");
   const [pages,setPages] = useState(1);
   const products = useQuery(productsQuery(q.trim(),"",pages));
-  const flash = useQuery(flashQuery());
+  const [flashPages,setFlashPages]=useState(1);
+  const flash = useQuery(flashQuery(flashPages));
   const soonestEnd = flash.data?.[0]?.flash_sale_end;
 
   return (
@@ -75,6 +76,7 @@ function Home() {
                 <div key={p.id} className="w-36 shrink-0 snap-start"><ProductCard p={p} /></div>
               ))}
             </div>
+            {flash.data?.length===flashPages*20&&<Button variant="outline" size="sm" onClick={()=>setFlashPages(n=>n+1)}>Tải thêm ưu đãi</Button>}
           </div>
         </Section>
       )}
