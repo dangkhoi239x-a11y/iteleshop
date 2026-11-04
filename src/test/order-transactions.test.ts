@@ -8,7 +8,7 @@ let db:PGlite;
 let product:string;
 let shop:string;
 async function order(quantity=1,method='crypto') {
- const r=await db.query<{id:string}>(`INSERT INTO public.orders(buyer_id,shop_id,product_id,product_name,quantity,unit_price,subtotal,total_amount,currency,commission_percent,commission_amount,pay_method,stars_amount) VALUES($1,$2,$3,'Test',$4,1,$4,$4,'USDT',5,$4*0.05,$5,100) RETURNING id`,[buyer,shop,product,quantity,method]);
+ const r=await db.query<{id:string}>(`INSERT INTO public.orders(buyer_id,shop_id,product_id,product_name,quantity,unit_price,subtotal,total_amount,currency,commission_percent,commission_amount,pay_method,stars_amount) VALUES($1,$2,$3,'Test',$4::integer,1,$4::integer,$4::integer,'USDT',5,$4::integer*0.05,$5,100) RETURNING id`,[buyer,shop,product,quantity,method]);
  return r.rows[0]?.id ?? '';
 }
 async function pay(id:string){return db.query('SELECT public.mark_order_paid($1,$2,$3)',[id,'charge-'+id,'USDT']);}
