@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { checked, requireTransition, readAll } from "@/lib/data-result";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const adminMw = [requireSupabaseAuth] as const;
@@ -51,16 +52,17 @@ export const adminResolveDispute = createServerFn({ method: "POST" })
     const db = await assertAdmin(context);
     const { data: d } = await db.from("disputes").select("order_id, status").eq("id", data.id).single();
     if (!d || d.status !== "open") throw new Error("Dispute is not open");
-    if (data.outcome === "refund") {
-      const {error}=await db.rpc("refund_order_escrow", { _order_id: d.order_id });
-      if(error)throw new Error(error.message);
+    const order = checked(await db.from("orders").select("pay_method").eq("id", d.order_id).single());
+    let starsRefunded = false;
+    if (data.outcome === "refund" && order.pay_method === "stars") {
+      const prepared = checked(await db.rpc("prepare_stars_refund", { _actor: context.userId, _dispute: data.id }));
+      const payload = z.object({ telegramId: z.string(), paymentId: z.string() }).parse(prepared);
+      const { tgApi } = await import("@/server/order-paid.server");
+      try { await tgApi("refundStarPayment", { user_id: Number(payload.telegramId), telegram_payment_charge_id: payload.paymentId }); }
+      catch (error) { if (!(error instanceof Error) || !error.message.includes("CHARGE_ALREADY_REFUNDED")) throw error; }
+      starsRefunded = true;
     }
-    else {
-      await db.from("orders").update({ escrow_status: "holding" }).eq("id", d.order_id).eq("escrow_status", "frozen");
-      const {error}=await db.rpc("release_order_escrow", { _order_id: d.order_id });
-      if(error)throw new Error(error.message);
-    }
-    await db.from("disputes").update({ status: data.outcome === "refund" ? "resolved_refund" : "resolved_release", admin_note: data.note ?? null, resolved_at: new Date().toISOString() }).eq("id", data.id);
+    requireTransition(await db.rpc("resolve_order_dispute", { _actor: context.userId, _dispute: data.id, _outcome: data.outcome, _note: data.note ?? "", _stars_refunded: starsRefunded }));
     return { ok: true };
   });
 
@@ -69,7 +71,7 @@ export const adminShopStatus = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["active", "suspended"]) }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
-    await db.from("shops").update({ status: data.status }).eq("id", data.id);
+    checked(await db.from("shops").update({ status: data.status }).eq("id", data.id));
     return { ok: true };
   });
 
@@ -81,9 +83,9 @@ export const adminSaveTier = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
     const { id, remove, ...row } = data;
-    if (id && remove) await db.from("commission_tiers").delete().eq("id", id);
-    else if (id) await db.from("commission_tiers").update(row).eq("id", id);
-    else await db.from("commission_tiers").insert(row);
+    if (id && remove) checked(await db.from("commission_tiers").delete().eq("id", id));
+    else if (id) checked(await db.from("commission_tiers").update(row).eq("id", id));
+    else checked(await db.from("commission_tiers").insert(row));
     return { ok: true };
   });
 
@@ -118,7 +120,7 @@ export const adminProductStatus = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["active", "suspended"]) }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
-    await db.from("products").update({ status: data.status }).eq("id", data.id);
+    checked(await db.from("products").update({ status: data.status }).eq("id", data.id));
     return { ok: true };
   });
 
@@ -128,8 +130,8 @@ export const adminSetAdmin = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
     if (data.userId === context.userId) throw new Error("You cannot change your own admin role");
-    if (data.admin) await db.from("user_roles").upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role", ignoreDuplicates: true });
-    else await db.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
+    if (data.admin) checked(await db.from("user_roles").upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role", ignoreDuplicates: true }));
+    else checked(await db.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin"));
     return { ok: true };
   });
 
@@ -139,7 +141,7 @@ export const adminSaveSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
     if (!data.stars_enabled && !data.crypto_enabled) throw new Error("Keep at least one payment method on");
-    await db.from("platform_settings").upsert({ id: true, ...data, updated_at: new Date().toISOString() });
+    checked(await db.from("platform_settings").upsert({ id: true, ...data, updated_at: new Date().toISOString() }));
     return { ok: true };
   });
 
