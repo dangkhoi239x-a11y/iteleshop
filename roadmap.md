@@ -1,4 +1,5 @@
 # TeleShop roadmap
+- [ ] Whole-app code review and official-document research: confirm defects, run existing tests and preview checks, then present an ordered repair plan for approval; no application changes before approval.
 - [x] Optimize product/order mobile layouts: wrapped full codes, guides and minigame history, grid tabs and purchase controls; signed-in delivery tabs and product verified without horizontal overflow at 320/360/390/843 widths.
 - [x] Simplify product details: removed duplicated header, moved share/referral beneath Telegram delivery, and docked the single price/buy control only on deep scroll; verified live short product and simulated long content at 390/843 widths, purchase-to-sign-in, no runtime errors; 25 pricing/referral tests pass.
 - [x] Refresh product, shop and shop-list UI: compact imagery, visible price/buy/share, factual promotion badges and related items; live stocked product, 360/390/843 layouts, purchase-to-sign-in, search/offer filter, copy/share and details verified; 23 pricing/referral tests pass. Current catalog has no configured offers or related items for populated verification.
