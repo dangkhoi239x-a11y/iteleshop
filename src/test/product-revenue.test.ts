@@ -8,6 +8,6 @@ describe('product revenue', () => {
     ], [{ order_id: 'a', received_at: 'x' }, { order_id: 'a', received_at: 'x' }, { order_id: 'b', received_at: null }]);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ day: '2026-11-06', orders: 2, units: 3, gross: 3, codes: 3, received: 2, disputed: 1, disputedOrders: 1 });
-    expect(rows[0].net).toBeCloseTo(2.9);
+    expect(rows[0]!.net).toBeCloseTo(2.9);
   });
 });

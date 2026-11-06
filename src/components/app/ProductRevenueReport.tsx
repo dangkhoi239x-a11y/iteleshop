@@ -10,7 +10,7 @@ const L = {
  ru: { title: 'Выручка по дням и товарам', day: 'День', product: 'Товар', orders: 'Заказы', units: 'Кол-во', gross: 'Выручка', net: 'Чистыми', codes: 'Выдано кодов', received: 'Получено', disputed: 'В споре', empty: 'Нет заказов за период.', loading: 'Загрузка…', failed: 'Не удалось загрузить отчёт.' },
  zh: { title: '按日期和商品的收入', day: '日期', product: '商品', orders: '订单', units: '数量', gross: '收入', net: '净额', codes: '已发码', received: '已收货', disputed: '争议中', empty: '此期间无订单。', loading: '加载中…', failed: '无法加载报告。' },
 };
-export function ProductRevenueReport({ from, to, shopId }: { from: string; to: string; shopId?: string }) {
+export function ProductRevenueReport({ from, to, shopId }: { from: string; to: string; shopId?: string | undefined }) {
  const { i18n } = useTranslation(); const t = L[i18n.language.slice(0, 2) as keyof typeof L] ?? L.vi;
  const { userId } = useAuth(); const fetchReport = useServerFn(getProductRevenue);
  const { data, isPending, isError } = useQuery({ queryKey: ['product-revenue', userId, from, to, shopId ?? 'all'], queryFn: () => fetchReport({ data: { from, to, ...(shopId ? { shopId } : {}) } }), enabled: !!userId && !!from && !!to && from <= to });
