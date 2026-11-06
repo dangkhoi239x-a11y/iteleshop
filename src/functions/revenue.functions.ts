@@ -24,4 +24,18 @@ export const getStarsSettlementQueue=createServerFn({method:'POST'}).middleware(
 });
 export const confirmStarsSettlement=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({orderIds:z.array(z.string().uuid()).min(1).max(500),amount:z.number().positive().max(1e10).refine(v=>Math.abs(v*1e6-Math.round(v*1e6))<0.001,'Maximum 6 decimals'),currency:z.enum(['USDT','TON']),reference:z.string().trim().min(6).max(200)}).parse(i)).handler(async({data,context})=>{
  const {data:admin}=await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'admin'});if(!admin)throw new Error('Forbidden');const {supabaseAdmin:db}=await import('@/integrations/supabase/client.server');const {data:id,error}=await db.rpc('settle_stars_orders',{_actor:context.userId,_orders:data.orderIds,_amount:data.amount,_currency:data.currency,_reference:data.reference});if(error)throw new Error(error.message);return {id};
+});export const getProductRevenue=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>filters.parse(i)).handler(async({data,context})=>{
+ const {data:isAdmin,error:roleError}=await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'admin'});
+ if(roleError)throw new Error(roleError.message);
+ let shopId=data.shopId;
+ if(!isAdmin){const {data:shop,error}=await context.supabase.from('shops').select('id').eq('owner_id',context.userId).maybeSingle();if(error||!shop||(shopId&&shopId!==shop.id))throw new Error('Forbidden');shopId=shop.id;}
+ const {supabaseAdmin:db}=await import('@/integrations/supabase/client.server');
+ const {summarizeProductRevenue}=await import('@/lib/product-revenue');
+ const orders:any[]=[];
+ for(let offset=0;;offset+=500){let q=db.from('orders').select('id,product_id,paid_at,currency,total_amount,quantity,free_quantity,escrow_status,settled_net,commission_amount').gte('paid_at',`${data.from}T00:00:00+07:00`).lte('paid_at',`${data.to}T23:59:59.999999+07:00`).order('id').range(offset,offset+499);if(shopId)q=q.eq('shop_id',shopId);const {data:page,error}=await q;if(error)throw new Error(error.message);orders.push(...(page??[]));if(!page||page.length<500)break;}
+ const codes:any[]=[];const ids=orders.map(o=>o.id);
+ for(let i=0;i<ids.length;i+=200){const chunk=ids.slice(i,i+200);for(let offset=0;;offset+=1000){const {data:page,error}=await db.from('product_codes').select('order_id,received_at').in('order_id',chunk).order('id').range(offset,offset+999);if(error)throw new Error(error.message);codes.push(...(page??[]));if(!page||page.length<1000)break;}}
+ const productIds=[...new Set(orders.map(o=>o.product_id))];const products:{id:string;name:string}[]=[];
+ for(let i=0;i<productIds.length;i+=200){const {data:page,error}=await db.from('products').select('id,name').in('id',productIds.slice(i,i+200));if(error)throw new Error(error.message);products.push(...(page??[]));}
+ return {rows:summarizeProductRevenue(orders,codes),products};
 });

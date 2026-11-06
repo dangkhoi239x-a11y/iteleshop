@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Field } from './ui-bits';
+import { ProductRevenueReport } from './ProductRevenueReport';
 import { getRevenue } from '@/functions/revenue.functions';
 import { financeText } from '@/locales/finance';
 import { revenueText } from '@/locales/revenue';
@@ -66,5 +67,6 @@ export function RevenueReport({ admin = false }: { admin?: boolean }) {
     {!rows.length ? <p className="py-8 text-center text-muted-foreground">{text.empty}</p> : <div className="overflow-x-auto" role="region" aria-label={labels.details} tabIndex={0}><table className="w-full min-w-[1200px] text-left text-xs"><thead className="border-b border-border text-muted-foreground"><tr>{[text.day,text.shop,text.method,labels.currency,text.orders,text.stars,text.pending,text.gross,text.fee,text.affiliate,text.net,text.held,text.released,text.refund].map(h=><th key={h} scope="col" className="px-2 py-3 font-medium">{h}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={[r.day,r.shopId,r.method,r.currency].join('|')} className="border-b border-border hover:bg-muted/40"><td className="px-2 py-3 whitespace-nowrap">{r.day}</td><td className="max-w-48 break-words px-2">{name(r.shopId)}</td><td className="px-2">{r.method==='stars'?'Stars':'Crypto'}</td><td className="px-2">{r.currency==='XTR'?text.unsettled:r.currency}</td><td className="px-2 tabular-nums">{r.orders}</td><td className="px-2 tabular-nums">{r.stars}</td><td className="px-2 tabular-nums text-warning">{r.pendingStars}</td>{[r.gross,r.fee,r.affiliate,r.net,r.held,r.released,r.refunded].map((v,i)=><td key={i} className="whitespace-nowrap px-2 tabular-nums">{r.currency==='XTR'?'—':money(v,r.currency)}</td>)}</tr>)}</tbody></table></div>}
    </section>
   </>}
+ {valid && <ProductRevenueReport from={from} to={to} shopId={shop === 'all' ? undefined : shop} />}
  </div>;
 }
