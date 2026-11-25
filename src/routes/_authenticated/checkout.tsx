@@ -14,9 +14,10 @@ import { productQuery, platformSettingsQuery } from "@/lib/queries";
 import { freeUnits, orderQuote, starsFor } from "@/lib/pricing";
 import { openStarsInvoice } from "@/lib/telegram";
 import { money } from "@/lib/format";
-import { checkVoucher } from "@/functions/market.functions";
+import { checkVoucher, listShopPublicVouchers } from "@/functions/market.functions";
 import { createOrder } from "@/functions/orders.functions";
 import { haptic, openExternal } from "@/lib/telegram";
+import { storefrontText } from "@/locales/storefront";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
   validateSearch: z.object({ productId: z.string(), quantity: z.coerce.number().int().min(1).max(100).optional() }),
@@ -25,14 +26,21 @@ export const Route = createFileRoute("/_authenticated/checkout")({
 });
 
 function Checkout() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const text = storefrontText(i18n.language);
   const { productId, quantity } = Route.useSearch();
   const nav = useNavigate();
   const { data: p } = useQuery(productQuery(productId));
   const check = useServerFn(checkVoucher);
+  const fetchVouchers = useServerFn(listShopPublicVouchers);
   const create = useServerFn(createOrder);
   const [qty, setQty] = useState(quantity ?? 1);
   const { data: settings, error: settingsError } = useQuery(platformSettingsQuery());
+  const { data: shopVouchers = [] } = useQuery({
+    queryKey: ["shopPublicVouchers", p?.shop_id],
+    queryFn: () => fetchVouchers({ data: { shopId: p!.shop_id } }),
+    enabled: !!p?.shop_id,
+  });
   const [method, setMethod] = useState<"crypto" | "stars" | null>(null);
   const payMethod = p?.goods_kind === "digital" ? "stars" : method ?? (settings && !settings.crypto_enabled ? "stars" : "crypto");
   const [code, setCode] = useState("");
@@ -50,12 +58,14 @@ function Checkout() {
   const free = freeUnits(qty, p.buy_x, p.get_y);
   const stars = settings ? starsFor(total, p.currency, settings) : 0;
 
-  const apply = async () => {
-    if (!code.trim()) return;
+  const applyCode = async (rawCode: string) => {
+    const trimmed = rawCode.trim().toUpperCase();
+    if (!trimmed || !p) return;
+    setCode(trimmed);
     try {
-      const r = await check({ data: { shopId: p.shop_id, code: code.trim(), subtotal } });
+      const r = await check({ data: { shopId: p.shop_id, code: trimmed, subtotal } });
       if (r.ok) {
-        setApplied({ code: code.trim().toUpperCase(), discount: r.discount });
+        setApplied({ code: trimmed, discount: r.discount });
         toast.success(t("checkout.voucherOk", { amount: money(r.discount, p.currency) }));
       } else {
         setApplied(null);
@@ -65,6 +75,7 @@ function Checkout() {
       toast.error(errMsg(e));
     }
   };
+  const apply = () => applyCode(code);
 
   const pay = async () => {
     setBusy(true);
@@ -115,10 +126,38 @@ function Checkout() {
             <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="SALE10" className="uppercase" />
             <Button variant="secondary" onClick={apply}>{t("checkout.apply")}</Button>
           </div>
+          {shopVouchers.length > 0 && (
+            <div className="mt-2 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground">{text.availableVouchers}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {shopVouchers.map((v) => {
+                  const minOk = v.min_order_amount == null || subtotal >= Number(v.min_order_amount);
+                  const active = applied?.code === v.code;
+                  return (
+                    <Button
+                      key={v.id}
+                      type="button"
+                      size="sm"
+                      variant={active ? "default" : "outline"}
+                      disabled={!minOk}
+                      className="h-auto px-2.5 py-1 text-[11px]"
+                      onClick={() => void applyCode(v.code)}
+                    >
+                      <span className="font-mono font-semibold">{v.code}</span>
+                      <span>· {v.discount_type === "percent" ? `−${Number(v.discount_value)}%` : `−${money(v.discount_value, p.currency)}`}</span>
+                      {v.min_order_amount != null && <span className="opacity-75">({text.minSpend} {money(v.min_order_amount, p.currency)})</span>}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </Field>
-        <Field label={t("checkout.address")}>
-          <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("checkout.addressPh")} rows={2} maxLength={500} />
-        </Field>
+        {p.goods_kind !== "digital" && (
+          <Field label={t("checkout.address")}>
+            <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("checkout.addressPh")} rows={2} maxLength={500} />
+          </Field>
+        )}
         <Field label={`${t("checkout.note")} (${t("common.optional")})`}>
           <Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} />
         </Field>
@@ -128,11 +167,11 @@ function Checkout() {
           {discount > 0 && <Row k={t("checkout.discount")} v={`−${money(discount, p.currency)}`} className="text-success" />}
           <div className="border-t border-border pt-2"><Row k={t("checkout.total")} v={payMethod === "stars" ? `${stars} ⭐ (≈ ${money(total, p.currency)})` : money(total, p.currency)} className="font-display text-base font-bold" /></div>
         </div>
-        <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0 text-success" />{payMethod==="stars"?"Telegram Stars · Tiền được giữ cho đến khi nhận hàng":t("checkout.secured")}</p>
+        <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0 text-success" />{payMethod === "stars" ? text.starsEscrow : t("checkout.secured")}</p>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-border bg-background/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
         <Button size="lg" className="w-full shadow-glow" onClick={pay} disabled={busy || !settings || (payMethod === "stars" ? !settings.stars_enabled : !settings.crypto_enabled) || total<=0}>
-          {busy ? <><Loader2 className="animate-spin" /> {t("checkout.processing")}</> : (payMethod === "stars" ? `Thanh toán ${stars} ⭐ bằng Telegram Stars` : t("checkout.payNow", {amount:money(total,p.currency)}))}
+          {busy ? <><Loader2 className="animate-spin" /> {t("checkout.processing")}</> : (payMethod === "stars" ? text.payStars.replace("{{n}}", String(stars)) : t("checkout.payNow", {amount:money(total,p.currency)}))}
         </Button>
       </div>
     </div>

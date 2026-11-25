@@ -61,8 +61,11 @@ export const createOrder = createServerFn({ method: "POST" })
     let discount = 0;
     let voucherCode: string | null = null;
     if (data.voucherCode) {
+      const { checkVoucherAudience } = await import("@/functions/market.functions");
       const { data: v } = await db.from("vouchers").select("*").eq("shop_id", p.shop_id).eq("code", data.voucherCode.toUpperCase()).maybeSingle();
       if (!v) throw new Error("Voucher not found");
+      const aud = await checkVoucherAudience(db, v, context.userId);
+      if (!aud.ok) throw new Error(`Voucher not valid (${aud.reason})`);
       const r = voucherDiscount(v, subtotal);
       if (!r.ok) throw new Error(`Voucher not valid (${r.reason})`);
       discount = r.discount;
@@ -268,4 +271,21 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
     const { error } = await db.rpc("request_withdrawal", { _user_id: context.userId, _amount: data.amount, _currency: data.currency, _address: data.address });
     if (error) throw new Error(error.message.includes("Insufficient") ? "Insufficient balance" : error.message);
     return { ok: true };
+  });
+
+export const submitOrderReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ orderId: z.string().uuid(), rating: z.number().int().min(1).max(5), comment: z.string().trim().max(1000).optional() }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const { data: reviewId, error } = await db.rpc("submit_order_review", {
+      _actor: context.userId,
+      _order_id: data.orderId,
+      _rating: data.rating,
+      _comment: data.comment || null,
+    });
+    if (error) throw new Error(error.code === "23505" ? "You already reviewed this order" : error.message);
+    return { id: reviewId };
   });

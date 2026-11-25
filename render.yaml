@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: iteleshop
+    runtime: node
+    plan: free
+    buildCommand: npm install && NITRO_PRESET=node-server npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NITRO_PRESET
+        value: node-server
+      - key: SUPABASE_PROJECT_ID
+        value: bvlnwlskegifcakddapi
+      - key: SUPABASE_URL
+        value: https://bvlnwlskegifcakddapi.supabase.co
+      - key: VITE_SUPABASE_PROJECT_ID
+        value: bvlnwlskegifcakddapi
+      - key: VITE_SUPABASE_URL
+        value: https://bvlnwlskegifcakddapi.supabase.co
+      - key: SUPABASE_PUBLISHABLE_KEY
+        value: sb_publishable_X0oGGVkN0ZyYlSVkdoY8TQ_yX6_HvNy
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        value: sb_publishable_X0oGGVkN0ZyYlSVkdoY8TQ_yX6_HvNy
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: NOWPAYMENTS_API_KEY
+        sync: false
+      - key: NOWPAYMENTS_IPN_SECRET
+        sync: false
+      - key: TELEGRAM_APP_URL
+        sync: false

@@ -59,6 +59,44 @@ export const claimTask = createServerFn({ method: "POST" }).middleware([requireS
     return { points: r.data as number };
   });
 
+export const redeemPointsVoucher = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ shopId: z.string().uuid(), tier: z.enum(["p5", "p10", "p20"]) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const TIERS = {
+      p5: { cost: 50, percent: 5 },
+      p10: { cost: 100, percent: 10 },
+      p20: { cost: 200, percent: 20 },
+    } as const;
+    const t = TIERS[data.tier];
+    const db = await admin();
+    const r = await db.rpc("redeem_points_for_voucher", {
+      _user: context.userId,
+      _shop_id: data.shopId,
+      _points_cost: t.cost,
+      _discount_percent: t.percent,
+      _min_order_amount: null,
+      _days_valid: 30,
+    });
+    if (r.error) throw new Error(r.error.message);
+    return { code: r.data as string, percent: t.percent };
+  });
+
+export const myPointVouchers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const db = await admin();
+    const { data, error } = await db
+      .from("vouchers")
+      .select("id, code, discount_value, expires_at, used_count, max_uses, shops(id, name)")
+      .eq("target_user_id", context.userId)
+      .eq("audience", "points")
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
 export const enterDraw = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ drawId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {

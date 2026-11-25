@@ -134,18 +134,57 @@ export const saveProduct = createServerFn({ method: "POST" })
     };
     const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null, buyer_guide: rest.buyer_guide || null, highlights: rest.highlights || null, bulk_discounts: rest.bulk_discounts || null, buy_x: rest.buy_x && rest.get_y ? rest.buy_x : null, get_y: rest.buy_x && rest.get_y ? rest.get_y : null };
     if (id) {
-      const { data: cur } = await db.from("products").select("status").eq("id", id).eq("shop_id", shopId).maybeSingle();
+      const { data: cur } = await db.from("products").select("status, stock").eq("id", id).eq("shop_id", shopId).maybeSingle();
       // Admin-hidden products stay hidden until an admin restores them.
       if (cur?.status === "suspended") (row as { status: string }).status = "suspended";
       const { error } = await db.from("products").update(row).eq("id", id).eq("shop_id", shopId);
       if (error) throw new Error(error.message);
       const added = await addCodes(id);
+      if ((added > 0 || (cur?.stock === 0 && rest.stock > 0)) && row.status === "active") {
+        void notifyRestockSubscribers(db, id, row.name);
+      }
       return { id, added };
     }
     const { data: p, error } = await db.from("products").insert({ ...row, shop_id: shopId }).select("id").single();
     if (error) throw new Error(error.message);
     const added = await addCodes(p.id);
     return { id: p.id, added };
+  });
+
+async function notifyRestockSubscribers(db: Awaited<ReturnType<typeof admin>>, productId: string, productName: string) {
+  const { data: alerts } = await db.from("restock_alerts").select("id, user_id").eq("product_id", productId).is("notified_at", null).limit(200);
+  if (!alerts?.length) return;
+  const userIds = alerts.map((a) => a.user_id);
+  const { data: profiles } = await db.from("profiles").select("id, telegram_id").in("id", userIds);
+  const tgMap = new Map((profiles ?? []).map((p) => [p.id, p.telegram_id]));
+  const tok = process.env["TELEGRAM_BOT_TOKEN"];
+  const { sendTelegramMessage, escapeHtml } = await import("@/server/telegram.server");
+  const { telegramStoreUrl } = await import("@/lib/telegram-start");
+  const base = telegramStoreUrl(process.env["TELEGRAM_APP_URL"]).replace(/\/$/, "");
+  const sentIds: string[] = [];
+  for (const a of alerts) {
+    const tid = tgMap.get(a.user_id);
+    if (tid && (await sendTelegramMessage(tok, tid, `🔔 <b>${escapeHtml(productName)}</b> đã có hàng trở lại!\n${base}/product/${productId}`))) {
+      sentIds.push(a.id);
+    }
+  }
+  if (sentIds.length) await db.from("restock_alerts").update({ notified_at: new Date().toISOString() }).in("id", sentIds);
+}
+
+export const subscribeRestockAlert = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ productId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const { data: p } = await db.from("products").select("id, stock, status").eq("id", data.productId).maybeSingle();
+    if (!p || p.status !== "active") throw new Error("Product not found");
+    if (p.stock > 0) throw new Error("Product is already in stock");
+    checked(
+      await db
+        .from("restock_alerts")
+        .upsert({ product_id: data.productId, user_id: context.userId, notified_at: null }, { onConflict: "product_id,user_id" }),
+    );
+    return { ok: true };
   });
 
 export const removeProductCode = createServerFn({ method: "POST" })
@@ -193,6 +232,35 @@ export const setFlashSale = createServerFn({ method: "POST" })
   });
 
 // ---------- Vouchers ----------
+export async function checkVoucherAudience(
+  db: Awaited<ReturnType<typeof admin>>,
+  v: { shop_id: string; audience?: string | null; target_user_id?: string | null },
+  userId: string | null,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  if (v.target_user_id && v.target_user_id !== userId) return { ok: false, reason: "not_yours" };
+  const aud = v.audience ?? "all";
+  if (aud === "all" || aud === "channel" || aud === "points") return { ok: true };
+  if (!userId) return { ok: false, reason: "sign_in_required" };
+  const { data: paidOrders } = await db
+    .from("orders")
+    .select("paid_at")
+    .eq("shop_id", v.shop_id)
+    .eq("buyer_id", userId)
+    .not("paid_at", "is", null)
+    .order("paid_at", { ascending: false })
+    .limit(1);
+  if (aud === "first_time") {
+    return (paidOrders?.length ?? 0) === 0 ? { ok: true } : { ok: false, reason: "first_time_only" };
+  }
+  if (aud === "win_back") {
+    const lastPaid = paidOrders?.[0]?.paid_at;
+    if (!lastPaid) return { ok: false, reason: "win_back_only" };
+    const daysSince = (Date.now() - new Date(lastPaid).getTime()) / 86_400_000;
+    return daysSince >= 30 ? { ok: true } : { ok: false, reason: "win_back_only" };
+  }
+  return { ok: true };
+}
+
 export const saveVoucher = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
@@ -204,6 +272,7 @@ export const saveVoucher = createServerFn({ method: "POST" })
         min_order_amount: z.number().min(0).nullable(),
         max_uses: z.number().int().positive().nullable(),
         expires_at: z.string().datetime().nullable(),
+        audience: z.enum(["all", "first_time", "win_back", "channel"]).default("all"),
       })
       .refine((v) => v.discount_type !== "percent" || v.discount_value <= 100, "Percent must be ≤ 100")
       .parse(i),
@@ -228,13 +297,38 @@ export const toggleVoucher = createServerFn({ method: "POST" })
   });
 
 export const checkVoucher = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ shopId: z.string().uuid(), code: z.string().trim().max(20), subtotal: z.number().positive() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { voucherDiscount } = await import("@/lib/pricing");
     const db = await admin();
     const v = checked(await db.from("vouchers").select("*").eq("shop_id", data.shopId).eq("code", data.code.toUpperCase()).maybeSingle());
     if (!v) return { ok: false as const, reason: "not_found" };
+    const aud = await checkVoucherAudience(db, v, context.userId);
+    if (!aud.ok) return aud;
     return voucherDiscount(v, data.subtotal);
+  });
+
+export const listShopPublicVouchers = createServerFn({ method: "GET" })
+  .inputValidator((i: unknown) => z.object({ shopId: z.string().uuid() }).parse(i))
+  .handler(async ({ data }) => {
+    const db = await admin();
+    const rows = checked(
+      await db
+        .from("vouchers")
+        .select("id, code, discount_type, discount_value, min_order_amount, max_uses, used_count, expires_at, audience")
+        .eq("shop_id", data.shopId)
+        .eq("is_active", true)
+        .in("audience", ["all", "first_time", "win_back"])
+        .order("discount_value", { ascending: false })
+        .limit(20),
+    );
+    const now = Date.now();
+    return (rows ?? []).filter(
+      (v) =>
+        (!v.expires_at || new Date(v.expires_at).getTime() > now) &&
+        (v.max_uses == null || v.used_count < v.max_uses),
+    );
   });
 
 // ---------- Affiliate / KOL ----------
@@ -267,20 +361,27 @@ export const broadcastVoucher = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await admin();
     const shopId = await myShopId(context.userId);
-    const { data: v } = await db.from("vouchers").select("*, shops(name)").eq("id", data.id).eq("shop_id", shopId).single();
+    const { data: v } = await db.from("vouchers").select("*, shops(name, telegram_channel)").eq("id", data.id).eq("shop_id", shopId).single();
     if (!v || !v.is_active) throw new Error("Voucher is not active");
     if (v.last_broadcast_at && Date.now() - new Date(v.last_broadcast_at).getTime() < 6 * 3600e3) throw new Error("This voucher was sent less than 6 hours ago");
     const { sendTelegramMessage, escapeHtml } = await import("@/server/telegram.server");
     const off = v.discount_type === "percent" ? `${Number(v.discount_value)}%` : `${Number(v.discount_value)}`;
-    const text = `🎟 <b>${escapeHtml(v.shops?.name ?? "Shop")}</b> — voucher <code>${v.code}</code> (−${off})${v.expires_at ? `\n⏰ ${new Date(v.expires_at).toISOString().slice(0, 10)}` : ""}${data.message ? `\n\n${escapeHtml(data.message)}` : ""}`;
-    const { data: orders } = await db.from("orders").select("buyer_id").eq("shop_id", shopId).not("paid_at", "is", null).limit(2000);
-    const ids = [...new Set((orders ?? []).map((o) => o.buyer_id))].slice(0, 500);
-    const { data: buyers } = ids.length ? await db.from("profiles").select("telegram_id").in("id", ids) : { data: [] };
+    const tag = v.audience === "channel" ? "🔒 Channel Promo · " : "";
+    const text = `🎟 ${tag}<b>${escapeHtml(v.shops?.name ?? "Shop")}</b> — voucher <code>${v.code}</code> (−${off})${v.expires_at ? `\n⏰ ${new Date(v.expires_at).toISOString().slice(0, 10)}` : ""}${data.message ? `\n\n${escapeHtml(data.message)}` : ""}`;
     const tok = process.env["TELEGRAM_BOT_TOKEN"];
     let sent = 0;
-    for (const b of buyers ?? []) { if (b.telegram_id && await sendTelegramMessage(tok, b.telegram_id, text)) sent++; }
+    if (v.audience !== "channel") {
+      const { data: orders } = await db.from("orders").select("buyer_id").eq("shop_id", shopId).not("paid_at", "is", null).limit(2000);
+      const ids = [...new Set((orders ?? []).map((o) => o.buyer_id))].slice(0, 500);
+      const { data: buyers } = ids.length ? await db.from("profiles").select("telegram_id").in("id", ids) : { data: [] };
+      for (const b of buyers ?? []) { if (b.telegram_id && await sendTelegramMessage(tok, b.telegram_id, text)) sent++; }
+    }
     const { data: bot } = await db.from("shop_bots").select("*").eq("shop_id", shopId).maybeSingle();
-    await sendTelegramMessage(bot?.bot_token, bot?.notification_chat_id, text);
+    if (bot?.bot_token && bot?.notification_chat_id && await sendTelegramMessage(bot.bot_token, bot.notification_chat_id, text)) sent++;
+    else if (v.audience === "channel" && v.shops?.telegram_channel) {
+      const ch = v.shops.telegram_channel.startsWith("@") ? v.shops.telegram_channel : `@${v.shops.telegram_channel.replace(/^https?:\/\/t\.me\//i, "")}`;
+      if (await sendTelegramMessage(tok, ch, text)) sent++;
+    }
     checked(await db.from("vouchers").update({ last_broadcast_at: new Date().toISOString() }).eq("id", v.id));
     return { sent };
   });

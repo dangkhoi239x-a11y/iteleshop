@@ -14,14 +14,45 @@ const maybe = <R extends Res>(r: R) => {
 
 const PRODUCT_COLS = "*, shops(id, name, logo_url)";
 
-export const productsQuery = (search = "", category = "", pages = 1) =>
-  queryOptions({
-    queryKey: ["products", search, category, pages],
+export type ProductSort = "popular" | "newest" | "price_asc" | "price_desc";
+
+export const productsQuery = (
+  search = "",
+  category = "",
+  pages = 1,
+  options?: { goodsKind?: "" | "digital" | "physical"; sort?: ProductSort },
+) => {
+  const goodsKind = options?.goodsKind ?? "";
+  const sort = options?.sort ?? "popular";
+  return queryOptions({
+    queryKey: ["products", search, category, pages, goodsKind, sort],
     queryFn: async () => {
-      let q = supabase.from("products").select(PRODUCT_COLS).eq("status", "active").order("sold_count", { ascending: false }).order("created_at", { ascending: false }).order("id").range(0, pages * 60 - 1);
+      let q = supabase.from("products").select(PRODUCT_COLS).eq("status", "active");
       if (search) q = q.ilike("name", `%${search.replace(/[%_,()]/g, "")}%`);
       if (category) q = q.eq("category", category);
-      return readWindow((a,b)=>q.range(a,b),pages*60,60);
+      if (goodsKind) q = q.eq("goods_kind", goodsKind);
+      if (sort === "newest") q = q.order("created_at", { ascending: false }).order("id");
+      else if (sort === "price_asc") q = q.order("price", { ascending: true }).order("id");
+      else if (sort === "price_desc") q = q.order("price", { ascending: false }).order("id");
+      else q = q.order("sold_count", { ascending: false }).order("created_at", { ascending: false }).order("id");
+      return readWindow((a, b) => q.range(a, b), pages * 60, 60);
+    },
+  });
+};
+
+export const categoriesQuery = () =>
+  queryOptions({
+    queryKey: ["productCategories"],
+    queryFn: async () => {
+      const rows = must(
+        await supabase
+          .from("products")
+          .select("category")
+          .eq("status", "active")
+          .not("category", "is", null)
+          .limit(300),
+      );
+      return [...new Set(rows.map((r) => r.category?.trim()).filter((c): c is string => !!c))].sort();
     },
   });
 
@@ -128,3 +159,39 @@ export const managedRewardsQuery = (shopId: string | null) =>
   });
 
 export const platformSettingsQuery = () => queryOptions({ queryKey: ["platformSettings"], queryFn: async () => checked(await supabase.from("platform_settings").select("*").single()) });
+
+export const productReviewsQuery = (productId: string) =>
+  queryOptions({
+    queryKey: ["productReviews", productId],
+    queryFn: async () =>
+      must(
+        await supabase
+          .from("product_reviews")
+          .select("id, rating, comment, created_at")
+          .eq("product_id", productId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+      ),
+  });
+
+export const orderReviewQuery = (orderId: string) =>
+  queryOptions({
+    queryKey: ["orderReview", orderId],
+    queryFn: async () =>
+      maybe(await supabase.from("product_reviews").select("id, rating, comment, created_at").eq("order_id", orderId).maybeSingle()),
+  });
+
+export const myRestockAlertQuery = (productId: string, userId: string | null) =>
+  queryOptions({
+    queryKey: ["restockAlert", productId, userId],
+    enabled: !!userId,
+    queryFn: async () =>
+      maybe(
+        await supabase
+          .from("restock_alerts")
+          .select("id, notified_at")
+          .eq("product_id", productId)
+          .eq("user_id", userId!)
+          .maybeSingle(),
+      ),
+  });

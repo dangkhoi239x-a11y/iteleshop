@@ -3,17 +3,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Loader2, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Loader2, ShieldCheck, Star } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState, Field, PageHeader, StatusPill, errMsg } from "@/components/app/ui-bits";
-import { orderQuery } from "@/lib/queries";
+import { orderQuery, orderReviewQuery } from "@/lib/queries";
 import { money, shortDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
-import { openDispute, payOrder, respondDispute, updateOrder } from "@/functions/orders.functions";
+import { openDispute, payOrder, respondDispute, submitOrderReview, updateOrder } from "@/functions/orders.functions";
 import { haptic, openExternal, openStarsInvoice } from "@/lib/telegram";
 import { CodeIssues } from "@/components/app/CodeIssues";
 import { OrderDelivery } from "@/components/app/OrderDelivery";
@@ -39,11 +39,15 @@ function OrderPage() {
   const update = useServerFn(updateOrder);
   const dispute = useServerFn(openDispute);
   const respond = useServerFn(respondDispute);
+  const reviewFn = useServerFn(submitOrderReview);
+  const { data: existingReview } = useQuery(orderReviewQuery(orderId));
   const [busy, setBusy] = useState(false);
   const [showDispute, setShowDispute] = useState(false);
   const [reason, setReason] = useState<string>("not_received");
   const [note, setNote] = useState("");
   const [reply, setReply] = useState("");
+  const [rating, setRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
 
   if (isLoading) return <EmptyState title={t("common.loading")} />;
   if (!data?.order) return <EmptyState title="404" />;
@@ -149,6 +153,39 @@ function OrderPage() {
               <div className="space-y-2">
                 <Textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={3} maxLength={2000} />
                 <Button className="w-full" disabled={busy || reply.trim().length < 2} onClick={() => run(() => respond({ data: { disputeId: d.id, note: reply.trim() } }), t("common.saved"))}>{t("dispute.reply")}</Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {isBuyer && o.status === "completed" && (
+          <div className="space-y-3 rounded-2xl border border-border bg-card p-4 text-sm">
+            <p className="font-display font-semibold">Đánh giá đơn hàng</p>
+            {existingReview ? (
+              <div className="space-y-1">
+                <p className="text-warning">{"★".repeat(existingReview.rating)}{"☆".repeat(5 - existingReview.rating)}</p>
+                {existingReview.comment && <p className="text-xs text-muted-foreground">{existingReview.comment}</p>}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex gap-1.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button key={s} type="button" onClick={() => setRating(s)} aria-label={`${s} stars`} className="p-1">
+                      <Star className={`h-6 w-6 ${s <= rating ? "fill-warning text-warning" : "text-muted-foreground"}`} />
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {["Mã chuẩn", "Giao nhanh", "Hỗ trợ tốt"].map((tag) => (
+                    <Button key={tag} type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => setReviewComment((c) => (c ? `${c}, ${tag}` : tag))}>
+                      + {tag}
+                    </Button>
+                  ))}
+                </div>
+                <Textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="Chia sẻ trải nghiệm của bạn (tùy chọn)…" rows={2} maxLength={1000} />
+                <Button className="w-full" disabled={busy} onClick={() => run(() => reviewFn({ data: { orderId, rating, comment: reviewComment } }), "Cảm ơn bạn đã đánh giá!")}>
+                  Gửi đánh giá
+                </Button>
               </div>
             )}
           </div>

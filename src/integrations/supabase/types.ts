@@ -1620,8 +1620,66 @@ export type Database = {
         }
         Relationships: []
       }
+      product_reviews: {
+        Row: {
+          buyer_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string
+          rating: number
+          shop_id: string
+        }
+        Insert: {
+          buyer_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id: string
+          rating: number
+          shop_id: string
+        }
+        Update: {
+          buyer_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          rating?: number
+          shop_id?: string
+        }
+        Relationships: []
+      }
+      restock_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          notified_at: string | null
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vouchers: {
         Row: {
+          audience: string
           code: string
           created_at: string
           discount_type: string
@@ -1633,9 +1691,11 @@ export type Database = {
           max_uses: number | null
           min_order_amount: number | null
           shop_id: string
+          target_user_id: string | null
           used_count: number
         }
         Insert: {
+          audience?: string
           code: string
           created_at?: string
           discount_type?: string
@@ -1647,9 +1707,11 @@ export type Database = {
           max_uses?: number | null
           min_order_amount?: number | null
           shop_id: string
+          target_user_id?: string | null
           used_count?: number
         }
         Update: {
+          audience?: string
           code?: string
           created_at?: string
           discount_type?: string
@@ -1661,6 +1723,7 @@ export type Database = {
           max_uses?: number | null
           min_order_amount?: number | null
           shop_id?: string
+          target_user_id?: string | null
           used_count?: number
         }
         Relationships: [
@@ -1882,6 +1945,17 @@ export type Database = {
         Args: { _actor: string; _dispute: string }
         Returns: Json
       }
+      redeem_points_for_voucher: {
+        Args: {
+          _days_valid?: number
+          _discount_percent: number
+          _min_order_amount?: number | null
+          _points_cost: number
+          _shop_id: string
+          _user: string
+        }
+        Returns: string
+      }
       refund_order_escrow: { Args: { _order_id: string }; Returns: boolean }
       release_order_escrow: { Args: { _order_id: string }; Returns: boolean }
       report_code_issue: {
@@ -1899,6 +1973,15 @@ export type Database = {
           _amount: number
           _currency: string
           _user_id: string
+        }
+        Returns: string
+      }
+      submit_order_review: {
+        Args: {
+          _actor: string
+          _comment?: string | null
+          _order_id: string
+          _rating: number
         }
         Returns: string
       }

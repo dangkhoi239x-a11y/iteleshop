@@ -79,4 +79,25 @@ describe('actual PostgreSQL order transactions',()=>{
   await db.query("INSERT INTO public.reward_points(user_id,amount,source) SELECT $1,CASE WHEN i<=500 THEN 10 ELSE -3 END,'test' FROM generate_series(1,600) i",[buyer]);
   expect(Number((await db.query<{balance:string}>('SELECT public.my_reward_balance() balance')).rows[0]?.balance)).toBe(4700);
  });
+ it('redeems reward points for a personal single-use voucher atomically',async()=>{
+  await db.query('DELETE FROM public.reward_points WHERE user_id=$1',[buyer]);
+  await db.query("INSERT INTO public.reward_points(user_id,amount,source) VALUES($1,120,'test')",[buyer]);
+  const r=await db.query<{code:string}>('SELECT public.redeem_points_for_voucher($1,$2,100,10,NULL,30) code',[buyer,shop]);
+  const code=r.rows[0]?.code??'';
+  expect(code).toMatch(/^PTS-/);
+  await expect(db.query('SELECT public.redeem_points_for_voucher($1,$2,100,10,NULL,30)',[buyer,shop])).rejects.toThrow('Not enough reward points');
+  const v=await db.query<{audience:string;target_user_id:string;max_uses:number}>('SELECT audience,target_user_id,max_uses FROM public.vouchers WHERE code=$1',[code]);
+  expect(v.rows[0]?.audience).toBe('points');
+  expect(v.rows[0]?.target_user_id).toBe(buyer);
+  expect(v.rows[0]?.max_uses).toBe(1);
+ });
+ it('allows one verified review per completed order and updates shop rating',async()=>{
+  const id=await order();await pay(id);
+  await expect(db.query('SELECT public.submit_order_review($1,$2,5,$3)',[buyer,id,'Great'])).rejects.toThrow('Only completed orders');
+  await db.query('SELECT public.confirm_order_receipt($1,$2)',[buyer,id]);
+  await db.query('SELECT public.submit_order_review($1,$2,5,$3)',[buyer,id,'Fast delivery']);
+  await expect(db.query('SELECT public.submit_order_review($1,$2,4,$3)',[buyer,id,'Again'])).rejects.toThrow();
+  const s=await db.query<{rating:string}>('SELECT rating FROM public.shops WHERE id=$1',[shop]);
+  expect(Number(s.rows[0]?.rating)).toBe(5);
+ });
 });

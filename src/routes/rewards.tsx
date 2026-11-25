@@ -3,13 +3,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CalendarCheck, Coins, ExternalLink, Gift, ListChecks, Trophy } from "lucide-react";
+import { CalendarCheck, Coins, Copy, ExternalLink, Gift, ListChecks, Tag, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Countdown, EmptyState, PageHeader, Section, errMsg } from "@/components/app/ui-bits";
 import { useAuth } from "@/lib/auth";
-import { myRewardsQuery, rewardsQuery } from "@/lib/queries";
-import { claimTask, dailyCheckin, enterDraw } from "@/functions/rewards.functions";
+import { myRewardsQuery, rewardsQuery, shopsQuery } from "@/lib/queries";
+import { claimTask, dailyCheckin, enterDraw, myPointVouchers, redeemPointsVoucher } from "@/functions/rewards.functions";
 import { shortDate } from "@/lib/format";
 import { useGrowthText } from '@/lib/growth-text';
 
@@ -31,6 +32,11 @@ function Rewards() {
   const checkin = useServerFn(dailyCheckin);
   const claim = useServerFn(claimTask);
   const enter = useServerFn(enterDraw);
+  const redeem = useServerFn(redeemPointsVoucher);
+  const listPointVouchers = useServerFn(myPointVouchers);
+  const { data: shops = [] } = useQuery(shopsQuery("", 1));
+  const pointVouchers = useQuery({ queryKey: ["myPointVouchers", userId], queryFn: () => listPointVouchers(), enabled: !!userId });
+  const [redeemShopId, setRedeemShopId] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
   const run = async (key: string, fn: () => Promise<unknown>, ok: string) => {
@@ -65,6 +71,67 @@ function Rewards() {
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">{t("rewards.bonusHint")}</p>
         </div>
+
+        <Section title="Đổi điểm lấy Voucher">
+          <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
+            <Select value={redeemShopId} onValueChange={setRedeemShopId}>
+              <SelectTrigger><SelectValue placeholder="Chọn cửa hàng áp dụng…" /></SelectTrigger>
+              <SelectContent>
+                {shops.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { tier: "p5", cost: 50, pct: 5 },
+                { tier: "p10", cost: 100, pct: 10 },
+                { tier: "p20", cost: 200, pct: 20 },
+              ] as const).map((item) => (
+                <Button
+                  key={item.tier}
+                  variant="outline"
+                  className="h-auto flex-col gap-0.5 py-2.5"
+                  disabled={!session || !redeemShopId || Number(mine.data?.balance ?? 0) < item.cost || busy === item.tier}
+                  onClick={() =>
+                    run(
+                      item.tier,
+                      async () => {
+                        const r = await redeem({ data: { shopId: redeemShopId, tier: item.tier } });
+                        await qc.invalidateQueries({ queryKey: ["myPointVouchers"] });
+                        toast.success(`Voucher ${r.code} (−${r.percent}%)`);
+                      },
+                      `Đã đổi voucher −${item.pct}%`,
+                    )
+                  }
+                >
+                  <span className="font-bold text-primary">−{item.pct}%</span>
+                  <span className="text-[11px] text-muted-foreground">{item.cost} {t("rewards.ptsUnit")}</span>
+                </Button>
+              ))}
+            </div>
+            {!!pointVouchers.data?.length && (
+              <div className="space-y-1.5 border-t border-border pt-3">
+                <p className="text-xs font-medium text-muted-foreground">Voucher đã đổi của bạn</p>
+                {pointVouchers.data.map((v) => (
+                  <div key={v.id} className="flex items-center justify-between gap-2 rounded-xl bg-secondary/50 px-3 py-2 text-xs">
+                    <div className="min-w-0">
+                      <p className="font-mono font-bold text-primary">{v.code} <span className="font-sans font-normal text-foreground">· −{Number(v.discount_value)}%</span></p>
+                      <p className="truncate text-[11px] text-muted-foreground">{v.shops?.name} · {v.used_count >= (v.max_uses ?? 1) ? "Đã dùng" : v.expires_at ? `HSD ${shortDate(v.expires_at)}` : ""}</p>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => { void navigator.clipboard?.writeText(v.code); toast.success(t("common.copied")); }}
+                      aria-label={t("common.copy")}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Section>
 
         <Section title={t("rewards.tasks")}>
           {pub.data?.tasks.length ? (

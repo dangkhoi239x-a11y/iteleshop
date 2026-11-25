@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Countdown, EmptyState, ProductCard, Section } from "@/components/app/ui-bits";
-import { flashQuery, productsQuery } from "@/lib/queries";
+import { categoriesQuery, flashQuery, productsQuery, type ProductSort } from "@/lib/queries";
 import { useAuth } from "@/lib/auth";
 import { AiRecommendations } from "@/components/app/AiRecommendations";
+import { storefrontText } from "@/locales/storefront";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,11 +27,16 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const text = storefrontText(i18n.language);
   const { shop, session } = useAuth();
   const [q, setQ] = useState("");
+  const [category, setCategory] = useState("");
+  const [goodsKind, setGoodsKind] = useState<"" | "digital" | "physical">("");
+  const [sort, setSort] = useState<ProductSort>("popular");
   const [pages,setPages] = useState(1);
-  const products = useQuery(productsQuery(q.trim(),"",pages));
+  const { data: categories = [] } = useQuery(categoriesQuery());
+  const products = useQuery(productsQuery(q.trim(), category, pages, { goodsKind, sort }));
   const [flashPages,setFlashPages]=useState(1);
   const flash = useQuery(flashQuery(flashPages));
   const soonestEnd = flash.data?.[0]?.flash_sale_end;
@@ -76,7 +82,7 @@ function Home() {
                 <div key={p.id} className="w-36 shrink-0 snap-start"><ProductCard p={p} /></div>
               ))}
             </div>
-            {flash.data?.length===flashPages*20&&<Button variant="outline" size="sm" onClick={()=>setFlashPages(n=>n+1)}>Tải thêm ưu đãi</Button>}
+            {flash.data?.length===flashPages*20&&<Button variant="outline" size="sm" onClick={()=>setFlashPages(n=>n+1)}>{text.loadMoreOffers}</Button>}
           </div>
         </Section>
       )}
@@ -91,7 +97,41 @@ function Home() {
         </Link>
       )}
 
-      <Section title={t("home.trending")}>
+      <Section
+        title={t("home.trending")}
+        action={
+          <select
+            aria-label={text.choose}
+            value={sort}
+            onChange={(e) => { setSort(e.target.value as ProductSort); setPages(1); }}
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+          >
+            <option value="popular">{text.popular}</option>
+            <option value="newest">{text.newest}</option>
+            <option value="price_asc">{text.price}</option>
+            <option value="price_desc">{text.priceDesc}</option>
+          </select>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-1.5">
+          {([["", text.allKinds], ["digital", text.digital], ["physical", text.physical]] as const).map(([k, label]) => (
+            <Button key={k || "all"} size="sm" variant={goodsKind === k ? "default" : "secondary"} className="h-7 rounded-full px-3 text-xs" onClick={() => { setGoodsKind(k); setPages(1); }}>
+              {label}
+            </Button>
+          ))}
+        </div>
+        {categories.length > 0 && (
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+            <Button size="sm" variant={category === "" ? "secondary" : "ghost"} className="h-7 shrink-0 rounded-full px-3 text-xs" onClick={() => { setCategory(""); setPages(1); }}>
+              {text.all}
+            </Button>
+            {categories.map((c) => (
+              <Button key={c} size="sm" variant={category === c ? "secondary" : "ghost"} className="h-7 shrink-0 rounded-full px-3 text-xs" onClick={() => { setCategory(c); setPages(1); }}>
+                {c}
+              </Button>
+            ))}
+          </div>
+        )}
         {products.isError ? <EmptyState title={products.error.message} /> : products.isLoading ? (
           <div className="grid grid-cols-2 gap-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-56 rounded-2xl" />)}</div>
         ) : products.data?.length ? (
@@ -99,7 +139,7 @@ function Home() {
         ) : (
           <EmptyState title={t("home.noProducts")} />
         )}
-      {products.data?.length===pages*60&&<Button variant="outline" className="w-full mt-3" onClick={()=>setPages(n=>n+1)}>Tải thêm</Button>}
+      {products.data?.length===pages*60&&<Button variant="outline" className="w-full mt-3" onClick={()=>setPages(n=>n+1)}>{text.loadMore}</Button>}
       </Section>
     </div>
   );

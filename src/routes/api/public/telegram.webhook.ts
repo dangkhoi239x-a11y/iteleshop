@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { isTelegramStart, telegramStoreUrl } from '@/lib/telegram-start';
+import { extractStartParam, isTelegramStart, telegramStoreUrl } from '@/lib/telegram-start';
 import { z } from 'zod';
 
 // Telegram bot webhook: handles Telegram Stars checkout. Verified via X-Telegram-Bot-Api-Secret-Token.
@@ -14,10 +14,11 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         if (!u) return new Response("ok");
         const message = u['message'];
         if (message?.chat?.type === 'private' && isTelegramStart(message.text)) {
+          const startParam = extractStartParam(message.text);
           await tgApi('sendMessage', {
             chat_id: message.chat.id,
             text: '🛍 Chào mừng anh/chị đến TeleShop!\nMở cửa hàng để xem sản phẩm, đặt hàng và nhận mã ngay trong Telegram.',
-            reply_markup: { inline_keyboard: [[{ text: '🛍 Mở TeleShop', web_app: { url: telegramStoreUrl(process.env['TELEGRAM_APP_URL']) } }]] },
+            reply_markup: { inline_keyboard: [[{ text: '🛍 Mở TeleShop', web_app: { url: telegramStoreUrl(process.env['TELEGRAM_APP_URL'], startParam) } }]] },
           });
           return new Response('ok');
         }
