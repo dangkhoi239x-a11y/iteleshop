@@ -3,7 +3,7 @@ services:
     name: iteleshop
     runtime: node
     plan: free
-    buildCommand: npm install && NITRO_PRESET=node-server npm run build
+    buildCommand: bun install && NITRO_PRESET=node-server bun run build
     startCommand: npm run start
     envVars:
       - key: NODE_VERSION
