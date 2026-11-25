@@ -882,6 +882,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          expires_at: string | null
           id: string
           order_id: string | null
           product_id: string
@@ -892,6 +893,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          expires_at?: string | null
           id?: string
           order_id?: string | null
           product_id: string
@@ -902,6 +904,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          expires_at?: string | null
           id?: string
           order_id?: string | null
           product_id?: string
@@ -1001,6 +1004,7 @@ export type Database = {
           highlights: string | null
           id: string
           image_url: string | null
+          low_stock_threshold: number
           name: string
           price: number
           shop_id: string
@@ -1030,6 +1034,7 @@ export type Database = {
           highlights?: string | null
           id?: string
           image_url?: string | null
+          low_stock_threshold?: number
           name: string
           price: number
           shop_id: string
@@ -1059,6 +1064,7 @@ export type Database = {
           highlights?: string | null
           id?: string
           image_url?: string | null
+          low_stock_threshold?: number
           name?: string
           price?: number
           shop_id?: string

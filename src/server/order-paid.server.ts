@@ -48,7 +48,14 @@ export async function sendOrderDelivery(orderId:string) {
  const o=checked(await db.from("orders").select("*").eq("id",orderId).single());
  if(!o)throw new Error("Order not found");
  const buyer=checked(await db.from("profiles").select("telegram_id").eq("id",o.buyer_id).single());
- const prod=checked(await db.from("products").select("auto_send_telegram").eq("id",o.product_id).single());
+ const prod=checked(await db.from("products").select("name, auto_send_telegram, fulfillment_mode, stock, low_stock_threshold, shop_id").eq("id",o.product_id).single());
  if(o.fulfillment_state==="shortage") { await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"],buyer?.telegram_id,`⚠️ Đơn #${o.order_number} đã thanh toán, đang chờ shop bổ sung mã. Tiền chưa giải ngân.`,{event:"fulfillment_shortage"}); return; }
  if(o.delivered_content&&prod?.auto_send_telegram!==false) await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"],buyer?.telegram_id,`🎁 Your item (#${o.order_number}):\n<code>${escapeHtml(o.delivered_content)}</code>${o.buyer_guide?`\n\n📘 ${escapeHtml(o.buyer_guide)}`:""}`,{event:"order_delivery"});
+ if(prod && prod.fulfillment_mode === "pool" && prod.stock <= (prod.low_stock_threshold ?? 5)) {
+  const { data: shop } = await db.from("shops").select("owner_id").eq("id", prod.shop_id).maybeSingle();
+  const { data: seller } = shop ? await db.from("profiles").select("telegram_id").eq("id", shop.owner_id).maybeSingle() : { data: null };
+  if (seller?.telegram_id) {
+   await sendTelegramMessage(process.env["TELEGRAM_BOT_TOKEN"], seller.telegram_id, `⚠️ <b>Kho mã sắp hết:</b> ${escapeHtml(prod.name)} chỉ còn <b>${prod.stock}</b> mã.`, { event: "low_stock_alert" });
+  }
+ }
 }

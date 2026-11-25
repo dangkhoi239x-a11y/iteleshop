@@ -115,26 +115,59 @@ const productInput = z.object({
   fulfillment_mode: z.enum(["pool", "webhook_api"]).default("pool"),
   webhook_url: url,
   external_sku: z.string().trim().max(100).optional().nullable(),
+  low_stock_threshold: z.number().int().min(0).max(1000).default(5),
 });
+
+async function syncPoolStock(db: Awaited<ReturnType<typeof admin>>, productId: string): Promise<number> {
+  const { data: avail } = await db
+    .from("product_codes")
+    .select("expires_at")
+    .eq("product_id", productId)
+    .eq("status", "available");
+  const now = Date.now();
+  const validCount = (avail ?? []).filter((c) => !c.expires_at || new Date(c.expires_at).getTime() > now).length;
+  checked(await db.from("products").update({ stock: validCount }).eq("id", productId));
+  return validCount;
+}
+
+async function insertUniqueCodes(
+  db: Awaited<ReturnType<typeof admin>>,
+  productId: string,
+  codes: string[],
+  expiresAt?: string | null,
+): Promise<{ added: number; skipped: number; stock: number }> {
+  if (!codes.length) return { added: 0, skipped: 0, stock: await syncPoolStock(db, productId) };
+  const existing = new Set<string>();
+  for (let i = 0; i < codes.length; i += 200) {
+    const chunk = codes.slice(i, i + 200);
+    const { data: found } = await db.from("product_codes").select("content").eq("product_id", productId).in("content", chunk);
+    for (const r of found ?? []) existing.add(r.content);
+  }
+  const fresh = codes.filter((c) => !existing.has(c));
+  const skipped = codes.length - fresh.length;
+  for (let i = 0; i < fresh.length; i += 200) {
+    const batch = fresh.slice(i, i + 200).map((content) => ({
+      product_id: productId,
+      content,
+      expires_at: expiresAt ?? null,
+    }));
+    const { error } = await db.from("product_codes").insert(batch);
+    if (error) throw new Error(error.message);
+  }
+  const stock = await syncPoolStock(db, productId);
+  return { added: fresh.length, skipped, stock };
+}
 
 export const saveProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => productInput.extend({ id: z.string().uuid().optional() }).parse(i))
+  .inputValidator((i: unknown) => productInput.extend({ id: z.string().uuid().optional(), code_expires_at: z.string().datetime().nullable().optional() }).parse(i))
   .handler(async ({ data, context }) => {
     const db = await admin();
     const shopId = await myShopId(context.userId);
-    const { id, delivery_content, ...rest } = data;
+    const { id, delivery_content, code_expires_at, ...rest } = data;
     // Mỗi dòng trong delivery_content là một mã/link riêng, bán đúng một lần.
     const { parseCodeLines } = await import("@/lib/codes");
     const codes = parseCodeLines(delivery_content);
-    const addCodes = async (pid: string) => {
-      if (!codes.length) return 0;
-      const { error } = await db.from("product_codes").insert(codes.map((content) => ({ product_id: pid, content })));
-      if (error) throw new Error(error.message);
-      const { count } = await db.from("product_codes").select("id", { count: "exact", head: true }).eq("product_id", pid).eq("status", "available");
-      checked(await db.from("products").update({ stock: count ?? 0 }).eq("id", pid));
-      return codes.length;
-    };
     let safeWebhookUrl: string | null = null;
     if (rest.fulfillment_mode === "webhook_api") {
       if (!rest.webhook_url) throw new Error("Webhook URL is required for API fulfillment");
@@ -151,17 +184,154 @@ export const saveProduct = createServerFn({ method: "POST" })
         : row;
       const { error } = await db.from("products").update(patch).eq("id", id).eq("shop_id", shopId);
       if (error) throw new Error(error.message);
-      const added = await addCodes(id);
-      if ((added > 0 || (cur?.stock === 0 && rest.stock > 0)) && row.status === "active") {
+      const res = codes.length ? await insertUniqueCodes(db, id, codes, code_expires_at) : { added: 0, skipped: 0 };
+      if ((res.added > 0 || (cur?.stock === 0 && rest.stock > 0)) && row.status === "active") {
         void notifyRestockSubscribers(db, id, row.name);
       }
-      return { id, added };
+      return { id, added: res.added, skipped: res.skipped };
     }
     const secret = rest.fulfillment_mode === "webhook_api" ? (await import("node:crypto")).randomBytes(24).toString("hex") : null;
     const { data: p, error } = await db.from("products").insert({ ...row, shop_id: shopId, webhook_secret: secret }).select("id").single();
     if (error) throw new Error(error.message);
-    const added = await addCodes(p.id);
-    return { id: p.id, added };
+    const res = codes.length ? await insertUniqueCodes(db, p.id, codes, code_expires_at) : { added: 0, skipped: 0 };
+    return { id: p.id, added: res.added, skipped: res.skipped };
+  });
+
+export const listProductCodes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      productId: z.string().uuid(),
+      status: z.enum(["all", "available", "sold", "disabled"]).default("all"),
+      q: z.string().max(100).default(""),
+      page: z.number().int().min(1).max(200).default(1),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const shopId = await myShopId(context.userId);
+    const { data: p } = await db.from("products").select("id, name, stock").eq("id", data.productId).eq("shop_id", shopId).maybeSingle();
+    if (!p) throw new Error("Product not found");
+
+    const { data: allMeta } = await db.from("product_codes").select("status, expires_at").eq("product_id", p.id);
+    const now = Date.now();
+    const counts = { available: 0, sold: 0, disabled: 0, expired: 0 };
+    for (const c of allMeta ?? []) {
+      if (c.status === "sold") counts.sold++;
+      else if (c.status === "disabled") counts.disabled++;
+      else if (c.status === "available") {
+        if (c.expires_at && new Date(c.expires_at).getTime() <= now) counts.expired++;
+        else counts.available++;
+      }
+    }
+
+    let q = db.from("product_codes").select("*").eq("product_id", p.id);
+    if (data.status !== "all") q = q.eq("status", data.status);
+    const needle = data.q.trim();
+    if (needle) q = q.ilike("content", `%${needle.replace(/[%_,()]/g, "")}%`);
+    const pageSize = 50;
+    const from = (data.page - 1) * pageSize;
+    const rows = checked(await q.order("created_at", { ascending: false }).order("id").range(from, from + pageSize - 1)) ?? [];
+    return { product: p, rows, counts, pageSize };
+  });
+
+export const importProductCodes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      productId: z.string().uuid(),
+      codes: z.array(z.string().trim().min(1).max(2000)).min(1).max(2000),
+      expiresAt: z.string().datetime().nullable().optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const shopId = await myShopId(context.userId);
+    const { data: p } = await db.from("products").select("id, name, stock, status").eq("id", data.productId).eq("shop_id", shopId).maybeSingle();
+    if (!p) throw new Error("Product not found");
+    const unique = [...new Set(data.codes.map((c) => c.trim()).filter(Boolean))];
+    const res = await insertUniqueCodes(db, p.id, unique, data.expiresAt);
+    if (res.added > 0 && p.stock === 0 && p.status === "active") {
+      void notifyRestockSubscribers(db, p.id, p.name);
+    }
+    return res;
+  });
+
+export const bulkManageCodes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      productId: z.string().uuid(),
+      action: z.enum(["disable", "enable", "delete", "purge_expired"]),
+      ids: z.array(z.string().uuid()).max(500).default([]),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const shopId = await myShopId(context.userId);
+    const { data: p } = await db.from("products").select("id").eq("id", data.productId).eq("shop_id", shopId).maybeSingle();
+    if (!p) throw new Error("Product not found");
+
+    let affected = 0;
+    if (data.action === "purge_expired") {
+      const nowIso = new Date().toISOString();
+      const { data: upd, error } = await db
+        .from("product_codes")
+        .update({ status: "disabled" })
+        .eq("product_id", p.id)
+        .eq("status", "available")
+        .lte("expires_at", nowIso)
+        .select("id");
+      if (error) throw new Error(error.message);
+      affected = upd?.length ?? 0;
+    } else if (data.ids.length) {
+      if (data.action === "delete") {
+        const { data: del, error } = await db
+          .from("product_codes")
+          .delete()
+          .eq("product_id", p.id)
+          .neq("status", "sold")
+          .in("id", data.ids)
+          .select("id");
+        if (error) throw new Error(error.message);
+        affected = del?.length ?? 0;
+      } else {
+        const nextStatus = data.action === "disable" ? "disabled" : "available";
+        const { data: upd, error } = await db
+          .from("product_codes")
+          .update({ status: nextStatus })
+          .eq("product_id", p.id)
+          .neq("status", "sold")
+          .in("id", data.ids)
+          .select("id");
+        if (error) throw new Error(error.message);
+        affected = upd?.length ?? 0;
+      }
+    }
+    const stock = await syncPoolStock(db, p.id);
+    return { affected, stock };
+  });
+
+export const exportProductCodes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      productId: z.string().uuid(),
+      status: z.enum(["all", "available", "sold", "disabled"]).default("all"),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const shopId = await myShopId(context.userId);
+    const { data: p } = await db.from("products").select("id, name").eq("id", data.productId).eq("shop_id", shopId).maybeSingle();
+    if (!p) throw new Error("Product not found");
+
+    let q = db.from("product_codes").select("content, status, expires_at, sold_at, order_id").eq("product_id", p.id);
+    if (data.status !== "all") q = q.eq("status", data.status);
+    const rows = checked(await q.order("created_at", { ascending: false }).limit(2000)) ?? [];
+    const esc = (v: string | null | undefined) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = ["content,status,expires_at,sold_at,order_id", ...rows.map((r) => [esc(r.content), esc(r.status), esc(r.expires_at), esc(r.sold_at), esc(r.order_id)].join(","))];
+    return { csv: lines.join("\n"), count: rows.length };
   });
 
 export const testWebhookEndpoint = createServerFn({ method: "POST" })

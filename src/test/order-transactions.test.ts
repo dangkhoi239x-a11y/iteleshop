@@ -111,4 +111,13 @@ describe('actual PostgreSQL order transactions',()=>{
   expect((await state(oId))?.status).toBe('delivered');
   expect((await db.query<{n:number}>("SELECT count(*)::int n FROM public.product_codes WHERE order_id=$1 AND status='sold'",[oId])).rows[0]?.n).toBe(2);
  });
+ it('enforces unique codes per product and delivers earliest-expiring non-expired codes (FEFO)',async()=>{
+  await expect(db.query(`INSERT INTO public.product_codes(product_id,content) VALUES($1,'CODE-1')`,[product])).rejects.toThrow();
+  await db.query(`DELETE FROM public.product_codes WHERE product_id=$1`,[product]);
+  await db.query(`INSERT INTO public.product_codes(product_id,content,expires_at) VALUES($1,'EXPIRED',now()-interval '1 day'),($1,'LATER',now()+interval '10 days'),($1,'SOONER',now()+interval '2 days')`,[product]);
+  const id=await order(1);await pay(id);
+  expect((await state(id))?.fulfillment_state).toBe('ready');
+  const delivered=(await db.query<{delivered_content:string}>('SELECT delivered_content FROM public.orders WHERE id=$1',[id])).rows[0]?.delivered_content;
+  expect(delivered).toBe('SOONER');
+ });
 });

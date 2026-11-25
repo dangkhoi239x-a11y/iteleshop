@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCodeLines } from "@/lib/codes";
+import { parseCodeLines, parseImportedCodes } from "@/lib/codes";
 
 describe("parseCodeLines", () => {
   it("splits one code per line and trims whitespace", () => {
@@ -19,5 +19,9 @@ describe("parseCodeLines", () => {
   it("caps a single paste at 500 codes", () => {
     const many = Array.from({ length: 600 }, (_, i) => `C-${i}`).join("\n");
     expect(parseCodeLines(many)).toHaveLength(500);
+  });
+
+  it("parses imported CSV/TXT files, skips header and deduplicates", () => {
+    expect(parseImportedCodes("code,status\n\"CPN-1\",available\nCPN-2\nCPN-1\n")).toEqual(["CPN-1", "CPN-2"]);
   });
 });

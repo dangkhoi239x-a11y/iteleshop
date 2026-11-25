@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState, Field, PageHeader, StatusPill, errMsg } from "@/components/app/ui-bits";
+import { CodePoolManager } from "@/components/app/CodePoolManager";
 import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { myProductsQuery } from "@/lib/queries";
 import { money } from "@/lib/format";
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/products")({
   component: () => <ShopGate>{(shop) => <Products shop={shop} />}</ShopGate>,
 });
 
-const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "", goods_kind:"digital" as "digital"|"physical", auto_send_telegram: true, buyer_guide: "", highlights: "", bulk_discounts: "", buy_x: "", get_y: "", fulfillment_mode: "pool" as "pool" | "webhook_api", webhook_url: "", external_sku: "", webhook_secret: "" };
+const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "", goods_kind:"digital" as "digital"|"physical", auto_send_telegram: true, buyer_guide: "", highlights: "", bulk_discounts: "", buy_x: "", get_y: "", fulfillment_mode: "pool" as "pool" | "webhook_api", webhook_url: "", external_sku: "", webhook_secret: "", low_stock_threshold: "5" };
 
 function Products({ shop }: { shop: ShopRow }) {
   const { t } = useTranslation();
@@ -37,6 +38,7 @@ function Products({ shop }: { shop: ShopRow }) {
   const del = useServerFn(deleteProduct);
   const testWh = useServerFn(testWebhookEndpoint);
   const [editing, setEditing] = useState<string | null | undefined>(undefined);
+  const [poolTarget, setPoolTarget] = useState<{ id: string; name: string } | null>(null);
   const [f, setF] = useState(blank);
   const [busy, setBusy] = useState(false);
   const [testingWh, setTestingWh] = useState(false);
@@ -53,7 +55,7 @@ function Products({ shop }: { shop: ShopRow }) {
     setEditing(p?.id ?? null);
     setCodes([]);
     if (p) void loadCodes(p.id);
-    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "", goods_kind:p.goods_kind as "digital"|"physical", auto_send_telegram: p.auto_send_telegram, buyer_guide: p.buyer_guide ?? "", highlights: p.highlights ?? "", bulk_discounts: p.bulk_discounts ?? "", buy_x: p.buy_x ? String(p.buy_x) : "", get_y: p.get_y ? String(p.get_y) : "", fulfillment_mode: (p.fulfillment_mode === "webhook_api" ? "webhook_api" : "pool"), webhook_url: p.webhook_url ?? "", external_sku: p.external_sku ?? "", webhook_secret: p.webhook_secret ?? "" } : blank);
+    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "", goods_kind:p.goods_kind as "digital"|"physical", auto_send_telegram: p.auto_send_telegram, buyer_guide: p.buyer_guide ?? "", highlights: p.highlights ?? "", bulk_discounts: p.bulk_discounts ?? "", buy_x: p.buy_x ? String(p.buy_x) : "", get_y: p.get_y ? String(p.get_y) : "", fulfillment_mode: (p.fulfillment_mode === "webhook_api" ? "webhook_api" : "pool"), webhook_url: p.webhook_url ?? "", external_sku: p.external_sku ?? "", webhook_secret: p.webhook_secret ?? "", low_stock_threshold: String(p.low_stock_threshold ?? 5) } : blank);
   };
 
   const delCode = async (id: string) => {
@@ -69,8 +71,8 @@ function Products({ shop }: { shop: ShopRow }) {
   const submit = async () => {
     setBusy(true);
     try {
-      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content, goods_kind:f.goods_kind, auto_send_telegram: f.auto_send_telegram, buyer_guide: f.buyer_guide || null, highlights: f.highlights || null, bulk_discounts: f.bulk_discounts || null, buy_x: Number(f.buy_x) || null, get_y: Number(f.get_y) || null, fulfillment_mode: f.fulfillment_mode, webhook_url: f.webhook_url || null, external_sku: f.external_sku || null } });
-      toast.success(r.added ? t("products.savedWithCodes", { n: r.added }) : t("common.saved"));
+      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content, goods_kind:f.goods_kind, auto_send_telegram: f.auto_send_telegram, buyer_guide: f.buyer_guide || null, highlights: f.highlights || null, bulk_discounts: f.bulk_discounts || null, buy_x: Number(f.buy_x) || null, get_y: Number(f.get_y) || null, fulfillment_mode: f.fulfillment_mode, webhook_url: f.webhook_url || null, external_sku: f.external_sku || null, low_stock_threshold: Number(f.low_stock_threshold) || 0 } });
+      toast.success(r.added ? `${t("products.savedWithCodes", { n: r.added })}${r.skipped ? ` (bỏ qua ${r.skipped} trùng)` : ""}` : t("common.saved"));
       setEditing(undefined);
       await qc.invalidateQueries({ queryKey: ["myProducts"] });
     } catch (e) {
@@ -94,6 +96,9 @@ function Products({ shop }: { shop: ShopRow }) {
               <p className="text-[11px] text-muted-foreground">{t("products.stock")}: {p.stock} · {t("product.sold", { n: p.sold_count })}</p>
             </div>
             {p.status === "draft" && <StatusPill status="cancelled" label={t("products.draft")} />}
+            {p.fulfillment_mode !== "webhook_api" && (
+              <Button variant="ghost" size="icon" aria-label="Kho mã" onClick={() => setPoolTarget({ id: p.id, name: p.name })}><KeyRound className="text-primary" /></Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => open(p)}><Pencil /></Button>
             <Button variant="ghost" size="icon" onClick={async () => { if (!confirm(t("products.deleteAsk"))) return; try { await del({ data: { id: p.id } }); await qc.invalidateQueries({ queryKey: ["myProducts"] }); } catch (e) { toast.error(errMsg(e)); } }}><Trash2 className="text-destructive" /></Button>
           </div>
@@ -160,7 +165,10 @@ function Products({ shop }: { shop: ShopRow }) {
                 </Button>
               </div>
             ) : (
-              <Field label={t("products.delivery")} hint={t("products.deliveryHint")}><Textarea value={f.delivery_content} onChange={set("delivery_content")} rows={3} maxLength={20000} placeholder={"CODE-XXXX\nhttps://…"} /></Field>
+              <>
+                <Field label={t("products.delivery")} hint={t("products.deliveryHint")}><Textarea value={f.delivery_content} onChange={set("delivery_content")} rows={3} maxLength={20000} placeholder={"CODE-XXXX\nhttps://…"} /></Field>
+                <Field label="Cảnh báo sắp hết mã qua Telegram (tồn ≤)"><Input type="number" min={0} max={1000} value={f.low_stock_threshold} onChange={set("low_stock_threshold")} /></Field>
+              </>
             )}
             <label className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"><span><span className="block text-sm font-medium">{t("extra.autoSend")}</span><span className="block text-xs text-muted-foreground">{t("extra.autoSendHint")}</span></span><Switch checked={f.auto_send_telegram} onCheckedChange={(v) => setF({ ...f, auto_send_telegram: v })} /></label>
             <Field label={t("extra.highlights")} hint={t("extra.highlightsHint")}><Textarea value={f.highlights} onChange={set("highlights")} rows={3} maxLength={2000} /></Field>
@@ -193,6 +201,12 @@ function Products({ shop }: { shop: ShopRow }) {
           </div>
         </SheetContent>
       </Sheet>
+      <CodePoolManager
+        productId={poolTarget?.id ?? null}
+        productName={poolTarget?.name ?? ""}
+        open={!!poolTarget}
+        onOpenChange={(o) => !o && setPoolTarget(null)}
+      />
     </div>
   );
 }
