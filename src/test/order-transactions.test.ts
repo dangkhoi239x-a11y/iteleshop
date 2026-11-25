@@ -100,4 +100,15 @@ describe('actual PostgreSQL order transactions',()=>{
   const s=await db.query<{rating:string}>('SELECT rating FROM public.shops WHERE id=$1',[shop]);
   expect(Number(s.rows[0]?.rating)).toBe(5);
  });
+ it('supports external webhook fulfillment lifecycle atomically',async()=>{
+  const whProd=(await db.query<{id:string}>(`INSERT INTO public.products(shop_id,name,price,stock,goods_kind,fulfillment_mode,webhook_url,webhook_secret) VALUES($1,'API Coupon',5,10,'digital','webhook_api','https://api.example.com/gen','sec') RETURNING id`,[shop])).rows[0]?.id??'';
+  const oId=(await db.query<{id:string}>(`INSERT INTO public.orders(buyer_id,shop_id,product_id,product_name,quantity,unit_price,subtotal,total_amount,currency,commission_percent,commission_amount,pay_method,stars_amount) VALUES($1,$2,$3,'API Coupon',2,5,10,10,'USDT',5,0.5,'stars',100) RETURNING id`,[buyer,shop,whProd])).rows[0]?.id??'';
+  await pay(oId);
+  expect((await state(oId))?.fulfillment_state).toBe('pending_external');
+  await expect(db.query('SELECT public.complete_external_fulfillment($1,$2,$3)',[oId,['ONLY-1'],null])).rejects.toThrow('Expected 2 codes');
+  await db.query('SELECT public.complete_external_fulfillment($1,$2,$3)',[oId,['CPN-A','CPN-B'],'Use at checkout']);
+  expect((await state(oId))?.fulfillment_state).toBe('ready');
+  expect((await state(oId))?.status).toBe('delivered');
+  expect((await db.query<{n:number}>("SELECT count(*)::int n FROM public.product_codes WHERE order_id=$1 AND status='sold'",[oId])).rows[0]?.n).toBe(2);
+ });
 });

@@ -43,6 +43,7 @@ import { Route as AuthenticatedGrowthCampaignIdRouteImport } from './routes/_aut
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as ApiPublicDbRouteImport } from './routes/api/public/db'
+import { Route as ApiPublicFulfillCallbackRouteImport } from './routes/api/public/fulfill-callback'
 import { Route as ApiPublicNowpaymentsIpnRouteImport } from './routes/api/public/nowpayments.ipn'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram.webhook'
 
@@ -235,6 +236,12 @@ const ApiPublicDbRoute = ApiPublicDbRouteImport.update({
   path: '/api/public/db',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicFulfillCallbackRoute =
+  ApiPublicFulfillCallbackRouteImport.update({
+    id: '/api/public/fulfill-callback',
+    path: '/api/public/fulfill-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicNowpaymentsIpnRoute = ApiPublicNowpaymentsIpnRouteImport.update({
   id: '/api/public/nowpayments/ipn',
   path: '/api/public/nowpayments/ipn',
@@ -278,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/growth/$campaignId': typeof AuthenticatedGrowthCampaignIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/api/public/db': typeof ApiPublicDbRoute
+  '/api/public/fulfill-callback': typeof ApiPublicFulfillCallbackRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/growth/': typeof AuthenticatedGrowthIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
@@ -315,6 +323,7 @@ export interface FileRoutesByTo {
   '/growth/$campaignId': typeof AuthenticatedGrowthCampaignIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/api/public/db': typeof ApiPublicDbRoute
+  '/api/public/fulfill-callback': typeof ApiPublicFulfillCallbackRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/growth': typeof AuthenticatedGrowthIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
@@ -354,6 +363,7 @@ export interface FileRoutesById {
   '/_authenticated/growth/$campaignId': typeof AuthenticatedGrowthCampaignIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/api/public/db': typeof ApiPublicDbRoute
+  '/api/public/fulfill-callback': typeof ApiPublicFulfillCallbackRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/growth/': typeof AuthenticatedGrowthIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
@@ -393,6 +403,7 @@ export interface FileRouteTypes {
     | '/growth/$campaignId'
     | '/orders/$orderId'
     | '/api/public/db'
+    | '/api/public/fulfill-callback'
     | '/dashboard/'
     | '/growth/'
     | '/orders/'
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/growth/$campaignId'
     | '/orders/$orderId'
     | '/api/public/db'
+    | '/api/public/fulfill-callback'
     | '/dashboard'
     | '/growth'
     | '/orders'
@@ -468,6 +480,7 @@ export interface FileRouteTypes {
     | '/_authenticated/growth/$campaignId'
     | '/_authenticated/orders/$orderId'
     | '/api/public/db'
+    | '/api/public/fulfill-callback'
     | '/_authenticated/dashboard/'
     | '/_authenticated/growth/'
     | '/_authenticated/orders/'
@@ -485,6 +498,7 @@ export interface RootRouteChildren {
   ProductProductIdRoute: typeof ProductProductIdRoute
   ShopShopIdRoute: typeof ShopShopIdRoute
   ApiPublicDbRoute: typeof ApiPublicDbRoute
+  ApiPublicFulfillCallbackRoute: typeof ApiPublicFulfillCallbackRoute
   ApiPublicNowpaymentsIpnRoute: typeof ApiPublicNowpaymentsIpnRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
@@ -729,6 +743,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDbRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/fulfill-callback': {
+      id: '/api/public/fulfill-callback'
+      path: '/api/public/fulfill-callback'
+      fullPath: '/api/public/fulfill-callback'
+      preLoaderRoute: typeof ApiPublicFulfillCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/nowpayments/ipn': {
       id: '/api/public/nowpayments/ipn'
       path: '/api/public/nowpayments/ipn'
@@ -816,6 +837,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductProductIdRoute: ProductProductIdRoute,
   ShopShopIdRoute: ShopShopIdRoute,
   ApiPublicDbRoute: ApiPublicDbRoute,
+  ApiPublicFulfillCallbackRoute: ApiPublicFulfillCallbackRoute,
   ApiPublicNowpaymentsIpnRoute: ApiPublicNowpaymentsIpnRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }

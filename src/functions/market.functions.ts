@@ -112,6 +112,9 @@ const productInput = z.object({
   bulk_discounts: z.string().max(500).optional().nullable(),
   buy_x: z.number().int().min(1).max(100).nullable().optional(),
   get_y: z.number().int().min(1).max(100).nullable().optional(),
+  fulfillment_mode: z.enum(["pool", "webhook_api"]).default("pool"),
+  webhook_url: url,
+  external_sku: z.string().trim().max(100).optional().nullable(),
 });
 
 export const saveProduct = createServerFn({ method: "POST" })
@@ -132,12 +135,21 @@ export const saveProduct = createServerFn({ method: "POST" })
       checked(await db.from("products").update({ stock: count ?? 0 }).eq("id", pid));
       return codes.length;
     };
-    const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null, buyer_guide: rest.buyer_guide || null, highlights: rest.highlights || null, bulk_discounts: rest.bulk_discounts || null, buy_x: rest.buy_x && rest.get_y ? rest.buy_x : null, get_y: rest.buy_x && rest.get_y ? rest.get_y : null };
+    let safeWebhookUrl: string | null = null;
+    if (rest.fulfillment_mode === "webhook_api") {
+      if (!rest.webhook_url) throw new Error("Webhook URL is required for API fulfillment");
+      const { validateWebhookUrl } = await import("@/server/webhook-fulfillment.server");
+      safeWebhookUrl = validateWebhookUrl(rest.webhook_url);
+    }
+    const row = { ...rest, description: rest.description ?? null, category: rest.category ?? null, image_url: rest.image_url || null, buyer_guide: rest.buyer_guide || null, highlights: rest.highlights || null, bulk_discounts: rest.bulk_discounts || null, buy_x: rest.buy_x && rest.get_y ? rest.buy_x : null, get_y: rest.buy_x && rest.get_y ? rest.get_y : null, webhook_url: safeWebhookUrl, external_sku: rest.external_sku || null };
     if (id) {
-      const { data: cur } = await db.from("products").select("status, stock").eq("id", id).eq("shop_id", shopId).maybeSingle();
+      const { data: cur } = await db.from("products").select("status, stock, webhook_secret").eq("id", id).eq("shop_id", shopId).maybeSingle();
       // Admin-hidden products stay hidden until an admin restores them.
       if (cur?.status === "suspended") (row as { status: string }).status = "suspended";
-      const { error } = await db.from("products").update(row).eq("id", id).eq("shop_id", shopId);
+      const patch = rest.fulfillment_mode === "webhook_api" && !cur?.webhook_secret
+        ? { ...row, webhook_secret: (await import("node:crypto")).randomBytes(24).toString("hex") }
+        : row;
+      const { error } = await db.from("products").update(patch).eq("id", id).eq("shop_id", shopId);
       if (error) throw new Error(error.message);
       const added = await addCodes(id);
       if ((added > 0 || (cur?.stock === 0 && rest.stock > 0)) && row.status === "active") {
@@ -145,10 +157,28 @@ export const saveProduct = createServerFn({ method: "POST" })
       }
       return { id, added };
     }
-    const { data: p, error } = await db.from("products").insert({ ...row, shop_id: shopId }).select("id").single();
+    const secret = rest.fulfillment_mode === "webhook_api" ? (await import("node:crypto")).randomBytes(24).toString("hex") : null;
+    const { data: p, error } = await db.from("products").insert({ ...row, shop_id: shopId, webhook_secret: secret }).select("id").single();
     if (error) throw new Error(error.message);
     const added = await addCodes(p.id);
     return { id: p.id, added };
+  });
+
+export const testWebhookEndpoint = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ productId: z.string().uuid().optional(), webhook_url: z.string().url().max(1000), external_sku: z.string().max(100).optional().nullable() }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const shopId = await myShopId(context.userId);
+    let secret = "test-preview-secret";
+    if (data.productId) {
+      const { data: p } = await db.from("products").select("webhook_secret").eq("id", data.productId).eq("shop_id", shopId).maybeSingle();
+      if (p?.webhook_secret) secret = p.webhook_secret;
+    }
+    const { testProductWebhook } = await import("@/server/webhook-fulfillment.server");
+    return testProductWebhook(data.webhook_url, secret, data.external_sku);
   });
 
 async function notifyRestockSubscribers(db: Awaited<ReturnType<typeof admin>>, productId: string, productName: string) {

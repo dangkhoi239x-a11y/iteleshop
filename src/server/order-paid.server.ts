@@ -21,6 +21,10 @@ export async function onOrderPaid(orderId: string, paymentId: string, payCurrenc
   for (const channel of channels ?? []) await sendTelegramMessage(tok, channel.chat_id, notice);
   await sendTelegramMessage(bot?.bot_token, bot?.notification_chat_id, `🛒 <b>New paid order #${o.order_number}</b>\n${escapeHtml(o.product_name)} × ${o.quantity}\n💰 ${amt}\n👤 ${buyer?.username ? "@" + escapeHtml(buyer.username) : "buyer"}${o.delivery_address ? `\n📍 ${escapeHtml(o.delivery_address)}` : ""}`);
   await sendTelegramMessage(tok, buyer?.telegram_id, `✅ Payment received for order #${o.order_number} (${amt}). Funds are held in escrow until you confirm receipt.`);
+  if (o.fulfillment_state === "pending_external") {
+    const { dispatchOrderWebhook } = await import("./webhook-fulfillment.server");
+    await dispatchOrderWebhook(o.id);
+  }
   await sendOrderDelivery(o.id);
   return true;
 }

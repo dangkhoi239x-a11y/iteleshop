@@ -992,8 +992,10 @@ export type Database = {
           currency: string
           description: string | null
           escrow_release_days: number
+          external_sku: string | null
           flash_sale_end: string | null
           flash_sale_price: number | null
+          fulfillment_mode: string
           get_y: number | null
           goods_kind: string
           highlights: string | null
@@ -1006,6 +1008,8 @@ export type Database = {
           status: string
           stock: number
           warranty_type: string
+          webhook_secret: string | null
+          webhook_url: string | null
         }
         Insert: {
           auto_send_telegram?: boolean
@@ -1017,8 +1021,10 @@ export type Database = {
           currency?: string
           description?: string | null
           escrow_release_days?: number
+          external_sku?: string | null
           flash_sale_end?: string | null
           flash_sale_price?: number | null
+          fulfillment_mode?: string
           get_y?: number | null
           goods_kind?: string
           highlights?: string | null
@@ -1031,6 +1037,8 @@ export type Database = {
           status?: string
           stock?: number
           warranty_type?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
         }
         Update: {
           auto_send_telegram?: boolean
@@ -1042,8 +1050,10 @@ export type Database = {
           currency?: string
           description?: string | null
           escrow_release_days?: number
+          external_sku?: string | null
           flash_sale_end?: string | null
           flash_sale_price?: number | null
+          fulfillment_mode?: string
           get_y?: number | null
           goods_kind?: string
           highlights?: string | null
@@ -1056,6 +1066,8 @@ export type Database = {
           status?: string
           stock?: number
           warranty_type?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
         }
         Relationships: [
           {
@@ -1819,6 +1831,14 @@ export type Database = {
     }
     Functions: {
       award_task: { Args: { _task: string; _user: string }; Returns: number }
+      complete_external_fulfillment: {
+        Args: { _buyer_guide?: string | null; _codes: string[]; _order_id: string }
+        Returns: boolean
+      }
+      fail_external_fulfillment: {
+        Args: { _order_id: string; _reason: string }
+        Returns: undefined
+      }
       bind_product_referral: {
         Args: { _buyer: string; _referral: string }
         Returns: string

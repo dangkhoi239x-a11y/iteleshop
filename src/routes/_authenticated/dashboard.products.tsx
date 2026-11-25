@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyRound, Package, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Copy, KeyRound, Package, Pencil, Plus, Trash2, Webhook, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +15,7 @@ import { EmptyState, Field, PageHeader, StatusPill, errMsg } from "@/components/
 import { ShopGate, type ShopRow } from "@/components/app/ShopGate";
 import { myProductsQuery } from "@/lib/queries";
 import { money } from "@/lib/format";
-import { deleteProduct, removeProductCode, saveProduct } from "@/functions/market.functions";
+import { deleteProduct, removeProductCode, saveProduct, testWebhookEndpoint } from "@/functions/market.functions";
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/products")({
   component: () => <ShopGate>{(shop) => <Products shop={shop} />}</ShopGate>,
 });
 
-const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "", goods_kind:"digital" as "digital"|"physical", auto_send_telegram: true, buyer_guide: "", highlights: "", bulk_discounts: "", buy_x: "", get_y: "" };
+const blank = { name: "", description: "", price: "", currency: "USDT" as "USDT" | "TON", image_url: "", category: "", stock: "10", status: "active" as "active" | "draft", warranty_type: "standard" as "standard" | "none", escrow_release_days: "3", delivery_content: "", goods_kind:"digital" as "digital"|"physical", auto_send_telegram: true, buyer_guide: "", highlights: "", bulk_discounts: "", buy_x: "", get_y: "", fulfillment_mode: "pool" as "pool" | "webhook_api", webhook_url: "", external_sku: "", webhook_secret: "" };
 
 function Products({ shop }: { shop: ShopRow }) {
   const { t } = useTranslation();
@@ -35,9 +35,11 @@ function Products({ shop }: { shop: ShopRow }) {
   const { data = [] } = useQuery(myProductsQuery(shop.id));
   const save = useServerFn(saveProduct);
   const del = useServerFn(deleteProduct);
+  const testWh = useServerFn(testWebhookEndpoint);
   const [editing, setEditing] = useState<string | null | undefined>(undefined);
   const [f, setF] = useState(blank);
   const [busy, setBusy] = useState(false);
+  const [testingWh, setTestingWh] = useState(false);
   const [codes, setCodes] = useState<Code[]>([]);
   const removeCode = useServerFn(removeProductCode);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -51,7 +53,7 @@ function Products({ shop }: { shop: ShopRow }) {
     setEditing(p?.id ?? null);
     setCodes([]);
     if (p) void loadCodes(p.id);
-    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "", goods_kind:p.goods_kind as "digital"|"physical", auto_send_telegram: p.auto_send_telegram, buyer_guide: p.buyer_guide ?? "", highlights: p.highlights ?? "", bulk_discounts: p.bulk_discounts ?? "", buy_x: p.buy_x ? String(p.buy_x) : "", get_y: p.get_y ? String(p.get_y) : "" } : blank);
+    setF(p ? { name: p.name, description: p.description ?? "", price: String(Number(p.price)), currency: p.currency as "USDT", image_url: p.image_url ?? "", category: p.category ?? "", stock: String(p.stock), status: p.status === "draft" ? "draft" : "active", warranty_type: p.warranty_type as "standard", escrow_release_days: String(p.escrow_release_days), delivery_content: "", goods_kind:p.goods_kind as "digital"|"physical", auto_send_telegram: p.auto_send_telegram, buyer_guide: p.buyer_guide ?? "", highlights: p.highlights ?? "", bulk_discounts: p.bulk_discounts ?? "", buy_x: p.buy_x ? String(p.buy_x) : "", get_y: p.get_y ? String(p.get_y) : "", fulfillment_mode: (p.fulfillment_mode === "webhook_api" ? "webhook_api" : "pool"), webhook_url: p.webhook_url ?? "", external_sku: p.external_sku ?? "", webhook_secret: p.webhook_secret ?? "" } : blank);
   };
 
   const delCode = async (id: string) => {
@@ -67,7 +69,7 @@ function Products({ shop }: { shop: ShopRow }) {
   const submit = async () => {
     setBusy(true);
     try {
-      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content, goods_kind:f.goods_kind, auto_send_telegram: f.auto_send_telegram, buyer_guide: f.buyer_guide || null, highlights: f.highlights || null, bulk_discounts: f.bulk_discounts || null, buy_x: Number(f.buy_x) || null, get_y: Number(f.get_y) || null } });
+      const r = await save({ data: { id: editing ?? undefined, name: f.name, description: f.description || null, price: Number(f.price), currency: f.currency, image_url: f.image_url, category: f.category || null, stock: Number(f.stock), status: f.status, warranty_type: f.warranty_type, escrow_release_days: Number(f.escrow_release_days), delivery_content: f.delivery_content, goods_kind:f.goods_kind, auto_send_telegram: f.auto_send_telegram, buyer_guide: f.buyer_guide || null, highlights: f.highlights || null, bulk_discounts: f.bulk_discounts || null, buy_x: Number(f.buy_x) || null, get_y: Number(f.get_y) || null, fulfillment_mode: f.fulfillment_mode, webhook_url: f.webhook_url || null, external_sku: f.external_sku || null } });
       toast.success(r.added ? t("products.savedWithCodes", { n: r.added }) : t("common.saved"));
       setEditing(undefined);
       await qc.invalidateQueries({ queryKey: ["myProducts"] });
@@ -116,7 +118,50 @@ function Products({ shop }: { shop: ShopRow }) {
             <Field label={t("products.image")}><Input value={f.image_url} onChange={set("image_url")} placeholder="https://…" /></Field>
             <Field label={t("products.category")}><Input value={f.category} onChange={set("category")} maxLength={40} /></Field>
             <Field label={t("shop.desc")}><Textarea value={f.description} onChange={set("description")} rows={4} maxLength={4000} /></Field>
-            <Field label={t("products.delivery")} hint={t("products.deliveryHint")}><Textarea value={f.delivery_content} onChange={set("delivery_content")} rows={3} maxLength={20000} placeholder={"CODE-XXXX\nhttps://…"} /></Field>
+            <Field label="Chế độ giao mã">
+              <Select value={f.fulfillment_mode} onValueChange={(v) => setF({ ...f, fulfillment_mode: v as "pool" | "webhook_api" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pool">Kho mã có sẵn (Pool)</SelectItem>
+                  <SelectItem value="webhook_api">API / Bot bên ngoài (Webhook)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            {f.fulfillment_mode === "webhook_api" ? (
+              <div className="space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-3">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-primary"><Webhook className="h-3.5 w-3.5" />Kết nối API / Bot tạo mã tự động</p>
+                <Field label="Webhook URL (HTTPS)"><Input value={f.webhook_url} onChange={set("webhook_url")} placeholder="https://api.shop.com/teleshop/fulfill" /></Field>
+                <Field label="External SKU (tùy chọn)"><Input value={f.external_sku} onChange={set("external_sku")} placeholder="COUPON-20PCT" maxLength={100} /></Field>
+                {f.webhook_secret && (
+                  <div className="flex items-center justify-between gap-2 rounded-xl bg-background px-2.5 py-2 text-xs">
+                    <span className="truncate font-mono text-[11px]">Secret: {f.webhook_secret}</span>
+                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={() => { void navigator.clipboard?.writeText(f.webhook_secret); toast.success(t("common.copied")); }}><Copy className="h-3 w-3" /></Button>
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  disabled={testingWh || !f.webhook_url}
+                  onClick={async () => {
+                    setTestingWh(true);
+                    try {
+                      const r = await testWh({ data: { productId: editing ?? undefined, webhook_url: f.webhook_url, external_sku: f.external_sku || null } });
+                      toast.success(r.mode === "async" ? "Kết nối OK (Async 202)" : `Kết nối OK (${r.sampleCount} mã)`);
+                    } catch (e) {
+                      toast.error(errMsg(e));
+                    } finally {
+                      setTestingWh(false);
+                    }
+                  }}
+                >
+                  Test kết nối API
+                </Button>
+              </div>
+            ) : (
+              <Field label={t("products.delivery")} hint={t("products.deliveryHint")}><Textarea value={f.delivery_content} onChange={set("delivery_content")} rows={3} maxLength={20000} placeholder={"CODE-XXXX\nhttps://…"} /></Field>
+            )}
             <label className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"><span><span className="block text-sm font-medium">{t("extra.autoSend")}</span><span className="block text-xs text-muted-foreground">{t("extra.autoSendHint")}</span></span><Switch checked={f.auto_send_telegram} onCheckedChange={(v) => setF({ ...f, auto_send_telegram: v })} /></label>
             <Field label={t("extra.highlights")} hint={t("extra.highlightsHint")}><Textarea value={f.highlights} onChange={set("highlights")} rows={3} maxLength={2000} /></Field>
             <Field label={t("extra.bulk")} hint={t("extra.bulkHint")}><Textarea value={f.bulk_discounts} onChange={set("bulk_discounts")} rows={2} maxLength={500} placeholder={"3:10\n5:15"} /></Field>

@@ -168,7 +168,14 @@ export const adminRegisterWebhook = createServerFn({ method: "POST" })
 
 export const retryOrderFulfillment = createServerFn({method:"POST"}).middleware([...adminMw]).inputValidator((i:unknown)=>z.object({id:z.string().uuid()}).parse(i)).handler(async({data,context})=>{
  const db=await assertAdmin(context);
- requireTransition(await db.rpc("fulfill_paid_order",{_order_id:data.id}));
+ const {data:ord}=await db.from("orders").select("product_id, products(fulfillment_mode)").eq("id",data.id).maybeSingle();
+ if(ord?.products?.fulfillment_mode==="webhook_api"){
+  const {dispatchOrderWebhook}=await import("@/server/webhook-fulfillment.server");
+  const state=await dispatchOrderWebhook(data.id);
+  if(state==="shortage")throw new Error("Webhook fulfillment failed");
+ }else{
+  requireTransition(await db.rpc("fulfill_paid_order",{_order_id:data.id}));
+ }
  const {sendOrderDelivery}=await import("@/server/order-paid.server");
  await sendOrderDelivery(data.id);
  return {ok:true};
