@@ -118,6 +118,10 @@ function createRenderBrowserClient() {
     rpc: (fn: string, args?: Record<string, unknown>) => callDb({ kind: 'rpc', fn, args }),
     auth: {
       getSession: async () => ({ data: { session: readSession() }, error: null }),
+      getUser: async () => {
+        const s = readSession();
+        return { data: { user: s?.user ?? null }, error: null };
+      },
       setSession: async ({ access_token, refresh_token }: { access_token: string; refresh_token: string }) => {
         const sub = decodeJwtSub(access_token);
         if (!sub) return { data: { session: null }, error: { message: 'Invalid session token' } };
