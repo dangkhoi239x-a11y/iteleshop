@@ -20,7 +20,7 @@ export const telegramLogin = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { validateInitData } = await import("@/server/telegram.server");
     const { hmacHex } = await import("@/server/crypto.server");
-    const sessionSecret = process.env["SESSION_SECRET"]!;
+    const sessionSecret = process.env["SESSION_SECRET"] || "teleshop-render-fallback-secret-change-me";
     let tg: { id: string; first_name?: string | undefined; last_name?: string | undefined; username?: string | undefined; photo_url?: string | undefined; lang?: string | undefined };
     let ref = data.ref;
     let growthInvite: string | null = null;
@@ -75,6 +75,14 @@ export const telegramLogin = createServerFn({ method: "POST" })
     const admins = (process.env["ADMIN_TELEGRAM_IDS"] ?? "").split(",").map((s) => s.trim()).filter(Boolean);
     if (admins.includes(tg.id)) {
       await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role: "admin" }, { onConflict: "user_id,role" });
+    }
+
+    if (process.env["DATABASE_URL"]) {
+      const { signJwt } = await import("@/server/pg-adapter.server");
+      return {
+        access_token: signJwt(userId),
+        refresh_token: signJwt(userId, 60 * 60 * 24 * 60),
+      };
     }
 
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;

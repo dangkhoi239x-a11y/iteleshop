@@ -42,6 +42,7 @@ import { Route as AuthenticatedGrowthIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedGrowthCampaignIdRouteImport } from './routes/_authenticated/growth.$campaignId'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
+import { Route as ApiPublicDbRouteImport } from './routes/api/public/db'
 import { Route as ApiPublicNowpaymentsIpnRouteImport } from './routes/api/public/nowpayments.ipn'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram.webhook'
 
@@ -229,6 +230,11 @@ const AuthenticatedOrdersOrderIdRoute =
     path: '/orders/$orderId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicDbRoute = ApiPublicDbRouteImport.update({
+  id: '/api/public/db',
+  path: '/api/public/db',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicNowpaymentsIpnRoute = ApiPublicNowpaymentsIpnRouteImport.update({
   id: '/api/public/nowpayments/ipn',
   path: '/api/public/nowpayments/ipn',
@@ -271,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/growth/$campaignId': typeof AuthenticatedGrowthCampaignIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
+  '/api/public/db': typeof ApiPublicDbRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/growth/': typeof AuthenticatedGrowthIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
@@ -307,6 +314,7 @@ export interface FileRoutesByTo {
   '/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/growth/$campaignId': typeof AuthenticatedGrowthCampaignIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
+  '/api/public/db': typeof ApiPublicDbRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/growth': typeof AuthenticatedGrowthIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
@@ -345,6 +353,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/vouchers': typeof AuthenticatedDashboardVouchersRoute
   '/_authenticated/growth/$campaignId': typeof AuthenticatedGrowthCampaignIdRoute
   '/_authenticated/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
+  '/api/public/db': typeof ApiPublicDbRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/growth/': typeof AuthenticatedGrowthIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
@@ -383,6 +392,7 @@ export interface FileRouteTypes {
     | '/dashboard/vouchers'
     | '/growth/$campaignId'
     | '/orders/$orderId'
+    | '/api/public/db'
     | '/dashboard/'
     | '/growth/'
     | '/orders/'
@@ -419,6 +429,7 @@ export interface FileRouteTypes {
     | '/dashboard/vouchers'
     | '/growth/$campaignId'
     | '/orders/$orderId'
+    | '/api/public/db'
     | '/dashboard'
     | '/growth'
     | '/orders'
@@ -456,6 +467,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/vouchers'
     | '/_authenticated/growth/$campaignId'
     | '/_authenticated/orders/$orderId'
+    | '/api/public/db'
     | '/_authenticated/dashboard/'
     | '/_authenticated/growth/'
     | '/_authenticated/orders/'
@@ -472,6 +484,7 @@ export interface RootRouteChildren {
   ShopsRoute: typeof ShopsRoute
   ProductProductIdRoute: typeof ProductProductIdRoute
   ShopShopIdRoute: typeof ShopShopIdRoute
+  ApiPublicDbRoute: typeof ApiPublicDbRoute
   ApiPublicNowpaymentsIpnRoute: typeof ApiPublicNowpaymentsIpnRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
@@ -709,6 +722,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/db': {
+      id: '/api/public/db'
+      path: '/api/public/db'
+      fullPath: '/api/public/db'
+      preLoaderRoute: typeof ApiPublicDbRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/nowpayments/ipn': {
       id: '/api/public/nowpayments/ipn'
       path: '/api/public/nowpayments/ipn'
@@ -795,6 +815,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShopsRoute: ShopsRoute,
   ProductProductIdRoute: ProductProductIdRoute,
   ShopShopIdRoute: ShopShopIdRoute,
+  ApiPublicDbRoute: ApiPublicDbRoute,
   ApiPublicNowpaymentsIpnRoute: ApiPublicNowpaymentsIpnRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }

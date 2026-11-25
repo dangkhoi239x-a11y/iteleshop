@@ -10,6 +10,12 @@ services:
         value: "22"
       - key: NITRO_PRESET
         value: node-server
+      - key: VITE_USE_RENDER_DB
+        value: "true"
+      - key: TELEGRAM_APP_URL
+        value: https://iteleshop.onrender.com
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_PROJECT_ID
         value: bvlnwlskegifcakddapi
       - key: SUPABASE_URL
