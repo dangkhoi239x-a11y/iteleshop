@@ -18,7 +18,7 @@ declare global {
 }
 
 // Set to your bot's username (without @) and Mini App short name to build t.me deep links.
-export const BOT_USERNAME = "iteleshop_bot";
+export const BOT_USERNAME = (typeof import.meta !== "undefined" && import.meta.env?.["VITE_TELEGRAM_BOT_USERNAME"]) || "teleshopai_bot";
 export const MINI_APP_NAME = "app";
 
 export const tg = () => (typeof window !== "undefined" ? window.Telegram?.WebApp : undefined);

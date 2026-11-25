@@ -9,5 +9,6 @@ export function parseGrowthInvite(value: string | undefined) {
   if (!s) return null;
   return `${s.slice(0,8)}-${s.slice(8,12)}-${s.slice(12,16)}-${s.slice(16,20)}-${s.slice(20)}`;
 }
-export const growthLink = (code: string) => `https://t.me/iteleshop_bot?startapp=grow_${code.replaceAll('-', '')}`;
+import { BOT_USERNAME } from './telegram';
+export const growthLink = (code: string) => `https://t.me/${BOT_USERNAME}?startapp=grow_${code.replaceAll('-', '')}`;
 export function prizeChance(count: number, total: number) { return total > 0 ? count / total * 100 : 0; }
