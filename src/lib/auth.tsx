@@ -23,6 +23,7 @@ type AuthCtx = {
   loginError: string | null;
   loginTelegram: () => Promise<void>;
   loginDemo: () => Promise<void>;
+  loginDemoAdmin: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -86,6 +87,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return finish(login({ data: { demoId: id, ref: localStorage.getItem("ts_ref") ?? undefined } }));
   }, [finish, login]);
 
+  const loginDemoAdmin = useCallback(() => {
+    let id = localStorage.getItem("ts_demo_id");
+    if (!id) {
+      id = Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => (b % 36).toString(36)).join("") + Date.now().toString(36);
+      localStorage.setItem("ts_demo_id", id);
+    }
+    return finish(login({ data: { demoId: id, demoAdmin: true, ref: localStorage.getItem("ts_ref") ?? undefined } }));
+  }, [finish, login]);
+
   // Inside Telegram: sign in automatically (or re-sign if a different Telegram account opened the app).
   useEffect(() => {
     if (ready && !session && inTelegram() && !signingIn && !loginError) void loginTelegram();
@@ -124,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider
-      value={{ session, ready, userId, profile: me?.profile ?? null, isAdmin: !!me?.isAdmin, shop: me?.shop ?? null, signingIn, loginError, loginTelegram, loginDemo, signOut }}
+      value={{ session, ready, userId, profile: me?.profile ?? null, isAdmin: !!me?.isAdmin, shop: me?.shop ?? null, signingIn, loginError, loginTelegram, loginDemo, loginDemoAdmin, signOut }}
     >
       {children}
     </Ctx.Provider>

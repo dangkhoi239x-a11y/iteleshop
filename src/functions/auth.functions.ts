@@ -13,9 +13,13 @@ function randomCode() {
  * then a Cloud account bound to that Telegram ID is created/reused and a session returned.
  * Outside Telegram, a per-browser demo account (demo_*) can be used for testing.
  */
+export const demoLoginConfig = createServerFn({ method: "GET" }).handler(async () => ({
+  demoAdminEnabled: process.env["DEMO_ADMIN_ENABLED"] === "true",
+}));
+
 export const telegramLogin = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
-    z.object({ initData: z.string().max(4096).optional(), demoId: z.string().regex(/^[a-z0-9]{12,40}$/).optional(), ref: z.string().max(32).optional() }).parse(i),
+    z.object({ initData: z.string().max(4096).optional(), demoId: z.string().regex(/^[a-z0-9]{12,40}$/).optional(), demoAdmin: z.boolean().optional(), ref: z.string().max(32).optional() }).parse(i),
   )
   .handler(async ({ data }) => {
     const { validateInitData } = await import("@/server/telegram.server");
@@ -34,7 +38,14 @@ export const telegramLogin = createServerFn({ method: "POST" })
       ref = v.startParam?.startsWith('ref_') ? v.startParam.slice(4) : undefined;
       growthInvite = parseGrowthInvite(v.startParam);
     } else if (data.demoId) {
-      tg = { id: `demo_${data.demoId}`, first_name: "Demo", last_name: "User", };
+      if (data.demoAdmin) {
+        if (process.env["DEMO_ADMIN_ENABLED"] !== "true") {
+          throw new Error("Demo admin login is disabled");
+        }
+        tg = { id: "demo_admin", first_name: "Demo", last_name: "Admin", username: "demo_admin" };
+      } else {
+        tg = { id: `demo_${data.demoId}`, first_name: "Demo", last_name: "User" };
+      }
     } else {
       throw new Error("Missing login data");
     }
@@ -73,7 +84,7 @@ export const telegramLogin = createServerFn({ method: "POST" })
     }
 
     const admins = (process.env["ADMIN_TELEGRAM_IDS"] ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-    if (admins.includes(tg.id)) {
+    if (admins.includes(tg.id) || (data.demoAdmin && process.env["DEMO_ADMIN_ENABLED"] === "true")) {
       await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role: "admin" }, { onConflict: "user_id,role" });
     }
 

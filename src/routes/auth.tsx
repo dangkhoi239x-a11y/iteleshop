@@ -1,4 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, Send, ShieldCheck, Coins, Users } from "lucide-react";
@@ -6,6 +8,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { inTelegram } from "@/lib/telegram";
+import { demoLoginConfig } from "@/functions/auth.functions";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ redirect: z.string().optional() }),
@@ -24,7 +27,9 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const { t } = useTranslation();
-  const { session, signingIn, loginError, loginTelegram, loginDemo } = useAuth();
+  const { session, signingIn, loginError, loginTelegram, loginDemo, loginDemoAdmin } = useAuth();
+  const getCfg = useServerFn(demoLoginConfig);
+  const { data: cfg } = useQuery({ queryKey: ["demoLoginConfig"], queryFn: () => getCfg() });
   const { redirect } = Route.useSearch();
   const nav = useNavigate();
   const tgMode = typeof window !== "undefined" && inTelegram();
@@ -66,6 +71,11 @@ function AuthPage() {
             <Button size="lg" className="w-full" onClick={loginDemo} disabled={signingIn}>
               {signingIn && <Loader2 className="animate-spin" />} {t("auth.demo")}
             </Button>
+            {cfg?.demoAdminEnabled && (
+              <Button size="lg" variant="outline" className="w-full" onClick={loginDemoAdmin} disabled={signingIn}>
+                {signingIn ? <Loader2 className="animate-spin" /> : <ShieldCheck />} Demo Admin (Test)
+              </Button>
+            )}
             <p className="text-center text-[11px] text-muted-foreground">{t("auth.demoHint")}</p>
           </>
         )}
