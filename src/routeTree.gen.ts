@@ -44,7 +44,9 @@ import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders.$orderId'
 import { Route as ApiPublicDbRouteImport } from './routes/api/public/db'
 import { Route as ApiPublicFulfillCallbackRouteImport } from './routes/api/public/fulfill-callback'
+import { Route as ApiPublicBinancepayWebhookRouteImport } from './routes/api/public/binancepay.webhook'
 import { Route as ApiPublicNowpaymentsIpnRouteImport } from './routes/api/public/nowpayments.ipn'
+import { Route as ApiPublicPayosWebhookRouteImport } from './routes/api/public/payos.webhook'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram.webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -242,9 +244,20 @@ const ApiPublicFulfillCallbackRoute =
     path: '/api/public/fulfill-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBinancepayWebhookRoute =
+  ApiPublicBinancepayWebhookRouteImport.update({
+    id: '/api/public/binancepay/webhook',
+    path: '/api/public/binancepay/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicNowpaymentsIpnRoute = ApiPublicNowpaymentsIpnRouteImport.update({
   id: '/api/public/nowpayments/ipn',
   path: '/api/public/nowpayments/ipn',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPayosWebhookRoute = ApiPublicPayosWebhookRouteImport.update({
+  id: '/api/public/payos/webhook',
+  path: '/api/public/payos/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTelegramWebhookRoute =
@@ -289,7 +302,9 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/growth/': typeof AuthenticatedGrowthIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
+  '/api/public/binancepay/webhook': typeof ApiPublicBinancepayWebhookRoute
   '/api/public/nowpayments/ipn': typeof ApiPublicNowpaymentsIpnRoute
+  '/api/public/payos/webhook': typeof ApiPublicPayosWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -327,7 +342,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/growth': typeof AuthenticatedGrowthIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
+  '/api/public/binancepay/webhook': typeof ApiPublicBinancepayWebhookRoute
   '/api/public/nowpayments/ipn': typeof ApiPublicNowpaymentsIpnRoute
+  '/api/public/payos/webhook': typeof ApiPublicPayosWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
@@ -367,7 +384,9 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/growth/': typeof AuthenticatedGrowthIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
+  '/api/public/binancepay/webhook': typeof ApiPublicBinancepayWebhookRoute
   '/api/public/nowpayments/ipn': typeof ApiPublicNowpaymentsIpnRoute
+  '/api/public/payos/webhook': typeof ApiPublicPayosWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
@@ -407,7 +426,9 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/growth/'
     | '/orders/'
+    | '/api/public/binancepay/webhook'
     | '/api/public/nowpayments/ipn'
+    | '/api/public/payos/webhook'
     | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -445,7 +466,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/growth'
     | '/orders'
+    | '/api/public/binancepay/webhook'
     | '/api/public/nowpayments/ipn'
+    | '/api/public/payos/webhook'
     | '/api/public/telegram/webhook'
   id:
     | '__root__'
@@ -484,7 +507,9 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/'
     | '/_authenticated/growth/'
     | '/_authenticated/orders/'
+    | '/api/public/binancepay/webhook'
     | '/api/public/nowpayments/ipn'
+    | '/api/public/payos/webhook'
     | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -499,7 +524,9 @@ export interface RootRouteChildren {
   ShopShopIdRoute: typeof ShopShopIdRoute
   ApiPublicDbRoute: typeof ApiPublicDbRoute
   ApiPublicFulfillCallbackRoute: typeof ApiPublicFulfillCallbackRoute
+  ApiPublicBinancepayWebhookRoute: typeof ApiPublicBinancepayWebhookRoute
   ApiPublicNowpaymentsIpnRoute: typeof ApiPublicNowpaymentsIpnRoute
+  ApiPublicPayosWebhookRoute: typeof ApiPublicPayosWebhookRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
@@ -750,11 +777,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFulfillCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/binancepay/webhook': {
+      id: '/api/public/binancepay/webhook'
+      path: '/api/public/binancepay/webhook'
+      fullPath: '/api/public/binancepay/webhook'
+      preLoaderRoute: typeof ApiPublicBinancepayWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/nowpayments/ipn': {
       id: '/api/public/nowpayments/ipn'
       path: '/api/public/nowpayments/ipn'
       fullPath: '/api/public/nowpayments/ipn'
       preLoaderRoute: typeof ApiPublicNowpaymentsIpnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payos/webhook': {
+      id: '/api/public/payos/webhook'
+      path: '/api/public/payos/webhook'
+      fullPath: '/api/public/payos/webhook'
+      preLoaderRoute: typeof ApiPublicPayosWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/telegram/webhook': {
@@ -838,7 +879,9 @@ const rootRouteChildren: RootRouteChildren = {
   ShopShopIdRoute: ShopShopIdRoute,
   ApiPublicDbRoute: ApiPublicDbRoute,
   ApiPublicFulfillCallbackRoute: ApiPublicFulfillCallbackRoute,
+  ApiPublicBinancepayWebhookRoute: ApiPublicBinancepayWebhookRoute,
   ApiPublicNowpaymentsIpnRoute: ApiPublicNowpaymentsIpnRoute,
+  ApiPublicPayosWebhookRoute: ApiPublicPayosWebhookRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport

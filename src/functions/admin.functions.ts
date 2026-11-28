@@ -146,10 +146,25 @@ export const adminSetAdmin = createServerFn({ method: "POST" })
 
 export const adminSaveSettings = createServerFn({ method: "POST" })
   .middleware([...adminMw])
-  .inputValidator((i: unknown) => z.object({ stars_enabled: z.boolean(), crypto_enabled: z.boolean(), stars_per_usdt: z.number().positive().max(100000), stars_per_ton: z.number().positive().max(100000) }).parse(i))
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        stars_enabled: z.boolean(),
+        crypto_enabled: z.boolean(),
+        payos_enabled: z.boolean().default(false),
+        binance_pay_enabled: z.boolean().default(false),
+        stars_per_usdt: z.number().positive().max(100000),
+        stars_per_ton: z.number().positive().max(100000),
+        vnd_per_usdt: z.number().positive().max(1000000).default(25500),
+        vnd_per_ton: z.number().positive().max(10000000).default(130000),
+      })
+      .parse(i),
+  )
   .handler(async ({ data, context }) => {
     const db = await assertAdmin(context);
-    if (!data.stars_enabled && !data.crypto_enabled) throw new Error("Keep at least one payment method on");
+    if (!data.stars_enabled && !data.crypto_enabled && !data.payos_enabled && !data.binance_pay_enabled) {
+      throw new Error("Keep at least one payment method on");
+    }
     checked(await db.from("platform_settings").upsert({ id: true, ...data, updated_at: new Date().toISOString() }));
     return { ok: true };
   });

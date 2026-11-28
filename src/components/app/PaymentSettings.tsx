@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Field, errMsg } from "@/components/app/ui-bits";
 import { platformSettingsQuery } from "@/lib/queries";
 import { adminRegisterWebhook, adminSaveSettings } from "@/functions/admin.functions";
-import { useFinanceText } from './RevenueReport';
+import { useFinanceText } from "./RevenueReport";
 
 export function PaymentSettings() {
   const finance = useFinanceText();
@@ -18,21 +18,76 @@ export function PaymentSettings() {
   const save = useServerFn(adminSaveSettings);
   const reg = useServerFn(adminRegisterWebhook);
   const { data, error } = useQuery(platformSettingsQuery());
-  const [f, setF] = useState({ stars_enabled: false, crypto_enabled: true, stars_per_usdt: "77", stars_per_ton: "250" });
-  useEffect(() => { if (data) setF({ stars_enabled: data.stars_enabled, crypto_enabled: data.crypto_enabled, stars_per_usdt: String(Number(data.stars_per_usdt)), stars_per_ton: String(Number(data.stars_per_ton)) }); }, [data]);
+  const [f, setF] = useState({
+    stars_enabled: false,
+    crypto_enabled: true,
+    payos_enabled: false,
+    binance_pay_enabled: false,
+    stars_per_usdt: "77",
+    stars_per_ton: "250",
+    vnd_per_usdt: "25500",
+    vnd_per_ton: "130000",
+  });
+
+  useEffect(() => {
+    if (data) {
+      setF({
+        stars_enabled: data.stars_enabled,
+        crypto_enabled: data.crypto_enabled,
+        payos_enabled: !!data.payos_enabled,
+        binance_pay_enabled: !!data.binance_pay_enabled,
+        stars_per_usdt: String(Number(data.stars_per_usdt)),
+        stars_per_ton: String(Number(data.stars_per_ton)),
+        vnd_per_usdt: String(Number(data.vnd_per_usdt ?? 25500)),
+        vnd_per_ton: String(Number(data.vnd_per_ton ?? 130000)),
+      });
+    }
+  }, [data]);
+
   const submit = async () => {
-    try { await save({ data: { ...f, stars_per_usdt: Number(f.stars_per_usdt), stars_per_ton: Number(f.stars_per_ton) } }); toast.success(t("common.saved")); await qc.invalidateQueries({ queryKey: ["platformSettings"] }); } catch (e) { toast.error(errMsg(e)); }
+    try {
+      await save({
+        data: {
+          stars_enabled: f.stars_enabled,
+          crypto_enabled: f.crypto_enabled,
+          payos_enabled: f.payos_enabled,
+          binance_pay_enabled: f.binance_pay_enabled,
+          stars_per_usdt: Number(f.stars_per_usdt),
+          stars_per_ton: Number(f.stars_per_ton),
+          vnd_per_usdt: Number(f.vnd_per_usdt),
+          vnd_per_ton: Number(f.vnd_per_ton),
+        },
+      });
+      toast.success(t("common.saved"));
+      await qc.invalidateQueries({ queryKey: ["platformSettings"] });
+    } catch (e) {
+      toast.error(errMsg(e));
+    }
   };
-  if(error) return <p role="alert" className="text-destructive">{errMsg(error)}</p>;
+
+  if (error) return <p role="alert" className="text-destructive">{errMsg(error)}</p>;
+
   return (
     <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
       <p className="text-xs text-muted-foreground">{finance.quote}</p>
       <label className="flex items-center justify-between text-sm">{t("extra.starsOn")}<Switch checked={f.stars_enabled} onCheckedChange={(c) => setF({ ...f, stars_enabled: c })} /></label>
       <label className="flex items-center justify-between text-sm">{t("extra.cryptoOn")}<Switch checked={f.crypto_enabled} onCheckedChange={(c) => setF({ ...f, crypto_enabled: c })} /></label>
+      <label className="flex items-center justify-between text-sm"><span>PayOS (VietQR VND)</span><Switch checked={f.payos_enabled} onCheckedChange={(c) => setF({ ...f, payos_enabled: c })} /></label>
+      <label className="flex items-center justify-between text-sm"><span>Binance Pay</span><Switch checked={f.binance_pay_enabled} onCheckedChange={(c) => setF({ ...f, binance_pay_enabled: c })} /></label>
+
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("extra.starsUsdt")}><Input type="number" value={f.stars_per_usdt} onChange={(e) => setF({ ...f, stars_per_usdt: e.target.value })} /></Field>
         <Field label={t("extra.starsTon")}><Input type="number" value={f.stars_per_ton} onChange={(e) => setF({ ...f, stars_per_ton: e.target.value })} /></Field>
+        <Field label="VND / 1 USDT (PayOS)"><Input type="number" value={f.vnd_per_usdt} onChange={(e) => setF({ ...f, vnd_per_usdt: e.target.value })} /></Field>
+        <Field label="VND / 1 TON (PayOS)"><Input type="number" value={f.vnd_per_ton} onChange={(e) => setF({ ...f, vnd_per_ton: e.target.value })} /></Field>
       </div>
+
+      <div className="space-y-1 rounded-xl bg-secondary/50 p-2.5 text-[11px] text-muted-foreground">
+        <p className="font-semibold text-foreground">Webhook URLs:</p>
+        <p className="break-all">PayOS: /api/public/payos/webhook</p>
+        <p className="break-all">Binance Pay: /api/public/binancepay/webhook</p>
+      </div>
+
       <Button className="w-full" onClick={submit}>{t("common.save")}</Button>
       <Button variant="outline" className="w-full" onClick={async () => { try { const r = await reg(); toast.success(r.url); } catch (e) { toast.error(errMsg(e)); } }}>{t("extra.regWebhook")}</Button>
     </div>

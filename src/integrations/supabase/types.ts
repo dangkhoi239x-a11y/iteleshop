@@ -675,6 +675,7 @@ export type Database = {
           escrow_release_at: string | null
           escrow_release_days: number
           escrow_status: string
+          fiat_amount_vnd: number | null
           free_quantity: number
           fulfillment_error: string | null
           fulfillment_state: string
@@ -729,6 +730,7 @@ export type Database = {
           escrow_release_at?: string | null
           escrow_release_days?: number
           escrow_status?: string
+          fiat_amount_vnd?: number | null
           free_quantity?: number
           fulfillment_error?: string | null
           fulfillment_state?: string
@@ -783,6 +785,7 @@ export type Database = {
           escrow_release_at?: string | null
           escrow_release_days?: number
           escrow_status?: string
+          fiat_amount_vnd?: number | null
           free_quantity?: number
           fulfillment_error?: string | null
           fulfillment_state?: string
@@ -853,28 +856,40 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          binance_pay_enabled: boolean
           crypto_enabled: boolean
           id: boolean
+          payos_enabled: boolean
           stars_enabled: boolean
           stars_per_ton: number
           stars_per_usdt: number
           updated_at: string
+          vnd_per_ton: number
+          vnd_per_usdt: number
         }
         Insert: {
+          binance_pay_enabled?: boolean
           crypto_enabled?: boolean
           id?: boolean
+          payos_enabled?: boolean
           stars_enabled?: boolean
           stars_per_ton?: number
           stars_per_usdt?: number
           updated_at?: string
+          vnd_per_ton?: number
+          vnd_per_usdt?: number
         }
         Update: {
+          binance_pay_enabled?: boolean
           crypto_enabled?: boolean
           id?: boolean
+          payos_enabled?: boolean
           stars_enabled?: boolean
           stars_per_ton?: number
           stars_per_usdt?: number
           updated_at?: string
+          vnd_per_ton?: number
+          vnd_per_usdt?: number
         }
         Relationships: []
       }

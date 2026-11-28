@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, Field, PageHeader, errMsg } from "@/components/app/ui-bits";
 import { productQuery, platformSettingsQuery } from "@/lib/queries";
-import { freeUnits, orderQuote, starsFor } from "@/lib/pricing";
+import { freeUnits, orderQuote, starsFor, vndFor } from "@/lib/pricing";
 import { openStarsInvoice } from "@/lib/telegram";
 import { money } from "@/lib/format";
 import { checkVoucher, listShopPublicVouchers } from "@/functions/market.functions";
@@ -41,8 +41,14 @@ function Checkout() {
     queryFn: () => fetchVouchers({ data: { shopId: p!.shop_id } }),
     enabled: !!p?.shop_id,
   });
-  const [method, setMethod] = useState<"crypto" | "stars" | null>(null);
-  const payMethod = p?.goods_kind === "digital" ? "stars" : method ?? (settings && !settings.crypto_enabled ? "stars" : "crypto");
+  const availableMethods = [
+    ...(settings?.stars_enabled ? (["stars"] as const) : []),
+    ...(settings?.payos_enabled ? (["payos"] as const) : []),
+    ...(settings?.binance_pay_enabled ? (["binance_pay"] as const) : []),
+    ...(p?.goods_kind !== "digital" && settings?.crypto_enabled ? (["crypto"] as const) : []),
+  ];
+  const [method, setMethod] = useState<"crypto" | "stars" | "payos" | "binance_pay" | null>(null);
+  const payMethod = method && availableMethods.includes(method) ? method : (availableMethods[0] ?? (p?.goods_kind === "digital" ? "stars" : "crypto"));
   const [code, setCode] = useState("");
   const [applied, setApplied] = useState<{ code: string; discount: number } | null>(null);
   const [address, setAddress] = useState("");
@@ -57,6 +63,7 @@ function Checkout() {
   const changeQty = (next:number) => { setQty(Math.min(100,Math.max(1,next))); setApplied(null); };
   const free = freeUnits(qty, p.buy_x, p.get_y);
   const stars = settings ? starsFor(total, p.currency, settings) : 0;
+  const amountVnd = settings ? vndFor(total, p.currency, settings) : 0;
 
   const applyCode = async (rawCode: string) => {
     const trimmed = rawCode.trim().toUpperCase();
@@ -113,11 +120,21 @@ function Checkout() {
           </div>
         </Field>
         {free > 0 && <p className="rounded-xl bg-success/10 p-2 text-sm text-success">{t("extra.freeGot", { n: free })}</p>}
-        {p.goods_kind !== "digital" && settings?.stars_enabled && settings.crypto_enabled && (
+        {availableMethods.length > 1 && (
           <Field label={t("extra.payMethod")}>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant={payMethod === "crypto" ? "default" : "secondary"} onClick={() => setMethod("crypto")}>{t("extra.payCrypto")}</Button>
-              <Button variant={payMethod === "stars" ? "default" : "secondary"} onClick={() => setMethod("stars")}>⭐ Telegram Stars</Button>
+              {availableMethods.includes("stars") && (
+                <Button type="button" variant={payMethod === "stars" ? "default" : "secondary"} onClick={() => setMethod("stars")}>⭐ Telegram Stars</Button>
+              )}
+              {availableMethods.includes("payos") && (
+                <Button type="button" variant={payMethod === "payos" ? "default" : "secondary"} onClick={() => setMethod("payos")}>🏦 PayOS (VietQR)</Button>
+              )}
+              {availableMethods.includes("binance_pay") && (
+                <Button type="button" variant={payMethod === "binance_pay" ? "default" : "secondary"} onClick={() => setMethod("binance_pay")}>🟡 Binance Pay</Button>
+              )}
+              {availableMethods.includes("crypto") && (
+                <Button type="button" variant={payMethod === "crypto" ? "default" : "secondary"} onClick={() => setMethod("crypto")}>{t("extra.payCrypto")}</Button>
+              )}
             </div>
           </Field>
         )}
@@ -165,13 +182,57 @@ function Checkout() {
           <Row k={t("checkout.subtotal")} v={money(gross, p.currency)} />
           {bulkOff > 0 && <Row k={t("extra.bulkTitle")} v={`−${money(bulkOff, p.currency)}`} className="text-success" />}
           {discount > 0 && <Row k={t("checkout.discount")} v={`−${money(discount, p.currency)}`} className="text-success" />}
-          <div className="border-t border-border pt-2"><Row k={t("checkout.total")} v={payMethod === "stars" ? `${stars} ⭐ (≈ ${money(total, p.currency)})` : money(total, p.currency)} className="font-display text-base font-bold" /></div>
+          <div className="border-t border-border pt-2">
+            <Row
+              k={t("checkout.total")}
+              v={
+                payMethod === "stars"
+                  ? `${stars} ⭐ (≈ ${money(total, p.currency)})`
+                  : payMethod === "payos"
+                    ? `${amountVnd.toLocaleString("vi-VN")} ₫ (≈ ${money(total, p.currency)})`
+                    : money(total, p.currency)
+              }
+              className="font-display text-base font-bold"
+            />
+          </div>
         </div>
-        <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0 text-success" />{payMethod === "stars" ? text.starsEscrow : t("checkout.secured")}</p>
+        <p className="flex gap-2 text-xs text-muted-foreground">
+          <ShieldCheck className="h-4 w-4 shrink-0 text-success" />
+          {payMethod === "stars"
+            ? text.starsEscrow
+            : payMethod === "payos"
+              ? "PayOS VietQR · Tiền được giữ ký quỹ đến khi nhận hàng"
+              : payMethod === "binance_pay"
+                ? "Binance Pay · Tiền được giữ ký quỹ đến khi nhận hàng"
+                : t("checkout.secured")}
+        </p>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-border bg-background/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
-        <Button size="lg" className="w-full shadow-glow" onClick={pay} disabled={busy || !settings || (payMethod === "stars" ? !settings.stars_enabled : !settings.crypto_enabled) || total<=0}>
-          {busy ? <><Loader2 className="animate-spin" /> {t("checkout.processing")}</> : (payMethod === "stars" ? text.payStars.replace("{{n}}", String(stars)) : t("checkout.payNow", {amount:money(total,p.currency)}))}
+        <Button
+          size="lg"
+          className="w-full shadow-glow"
+          onClick={pay}
+          disabled={
+            busy ||
+            !settings ||
+            (payMethod === "stars" && !settings.stars_enabled) ||
+            (payMethod === "crypto" && !settings.crypto_enabled) ||
+            (payMethod === "payos" && !settings.payos_enabled) ||
+            (payMethod === "binance_pay" && !settings.binance_pay_enabled) ||
+            total <= 0
+          }
+        >
+          {busy ? (
+            <><Loader2 className="animate-spin" /> {t("checkout.processing")}</>
+          ) : payMethod === "stars" ? (
+            text.payStars.replace("{{n}}", String(stars))
+          ) : payMethod === "payos" ? (
+            `Thanh toán ${amountVnd.toLocaleString("vi-VN")} ₫ qua PayOS`
+          ) : payMethod === "binance_pay" ? (
+            `Thanh toán ${money(total, p.currency)} qua Binance Pay`
+          ) : (
+            t("checkout.payNow", { amount: money(total, p.currency) })
+          )}
         </Button>
       </div>
     </div>

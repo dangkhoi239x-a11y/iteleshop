@@ -67,6 +67,13 @@ export function starsFor(total: number, currency: string, rates: { stars_per_usd
   return Math.max(1, Math.ceil(total * rate - 1e-9));
 }
 
+/** VND amount for PayOS VietQR checkout (rounded, min 2,000 VND per PayOS rule). */
+export function vndFor(total: number, currency: string, rates: { vnd_per_usdt?: number | string | null; vnd_per_ton?: number | string | null }) {
+  const fallback = currency === "TON" ? 130000 : 25500;
+  const rate = Number((currency === "TON" ? rates.vnd_per_ton : rates.vnd_per_usdt) ?? fallback);
+  return Math.max(2000, Math.round(total * rate));
+}
+
 export function orderQuote(p: PriceProduct & { bulk_discounts?: string | null }, quantity: number, voucher?: PriceVoucher | null) {
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) throw new Error("Quantity must be between 1 and 100");
   const unit = effectivePrice(p);

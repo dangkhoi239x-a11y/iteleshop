@@ -18,14 +18,41 @@ async function attachInvoice(orderId: string) {
   const db = await admin();
   const { data: o } = await db.from("orders").select("*").eq("id", orderId).single();
   if (!o) throw new Error("Order not found");
-  const { createInvoice } = await import("@/server/nowpayments.server");
-  const inv = await createInvoice({
-    orderId: o.id,
-    amount: Number(o.total_amount),
-    currency: o.currency as "USDT" | "TON",
-    description: `TeleShop #${o.order_number} – ${o.product_name} x${o.quantity}`,
-    origin: requestOrigin(),
-  });
+  const origin = requestOrigin();
+  const desc = `TeleShop #${o.order_number} – ${o.product_name} x${o.quantity}`;
+  let inv: { invoiceId: string; invoiceUrl: string };
+  if (o.pay_method === "payos") {
+    const { createPayosPayment } = await import("@/server/payos.server");
+    const { vndFor } = await import("@/lib/pricing");
+    const settings = checked(await db.from("platform_settings").select("*").single());
+    const amountVnd = Number(o.fiat_amount_vnd ?? vndFor(Number(o.total_amount), o.currency, settings ?? {}));
+    inv = await createPayosPayment({
+      orderId: o.id,
+      orderCode: Number(o.order_number),
+      amountVnd,
+      description: `TeleShop #${o.order_number}`,
+      origin,
+    });
+  } else if (o.pay_method === "binance_pay") {
+    const { createBinancePayOrder } = await import("@/server/binancepay.server");
+    inv = await createBinancePayOrder({
+      orderId: o.id,
+      orderNumber: Number(o.order_number),
+      amount: Number(o.total_amount),
+      currency: o.currency as "USDT" | "TON",
+      description: desc,
+      origin,
+    });
+  } else {
+    const { createInvoice } = await import("@/server/nowpayments.server");
+    inv = await createInvoice({
+      orderId: o.id,
+      amount: Number(o.total_amount),
+      currency: o.currency as "USDT" | "TON",
+      description: desc,
+      origin,
+    });
+  }
   checked(await db.from("orders").update({ invoice_id: inv.invoiceId, invoice_url: inv.invoiceUrl, payment_status: "waiting" }).eq("id", o.id).select("id").single());
   return inv.invoiceUrl;
 }
@@ -40,12 +67,12 @@ export const createOrder = createServerFn({ method: "POST" })
         voucherCode: z.string().trim().max(20).optional().nullable(),
         deliveryAddress: z.string().max(500).optional().nullable(),
         note: z.string().max(500).optional().nullable(),
-        payMethod: z.enum(["crypto", "stars"]).default("crypto"),
+        payMethod: z.enum(["crypto", "stars", "payos", "binance_pay"]).default("crypto"),
       })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { voucherDiscount, commissionPercent, round6, orderQuote, freeUnits, starsFor } = await import("@/lib/pricing");
+    const { voucherDiscount, commissionPercent, round6, orderQuote, freeUnits, starsFor, vndFor } = await import("@/lib/pricing");
     const db = await admin();
     const { data: p } = await db.from("products").select("*, shops!inner(id, owner_id, status, affiliate_percent)").eq("id", data.productId).single();
     if (!p || p.status !== "active" || p.shops.status !== "active") throw new Error("Product is not available");
@@ -53,9 +80,11 @@ export const createOrder = createServerFn({ method: "POST" })
     const free = freeUnits(data.quantity, p.buy_x, p.get_y);
     if (p.stock < data.quantity + free) throw new Error("Not enough stock");
     const settings = checked(await db.from("platform_settings").select("*").single());
-    if (data.payMethod === "crypto" && p.goods_kind === "digital") throw new Error("Digital goods require Telegram Stars");
+    if (data.payMethod === "crypto" && p.goods_kind === "digital") throw new Error("Digital goods require Telegram Stars, PayOS or Binance Pay");
     if (data.payMethod === "stars" && !settings?.stars_enabled) throw new Error("Telegram Stars payments are turned off");
     if (data.payMethod === "crypto" && settings && !settings.crypto_enabled) throw new Error("Crypto payments are turned off");
+    if (data.payMethod === "payos" && !settings?.payos_enabled) throw new Error("PayOS payments are turned off");
+    if (data.payMethod === "binance_pay" && !settings?.binance_pay_enabled) throw new Error("Binance Pay is turned off");
 
     const { unit, gross, bulkOff, subtotal } = orderQuote(p, data.quantity);
     let discount = 0;
@@ -97,6 +126,7 @@ export const createOrder = createServerFn({ method: "POST" })
         buyer_id: context.userId, shop_id: p.shop_id, product_id: p.id, product_name: p.name, product_image: p.image_url,
         quantity: data.quantity + free, free_quantity: free, pay_method: data.payMethod,
         stars_amount: data.payMethod === "stars" && settings ? starsFor(total, p.currency, settings) : null,
+        fiat_amount_vnd: data.payMethod === "payos" && settings ? vndFor(total, p.currency, settings) : null,
         unit_price: unit, subtotal: gross, discount_amount: discount, total_amount: total, currency: p.currency,
         warranty_type: p.warranty_type, escrow_release_days: p.escrow_release_days, commission_percent: cp,
         commission_amount: round6((total * cp) / 100), affiliate_user_id: affiliateUser,
